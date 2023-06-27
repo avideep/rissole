@@ -5,7 +5,8 @@ venv
 
 sandbox
 test_data
-
+./.ipynb_checkpoints
+./.vscode
 # logs and checkpoints of models
 logs
 checkpoints
