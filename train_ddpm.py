@@ -184,34 +184,30 @@ def train(model, train_loader, optimizer, device):
         metrics = {'ema_loss': ema_loss, 'loss': loss}
         logger.log_metrics(metrics, phase='Train', aggregate=True, n=x.shape[0])
 
-# def train(model, train_loader, optimizer, num_blocks, device):
-#     model.train()
+def train(model, train_loader, optimizer, block_size, device):
+    model.train()
 
-#     ema_loss = None
-#     for x, _ in tqdm(train_loader, desc="Training"):
-#         optimizer.zero_grad()
-#         x = x.to(device)
-#         block_size = x.shape[-1] // num_blocks
-#         output = x[:, :, :block_size, :block_size]
+    ema_loss = None
+    for x, _ in tqdm(train_loader, desc="Training"):
+        optimizer.zero_grad()
+        x = x.to(device)
+        #num_blocks = (x.shape[-1] // block_size)**2
+        # output = x[:, :, :block_size, :block_size]
+        prev_block = torch.rand_like(x[:, :, :block_size, :block_size]).to(device)
+        for i in range(0, x.shape[-1], block_size):
+            for j in range(0, x.shape[-1], block_size):
+                curr_block = x[:, :, i:i+block_size, j:j+block_size]
+                loss = model.p_losses(curr_block, prev_block)
+                loss.backward()
+                optimizer.step()
 
-#         for block in range(1, num_blocks):
-#             prev_block = output.detach()
-#             input_block = x[:, :, block*block_size:(block+1)*block_size, :block_size]
-#             if block == 1:
-#                 loss = model.p_losses(input_block)
-#             else:
-#             #target_block = target[:, :, block*block_size:(block+1)*block_size, :block_size]
-#                 loss = model.p_losses()
-#             loss.backward()
-#             optimizer.step()
+                if ema_loss is None:
+                    ema_loss = loss.item()
+                else:
+                    ema_loss = 0.9 * ema_loss + 0.1 * loss.item()
 
-#             if ema_loss is None:
-#                 ema_loss = loss.item()
-#             else:
-#                 ema_loss = 0.9 * ema_loss + 0.1 * loss.item()
-
-#             metrics = {'ema_loss': ema_loss, 'loss': loss}
-#             logger.log_metrics(metrics, phase='Train', aggregate=True, n=x.shape[0])
+                metrics = {'ema_loss': ema_loss, 'loss': loss}
+                logger.log_metrics(metrics, phase='Train', aggregate=True, n=curr_block.shape[0])
 
 @torch.no_grad()
 def validate(model):
