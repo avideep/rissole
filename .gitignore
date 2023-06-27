@@ -1,0 +1,20 @@
+# venv and ide's
+venv
+.idea
+*__pycache__*
+
+sandbox
+test_data
+
+# logs and checkpoints of models
+logs
+checkpoints
+samples
+
+# data folders
+dataloader/datasamples
+*data
+
+todo.txt
+
+scripts
