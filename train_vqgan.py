@@ -116,15 +116,16 @@ def main():
         start_epoch = 0
 
     # start run
+    block_size = args.block_size
     logger.log_hparams({**cfg, **vars(args)})
     t_start = time.time()
     for epoch in range(start_epoch, args.epochs):
         logger.init_epoch(epoch)
         print(f"Epoch [{epoch + 1} / {args.epochs}]")
 
-        train(model, data.train, optimizer, criterion, device)
+        train(model, data.train, optimizer, criterion, block_size, device)
 
-        validate(model, data.val, criterion, device)
+        validate(model, data.val, criterion, block_size, device)
 
         # logging
         output = ' - '.join([f'{k}: {v.avg:.4f}' for k, v in logger.epoch.items()])
