@@ -249,7 +249,7 @@ def validate(model, val_loader, criterion, block_size, device):
     model.eval()
 
     is_first = True
-    log_keys = None
+    logs_keys = None
     for x, _ in tqdm(val_loader, desc="Validation"):
         x = x.to(device)
         x_recon = torch.zeros_like(x).to(device)
