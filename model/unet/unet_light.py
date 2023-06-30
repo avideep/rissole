@@ -26,7 +26,7 @@ class UNetLight(nn.Module):
             n_heads: Number of heads for multi-head attention
         """
         super().__init__()
-
+        in_channels = in_channels*2 
         self.channels = channels if channels is not None else [16, 32, 64]
         self.n_blocks = len(self.channels)
 
@@ -72,8 +72,9 @@ class UNetLight(nn.Module):
         # final output 1x1 convolution
         self.final_conv = nn.Conv2d(self.channels[0], in_channels, 1)
 
-    def forward(self, x: torch.Tensor, t: torch.Tensor):
+    def forward(self, x: torch.Tensor, x_cond: torch.Tensor, t: torch.Tensor):
         t = self.time_embedding(t)
+        x = torch.cat((x,x_cond),dim=1)
         x = self.init_conv(x)
 
         skips = []
