@@ -130,7 +130,7 @@ class DDPM(nn.Module):
 
         return sqrt_alphas_cumprod_t * x_start + sqrt_one_minus_alphas_cumprod_t * noise
 
-    def p_losses(self, x_start, noise=None):
+    def p_losses(self, x_start, x_cond, noise=None):
         """
         runs a forward step and calculates the loss
 
@@ -141,14 +141,14 @@ class DDPM(nn.Module):
             loss between the noise and the predicted noise of the epsilon model
         """
         x_start = self.encode(x_start)
-
+        x_cond = self.encode(x_cond)
         if noise is None:
             noise = torch.randn_like(x_start)
 
         t = torch.randint(0, self.n_steps, (x_start.shape[0],)).to(x_start.device)  # t ~ Uniform({1, ..., T})
 
         x_noisy = self.q_sample(x_start, t, noise)
-        predicted_noise = self.eps_model(x_noisy, t)
+        predicted_noise = self.eps_model(x_noisy, x_cond, t)
 
         return self.calculate_loss(noise, predicted_noise)
 
