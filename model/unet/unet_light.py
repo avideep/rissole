@@ -26,7 +26,7 @@ class UNetLight(nn.Module):
             n_heads: Number of heads for multi-head attention
         """
         super().__init__()
-        in_channels = in_channels*2 
+        #in_channels = in_channels*2 
         self.channels = channels if channels is not None else [16, 32, 64]
         self.n_blocks = len(self.channels)
 
