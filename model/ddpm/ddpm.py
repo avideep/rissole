@@ -222,7 +222,7 @@ class DDPM(nn.Module):
         img = torch.randn(shape, device=device)
         img_recon = torch.randn_like(img)
         imgs = []
-        prev_block = torch.rand_like(x[:, :, :block_size, :block_size]).to(device)
+        prev_block = torch.rand_like(img[:, :, :block_size, :block_size]).to(device)
         for i in range(0, img.shape[-1], block_size):
             for j in range(0, img.shape[-1], block_size):
                 curr_block = img[:, :, i:i+block_size, j:j+block_size]
