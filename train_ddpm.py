@@ -33,8 +33,10 @@ parser.add_argument('--epochs', default=100,
                     type=int, metavar='N', help='Number of epochs to run (default: 100)')
 parser.add_argument('--batch-size', default=64, metavar='N',
                     type=int, help='Mini-batch size (default: 64)')
-parser.add_argument('--image-size', default=32, metavar='N',
+parser.add_argument('--image-size', default=64, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
+parser.add_argument('--block-size', default=32, metavar='N',
+                    type=int, help='Size of the block that the image will be divided by.')
 parser.add_argument('--image-channels', default=3, metavar='N',
                     type=int, help='Number of image channels (default: 3)')
 parser.add_argument('--num-workers', default=0, metavar='N',
@@ -59,7 +61,7 @@ parser.add_argument('--load-ckpt_unet', default=None, metavar='PATH',
                     dest='load_checkpoint_unet', help='Load model checkpoint and continue training')
 parser.add_argument('--log-save-interval', default=5, type=int, metavar='N',
                     dest='save_interval', help="Interval in which logs are saved to disk (default: 5)")
-parser.add_argument('--vae-path', default='checkpoints/vqgan/23-06-02_115357/e100.pt',
+parser.add_argument('--vae-path', default='checkpoints/vqgan/23-06-30_045831/e100.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 parser.add_argument('--vae-config', default='configs/vqgan_cifar10.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
@@ -123,7 +125,7 @@ def main():
 
     ddpm = DDPM(eps_model=unet, vae_model=vae_model, **cfg)
     ddpm.to(device)
-
+    block_size = args.block_size
     optimizer = torch.optim.Adam(unet.parameters(), args.lr)
 
     # resume training
@@ -144,9 +146,9 @@ def main():
         logger.global_train_step = logger.running_epoch
         print(f"Epoch [{epoch + 1} / {args.epochs}]")
 
-        train(ddpm, data.train, optimizer, device)
+        train(ddpm, data.train, optimizer, block_size, device)
 
-        validate(ddpm)
+        validate(ddpm, block_size)
 
         # logging
         output = ' - '.join([f'{k}: {v.avg:.4f}' for k, v in logger.epoch.items()])
@@ -165,24 +167,24 @@ def main():
     print(f"Total training time: {elapsed_time}")
 
 
-def train(model, train_loader, optimizer, device):
-    model.train()
+# def train(model, train_loader, optimizer, device):
+#     model.train()
 
-    ema_loss = None
-    for x, _ in tqdm(train_loader, desc="Training"):
-        optimizer.zero_grad()
-        x = x.to(device)
-        loss = model.p_losses(x)
-        loss.backward()
-        optimizer.step()
+#     ema_loss = None
+#     for x, _ in tqdm(train_loader, desc="Training"):
+#         optimizer.zero_grad()
+#         x = x.to(device)
+#         loss = model.p_losses(x)
+#         loss.backward()
+#         optimizer.step()
 
-        if ema_loss is None:
-            ema_loss = loss.item()
-        else:
-            ema_loss = 0.9 * ema_loss + 0.1 * loss.item()
+#         if ema_loss is None:
+#             ema_loss = loss.item()
+#         else:
+#             ema_loss = 0.9 * ema_loss + 0.1 * loss.item()
 
-        metrics = {'ema_loss': ema_loss, 'loss': loss}
-        logger.log_metrics(metrics, phase='Train', aggregate=True, n=x.shape[0])
+#         metrics = {'ema_loss': ema_loss, 'loss': loss}
+#         logger.log_metrics(metrics, phase='Train', aggregate=True, n=x.shape[0])
 
 def train(model, train_loader, optimizer, block_size, device):
     model.train()
@@ -209,11 +211,11 @@ def train(model, train_loader, optimizer, block_size, device):
                 prev_block = curr_block
 
 @torch.no_grad()
-def validate(model):
+def validate(model, block_size):
     model.eval()
 
     n_images = 8
-    images = model.sample(64, batch_size=n_images, channels=latent_dim)
+    images = model.sample(64, batch_size=n_images, block_size = block_size, channels=latent_dim)
     images = [model.decode(img) for img in images]
 
     logger.tensorboard.add_figure('Val: DDPM',
