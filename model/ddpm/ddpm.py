@@ -235,7 +235,7 @@ class DDPM(nn.Module):
                 prev_block = curr_block
                 img_recon[:, :, i:i+block_size, j:j+block_size] = curr_block
         if sample_step is None:
-                imgs.append(img_recon)
+                imgs.append(self.decode(img_recon))
         return imgs
 
     @torch.no_grad()
@@ -251,4 +251,5 @@ class DDPM(nn.Module):
         Returns:
             sampled images
         """
-        return self.p_sample_loop(block_size, shape=(batch_size, channels, image_size, image_size), sample_step=sample_step)
+        return  self.p_sample_loop(block_size, shape=(batch_size, channels, image_size, image_size), sample_step=sample_step)
+

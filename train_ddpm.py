@@ -216,7 +216,7 @@ def validate(model, block_size):
 
     n_images = 8
     images = model.sample(64, batch_size=n_images, block_size = block_size, channels=latent_dim)
-    images = [model.decode(img) for img in images]
+    #images = [model.decode(img) for img in images]
 
     logger.tensorboard.add_figure('Val: DDPM',
                                   get_sample_images_for_ddpm(images, n_ims=n_images),
