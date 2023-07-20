@@ -228,14 +228,13 @@ class DDPM(nn.Module):
                 curr_block = img[:, :, i:i+block_size, j:j+block_size]
                 for k in tqdm(reversed(range(0, self.n_steps)), desc='sampling loop time step', total=self.n_steps):
                     curr_block = self.p_sample(curr_block, prev_block, torch.full((b,), k, device=device, dtype=torch.long), k)
-                    # if sample_step is not None and k == sample_step:
-                    #     imgs.append(curr_block)
-                    # elif sample_step is None:
-                    #     imgs.append(curr_block)
+
                 prev_block = curr_block
                 img_recon[:, :, i:i+block_size, j:j+block_size] = curr_block
-        if sample_step is None:
-                imgs.append(self.decode(img_recon))
+        if sample_step is not None and k == sample_step:
+            imgs.append(self.decode(img_recon))
+        elif sample_step is None:
+            imgs.append(self.decode(img_recon))                
         return imgs
 
     @torch.no_grad()
