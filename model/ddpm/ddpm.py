@@ -230,11 +230,11 @@ class DDPM(nn.Module):
                     curr_block = self.p_sample(curr_block, prev_block, torch.full((b,), k, device=device, dtype=torch.long), k)
 
                 prev_block = curr_block
-                img_recon[:, :, i:i+block_size, j:j+block_size] = curr_block
+                img_recon[:, :, i:i+block_size, j:j+block_size] = self.decode(curr_block)
         if sample_step is not None and k == sample_step:
-            imgs.append(self.decode(img_recon))
+            imgs.append(img_recon)
         elif sample_step is None:
-            imgs.append(self.decode(img_recon))                
+            imgs.append(img_recon)
         return imgs
 
     @torch.no_grad()
