@@ -123,13 +123,14 @@ def sample_images_gen(model, n_images, image_path):
             sample_size = n_images
 
         images = model.sample(64, batch_size=sample_size, channels=latent_dim, sample_step=sample_step)
-        # images = [img for img in images[0]]
-        # images = torch.stack(images)
+        images = [img for img in images[0]]
+        images = torch.stack(images)
         # images = model.decode(images)
 
         for n, img in enumerate(images):
             img = tensor_to_image(img)
             img.save(f"{image_path}/{step_count}_{n}.jpg")
+            print('Saving Image...')
 
         n_images -= sample_size
         step_count += 1
