@@ -221,7 +221,8 @@ def validate(model, data_loader, block_size, device):
     model.eval()
     x, _ = next(iter(data_loader))
     n_images = 8
-    img = torch.rand_like(x)
+    _, c, w, h = x.size()
+    img = torch.randn((n_images, c, w, h), device=device)
     prev_block = torch.rand_like(img[:, :, :block_size, :block_size]).to(device)
     prev_block = model.encode(prev_block)
     for i in range(0, img.shape[-1], block_size):
