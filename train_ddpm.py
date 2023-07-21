@@ -149,7 +149,7 @@ def main():
 
         # train(ddpm, data.train, optimizer, block_size, device)
 
-        validate(ddpm, block_size)
+        validate(ddpm, data.train, block_size, device)
 
         # logging
         output = ' - '.join([f'{k}: {v.avg:.4f}' for k, v in logger.epoch.items()])
