@@ -228,7 +228,7 @@ def validate(model, data_loader, block_size, device):
     for i in range(0, img.shape[-1], block_size):
         for j in range(0, img.shape[-1], block_size):
             curr_block = model.sample(32, prev_block, batch_size=n_images, channels=latent_dim)
-            prev_block = curr_block
+            prev_block = curr_block[0]
             curr_block = [model.decode(curr_block_imgs) for curr_block_imgs in curr_block]
             img[:, :, i:i+block_size, j:j+block_size] = curr_block[0]
     #images = [model.decode(img) for img in images]
