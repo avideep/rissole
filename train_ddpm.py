@@ -136,6 +136,7 @@ def main():
         args.epochs += start_epoch
     else:
         start_epoch = 0
+    debug(ddpm, data.train, device)
 
     # start run
     logger.log_hparams({**cfg, **vars(args)})
@@ -185,6 +186,11 @@ def main():
 
 #         metrics = {'ema_loss': ema_loss, 'loss': loss}
 #         logger.log_metrics(metrics, phase='Train', aggregate=True, n=x.shape[0])
+def debug(model,data_loader,device):
+    x, _ = next(iter(data_loader))
+    x = x.to(device)
+    print(model.encode(x).shape)
+
 
 def train(model, train_loader, optimizer, block_size, device):
     model.train()
