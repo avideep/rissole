@@ -217,15 +217,23 @@ def train(model, train_loader, optimizer, block_size, device):
                 prev_block = curr_block
 
 @torch.no_grad()
-def validate(model, block_size):
+def validate(model, data_loader, block_size, device):
     model.eval()
-
+    x, _ = next(iter(data_loader))
     n_images = 8
-    images = model.sample(64, batch_size=n_images, block_size = block_size, channels=latent_dim)
+    img = torch.rand_like(x)
+    prev_block = torch.rand_like(img[:, :, :block_size, :block_size]).to(device)
+    prev_block = model.encode(prev_block)
+    for i in range(0, img.shape[-1], block_size):
+        for j in range(0, img.shape[-1], block_size):
+            curr_block = model.sample(32, prev_block, batch_size=n_images, channels=latent_dim)
+            prev_block = curr_block
+            curr_block = [model.decode(curr_block_imgs) for curr_block_imgs in curr_block]
+            img[:, :, i:i+block_size, j:j+block_size] = curr_block[0]
     #images = [model.decode(img) for img in images]
 
     logger.tensorboard.add_figure('Val: DDPM',
-                                  get_sample_images_for_ddpm(images, n_ims=n_images),
+                                  get_sample_images_for_ddpm(img, n_ims=n_images),
                                   global_step=logger.global_train_step)
 
 
