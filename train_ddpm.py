@@ -232,8 +232,8 @@ def validate(model, data_loader, block_size, device):
         for j in range(0, img.shape[-1], block_size):
             curr_block = model.sample(16, prev_block, batch_size=n_images, channels=latent_dim)
             prev_block = curr_block[0]
-            for i in range(len(curr_block)):
-                images[i][:, :, i:i+block_size, j:j+block_size] = model.decode(curr_block[i])
+            for k in range(len(curr_block)):
+                images[k][:, :, i:i+block_size, j:j+block_size] = model.decode(curr_block[k])
     logger.tensorboard.add_figure('Val: DDPM',
                                   get_sample_images_for_ddpm(images, n_ims=n_images),
                                   global_step=logger.global_train_step)
