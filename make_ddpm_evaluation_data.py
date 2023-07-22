@@ -17,17 +17,19 @@ from utils.helpers import load_model_checkpoint
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 parser = argparse.ArgumentParser(description="PyTorch Second Stage Training")
-parser.add_argument('--image-size', default=128, metavar='N',
+parser.add_argument('--image-size', default=64, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
+parser.add_argument('--block-size', default=32, metavar='N',
+                    type=int, help='Size of the block that the image will be divided by.')
 parser.add_argument('--image-count', default=500,
                     type=int, help='number of images that should be generated for comparison')
 parser.add_argument('--config', default='configs/ddpm_linear.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/ddpm_linear.yaml)')
 parser.add_argument('--unet-config', default='configs/unet.yaml',
                     metavar='PATH', help='Path to unet model config file (default: configs/unet.yaml)')
-parser.add_argument('--load-ckpt-ddpm', default='checkpoints/second_stage/ddpm_linear/23-07-20_055456/ddpm/e100.pt', metavar='PATH',
+parser.add_argument('--load-ckpt-ddpm', default='checkpoints/second_stage/ddpm_linear/23-07-22_083242/ddpm/e100.pt', metavar='PATH',
                     dest='load_checkpoint_ddpm', help='Load model checkpoint and continue training')
-parser.add_argument('--load-ckpt-unet', default='checkpoints/second_stage/ddpm_linear/23-07-20_055456/unet/e100.pt', metavar='PATH',
+parser.add_argument('--load-ckpt-unet', default='checkpoints/second_stage/ddpm_linear/23-07-22_083242/unet/e100.pt', metavar='PATH',
                     dest='load_checkpoint_unet', help='Load model checkpoint and continue training')
 parser.add_argument('--vae-path', default='checkpoints/vqgan/23-06-30_045831/e100.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
@@ -92,8 +94,8 @@ def main():
 
         global latent_dim
         latent_dim = cfg_vae['model']['latent_dim']
-
-        sample_images_gen(ddpm, args.image_count, args.gen_image_path)
+        block_size = args.block_size
+        sample_images_gen(ddpm, block_size, args.image_count, args.gen_image_path, args.image_size, device)
 
 
 def sample_images_real(data_loader, n_images, real_image_path):
@@ -107,7 +109,7 @@ def sample_images_real(data_loader, n_images, real_image_path):
             break
 
 
-def sample_images_gen(model, n_images, image_path):
+def sample_images_gen(model, block_size, n_images, image_path, image_size, device):
     model.eval()
 
     # we only want to sample x0 images
@@ -121,8 +123,20 @@ def sample_images_gen(model, n_images, image_path):
             sample_size = max_sample_size
         else:
             sample_size = n_images
-
-        images = model.sample(64, batch_size=sample_size, channels=latent_dim, sample_step=sample_step)
+        images = [0]*1000
+        channels = 3
+        img = torch.randn((n_images, channels, image_size, image_size), device=device)
+        for i in range(len(images)):
+            images[i] = img
+        prev_block = torch.rand_like(img[:, :, :block_size, :block_size]).to(device)
+        prev_block = model.encode(prev_block)
+        for i in range(0, img.shape[-1], block_size):
+            for j in range(0, img.shape[-1], block_size):
+                curr_block = model.sample(16, prev_block, batch_size=n_images, channels=latent_dim)
+                prev_block = curr_block[0]
+                for k in range(len(curr_block)):
+                    images[k][:, :, i:i+block_size, j:j+block_size] = model.decode(curr_block[k])
+        images = model.sample(16, batch_size=sample_size, channels=latent_dim, sample_step=sample_step)
         images = [img for img in images[0]]
         images = torch.stack(images)
         # images = model.decode(images)
