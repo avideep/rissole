@@ -136,7 +136,7 @@ def sample_images_gen(model, block_size, n_images, image_path, image_size, devic
                 prev_block = curr_block[0]
                 for k in range(len(curr_block)):
                     images[k][:, :, i:i+block_size, j:j+block_size] = model.decode(curr_block[k])
-        images = model.sample(16, batch_size=sample_size, channels=latent_dim, sample_step=sample_step)
+        # images = model.sample(16, batch_size=sample_size, channels=latent_dim, sample_step=sample_step)
         images = [img for img in images[0]]
         images = torch.stack(images)
         # images = model.decode(images)
