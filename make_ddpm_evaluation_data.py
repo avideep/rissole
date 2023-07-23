@@ -144,7 +144,6 @@ def sample_images_gen(model, block_size, n_images, image_path, image_size, devic
         for n, img in enumerate(images):
             img = tensor_to_image(img)
             img.save(f"{image_path}/{step_count}_{n}.jpg")
-            print('Saving Image...')
 
         n_images -= sample_size
         step_count += 1
