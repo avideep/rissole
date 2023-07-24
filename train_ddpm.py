@@ -210,7 +210,7 @@ def train(model, train_loader, optimizer, block_size, device):
                 loss += model.p_losses(curr_block, prev_block)
                 prev_block = curr_block
         loss = loss / num_blocks
-        loss.backward()
+        loss.backward(retain_graph=True)
         optimizer.step()
 
         if ema_loss is None:
