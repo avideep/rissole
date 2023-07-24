@@ -119,6 +119,7 @@ def main():
     block_size = args.block_size
     logger.log_hparams({**cfg, **vars(args)})
     t_start = time.time()
+    prev_loss = torch.inf
     for epoch in range(start_epoch, args.epochs):
         logger.init_epoch(epoch)
         print(f"Epoch [{epoch + 1} / {args.epochs}]")
@@ -129,14 +130,16 @@ def main():
 
         # logging
         output = ' - '.join([f'{k}: {v.avg:.4f}' for k, v in logger.epoch.items()])
-        print(output)
-
+        print(output)   
+        loss = logger.epoch.items['val_loss'].avg
+        if loss < prev_loss:
         # save logs and checkpoint
-        if (epoch + 1) % args.save_interval == 0 or (epoch + 1) == args.epochs:
+        # if (epoch + 1) % args.save_interval == 0 or (epoch + 1) == args.epochs:
             logger.save()
             if args.save_checkpoint:
                 save_model_checkpoint(model, running_ckpt_dir, logger)
                 save_model_checkpoint(criterion, running_ckpt_dir, logger, prefix='disc')
+        prev_loss = loss
 
     elapsed_time = timer(t_start, time.time())
     print(f"Total training time: {elapsed_time}")
@@ -275,6 +278,7 @@ def validate(model, val_loader, criterion, block_size, device):
                                             global_step=logger.global_train_step, dataformats='HWC')
 
     log2tensorboard_vqvae(logger, 'Val', logs_keys)
+    return loss
 
 
 if __name__ == "__main__":
