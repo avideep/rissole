@@ -187,9 +187,9 @@ def train(model, train_loader, optimizer, criterion, block_size, device):
         #num_blocks = x // block_size
         x = x.to(device)
         x_recon = torch.zeros_like(x).to(device)
+        optimizer.zero_grad()
         for i in range(0, x.shape[-1], block_size):
             for j in range(0, x.shape[-1], block_size):
-                optimizer.zero_grad()
                 block = x[:, :, i:i+block_size, j:j+block_size]
                 x_hat, z_e, z_q = model(block)
                 x_recon[:, :, i:i+block_size, j:j+block_size] = x_hat
@@ -199,7 +199,6 @@ def train(model, train_loader, optimizer, criterion, block_size, device):
                     loss, logs = criterion(x_hat, block, z_e, z_q, disc_training=True)
                     optimizer.zero_grad()
                     loss.backward()
-                    optimizer.step()
                     # update discriminator
                     _, disc_logs = criterion.update_discriminator(x_hat, block)
                     logs.update(disc_logs)
@@ -207,7 +206,7 @@ def train(model, train_loader, optimizer, criterion, block_size, device):
                     loss, logs = criterion(x_hat, block, z_e, z_q)
                     optimizer.zero_grad()
                     loss.backward()
-                    optimizer.step()
+        optimizer.step()
         logger.log_metrics(logs, phase='train', aggregate=True, n=x.shape[0])
 
         if logger.global_train_step % 150 == 0:

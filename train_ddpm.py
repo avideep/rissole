@@ -204,14 +204,14 @@ def train(model, train_loader, optimizer, block_size, device):
     for x, _ in tqdm(train_loader, desc="Training"):
         x = x.to(device)
         prev_block = torch.rand_like(x[:, :, :block_size, :block_size]).to(device)
+        optimizer.zero_grad()
         for i in range(0, x.shape[-1], block_size):
             for j in range(0, x.shape[-1], block_size):
-                optimizer.zero_grad()
                 curr_block = x[:, :, i:i+block_size, j:j+block_size]
                 loss = model.p_losses(curr_block, prev_block)
                 prev_block = curr_block
                 loss.backward()
-                optimizer.step()
+        optimizer.step()
 
         if ema_loss is None:
             ema_loss = loss.item()
