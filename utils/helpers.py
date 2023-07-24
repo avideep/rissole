@@ -21,7 +21,7 @@ def save_model_checkpoint(model, ckpt_dir, logger, prefix=''):
     global_train_step = logger.global_train_step
     state = {'epoch': epoch, 'model_state_dict': model.state_dict(),
              'global_train_step': global_train_step}
-    filename = os.path.join(ckpt_dir, f'{prefix}e{epoch + 1}.pt')
+    filename = os.path.join(ckpt_dir, f'{prefix}best_model.pt')
     print(f"Save checkpoint to '{filename}'")
     torch.save(state, filename)
 
