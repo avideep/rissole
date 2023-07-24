@@ -213,7 +213,7 @@ def train(model, train_loader, optimizer, block_size, device):
         # loss = loss / num_blocks
         loss = sum(l)
         loss = loss / num_blocks
-        loss.backward()
+        loss.backward(retain_graph=True)
         optimizer.step()
 
         if ema_loss is None:
