@@ -131,7 +131,7 @@ def main():
         # logging
         output = ' - '.join([f'{k}: {v.avg:.4f}' for k, v in logger.epoch.items()])
         print(output)   
-        loss = logger.epoch.items['val_loss'].avg
+        loss = logger.epoch['val_loss'].avg
         if loss < prev_loss:
         # save logs and checkpoint
         # if (epoch + 1) % args.save_interval == 0 or (epoch + 1) == args.epochs:
