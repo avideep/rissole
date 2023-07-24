@@ -196,6 +196,10 @@ def train(model, train_loader, optimizer, block_size, device):
     model.train()
 
     ema_loss = None
+    loss = 0
+    img, _ = next(iter(train_loader))
+    img_size = img.size(2)
+    num_blocks = img_size // block_size
     for x, _ in tqdm(train_loader, desc="Training"):
         optimizer.zero_grad()
         x = x.to(device)
@@ -203,18 +207,19 @@ def train(model, train_loader, optimizer, block_size, device):
         for i in range(0, x.shape[-1], block_size):
             for j in range(0, x.shape[-1], block_size):
                 curr_block = x[:, :, i:i+block_size, j:j+block_size]
-                loss = model.p_losses(curr_block, prev_block)
-                loss.backward()
-                optimizer.step()
-
-                if ema_loss is None:
-                    ema_loss = loss.item()
-                else:
-                    ema_loss = 0.9 * ema_loss + 0.1 * loss.item()
-
-                metrics = {'ema_loss': ema_loss, 'loss': loss}
-                logger.log_metrics(metrics, phase='Train', aggregate=True, n=curr_block.shape[0])
+                loss += model.p_losses(curr_block, prev_block)
                 prev_block = curr_block
+        loss = loss / num_blocks
+        loss.backward()
+        optimizer.step()
+
+        if ema_loss is None:
+            ema_loss = loss.item()
+        else:
+            ema_loss = 0.9 * ema_loss + 0.1 * loss.item()
+
+        metrics = {'ema_loss': ema_loss, 'loss': loss}
+        logger.log_metrics(metrics, phase='Train', aggregate=True, n=curr_block.shape[0])
 
 @torch.no_grad()
 def validate(model, data_loader, block_size, device):
