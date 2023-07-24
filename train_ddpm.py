@@ -196,7 +196,7 @@ def train(model, train_loader, optimizer, block_size, device):
     model.train()
 
     ema_loss = None
-    loss = 0
+    l = []
     img, _ = next(iter(train_loader))
     img = img.to(device)
     img_size = img.size(2)
@@ -208,10 +208,12 @@ def train(model, train_loader, optimizer, block_size, device):
         for i in range(0, x.shape[-1], block_size):
             for j in range(0, x.shape[-1], block_size):
                 curr_block = x[:, :, i:i+block_size, j:j+block_size]
-                loss += model.p_losses(curr_block, prev_block)
+                l.append(model.p_losses(curr_block, prev_block))
                 prev_block = curr_block
         # loss = loss / num_blocks
-        loss.backward(retain_graph=True)
+        loss = sum(l)
+        loss = loss / num_blocks
+        loss.backward()
         optimizer.step()
 
         if ema_loss is None:
