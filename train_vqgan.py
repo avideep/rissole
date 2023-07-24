@@ -182,11 +182,11 @@ def train(model, train_loader, optimizer, criterion, block_size, device):
     model.train()
     for x, _ in tqdm(train_loader, desc="Training"):
         #num_blocks = x // block_size
-        optimizer.zero_grad()
         x = x.to(device)
         x_recon = torch.zeros_like(x).to(device)
         for i in range(0, x.shape[-1], block_size):
             for j in range(0, x.shape[-1], block_size):
+                optimizer.zero_grad()
                 block = x[:, :, i:i+block_size, j:j+block_size]
                 x_hat, z_e, z_q = model(block)
                 x_recon[:, :, i:i+block_size, j:j+block_size] = x_hat

@@ -196,25 +196,22 @@ def train(model, train_loader, optimizer, block_size, device):
     model.train()
 
     ema_loss = None
-    l = []
-    img, _ = next(iter(train_loader))
-    img = img.to(device)
-    img_size = img.size(2)
-    num_blocks = img_size // block_size
+    # l = []
+    # img, _ = next(iter(train_loader))
+    # img = img.to(device)
+    # img_size = img.size(2)
+    # num_blocks = img_size // block_size
     for x, _ in tqdm(train_loader, desc="Training"):
-        optimizer.zero_grad()
         x = x.to(device)
         prev_block = torch.rand_like(x[:, :, :block_size, :block_size]).to(device)
         for i in range(0, x.shape[-1], block_size):
             for j in range(0, x.shape[-1], block_size):
+                optimizer.zero_grad()
                 curr_block = x[:, :, i:i+block_size, j:j+block_size]
-                l.append(model.p_losses(curr_block, prev_block))
+                loss = model.p_losses(curr_block, prev_block)
                 prev_block = curr_block
-        # loss = loss / num_blocks
-        loss = sum(l)
-        loss = loss / num_blocks
-        loss.backward(retain_graph=True)
-        optimizer.step()
+                loss.backward()
+                optimizer.step()
 
         if ema_loss is None:
             ema_loss = loss.item()
