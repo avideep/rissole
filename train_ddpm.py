@@ -198,6 +198,7 @@ def train(model, train_loader, optimizer, block_size, device):
     ema_loss = None
     loss = 0
     img, _ = next(iter(train_loader))
+    img = img.to(device)
     img_size = img.size(2)
     num_blocks = img_size // block_size
     for x, _ in tqdm(train_loader, desc="Training"):
