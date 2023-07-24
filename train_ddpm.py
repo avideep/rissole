@@ -210,7 +210,7 @@ def train(model, train_loader, optimizer, block_size, device):
                 curr_block = x[:, :, i:i+block_size, j:j+block_size]
                 loss += model.p_losses(curr_block, prev_block)
                 prev_block = curr_block
-        loss = loss / num_blocks
+        # loss = loss / num_blocks
         loss.backward(retain_graph=True)
         optimizer.step()
 
