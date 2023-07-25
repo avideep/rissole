@@ -139,7 +139,7 @@ def main():
             if args.save_checkpoint:
                 save_model_checkpoint(model, running_ckpt_dir, logger)
                 save_model_checkpoint(criterion, running_ckpt_dir, logger, prefix='disc')
-        prev_loss = loss
+            prev_loss = loss
 
     elapsed_time = timer(t_start, time.time())
     print(f"Total training time: {elapsed_time}")
