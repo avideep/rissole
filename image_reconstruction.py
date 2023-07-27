@@ -99,8 +99,8 @@ def main():
     prefix = args.prefix + '_' if args.prefix != "" else ''
     for i, (im, rec) in enumerate(zip(ims, recs)):
         rec.save(os.path.join(img_dir, f'{args.model}_{prefix}{i}_recon.png'))
-        if args.save_original:
-            im.save(os.path.join(img_dir, f'{args.model}_{prefix}{i}_original.png'))
+        # if args.save_original:
+        im.save(os.path.join(img_dir, f'{args.model}_{prefix}{i}_original.png'))
 
 
 if __name__ == "__main__":
