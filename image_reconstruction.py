@@ -19,6 +19,8 @@ parser.add_argument('--config', default='configs/vqgan_cifar10.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
 parser.add_argument('--ckpt', default='checkpoints/vqgan/23-07-25_093150/best_model.pt', metavar='PATH',
                     dest='ckpt', help='Load model checkpoint.')
+parser.add_argument('--batch-size', default=64, metavar='N',
+                    type=int, help='Mini-batch size (default: 64)')
 parser.add_argument('--block-size', default=32, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
 parser.add_argument('--prefix', default='',
