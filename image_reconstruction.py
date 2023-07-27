@@ -78,7 +78,7 @@ def main():
     model, _, _ = load_model_checkpoint(model, args.ckpt, device)
     block_size = args.block_size
     # get images
-    x, _ = iter(data.val).next()
+    x, _ = next(iter(data.val))
     x = x.to(device)
     x_recon = torch.randn_like(x)
     # reconstruct images
