@@ -29,7 +29,7 @@ parser.add_argument('--data-config', default=None, metavar='PATH',
                     help='Path to model config file (default: None)')
 parser.add_argument('--gpus', default=None, nargs='+', metavar='GPUS',
                     help='If GPU(s) available, which GPU(s) to use for training.')
-parser.add_argument('--save-original', default=True, action=argparse.BooleanOptionalAction,
+parser.add_argument('--save-original', action='store_true',
                     dest='save_original', help='Whether or not to save original images.')
 
 
