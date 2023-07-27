@@ -141,6 +141,7 @@ def main():
     # start run
     logger.log_hparams({**cfg, **vars(args)})
     t_start = time.time()
+    prev_loss = torch.inf
     for epoch in range(start_epoch, args.epochs):
 
         logger.init_epoch(epoch)
@@ -154,13 +155,15 @@ def main():
         # logging
         output = ' - '.join([f'{k}: {v.avg:.4f}' for k, v in logger.epoch.items()])
         print(output)
-
+        loss = logger.epoch['ema_loss']
+        if loss < prev_loss:
         # save logs and checkpoint
-        if (epoch + 1) % args.save_interval == 0 or (epoch + 1) == args.epochs:
+        #if (epoch + 1) % args.save_interval == 0 or (epoch + 1) == args.epochs:
             logger.save()
             if args.save_checkpoint:
                 save_model_checkpoint(unet, f"{running_ckpt_dir_unet}", logger)
                 save_model_checkpoint(ddpm, f"{running_ckpt_dir_ddpm}", logger)
+            prev_loss = loss
 
         log2tensorboard_ddpm(logger, 'Train', ['ema_loss', 'loss'])
 
