@@ -27,9 +27,9 @@ parser.add_argument('--config', default='configs/ddpm_linear.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/ddpm_linear.yaml)')
 parser.add_argument('--unet-config', default='configs/unet.yaml',
                     metavar='PATH', help='Path to unet model config file (default: configs/unet.yaml)')
-parser.add_argument('--load-ckpt-ddpm', default='checkpoints/second_stage/ddpm_linear/23-07-26_203236/ddpm/best_model.pt', metavar='PATH',
+parser.add_argument('--load-ckpt-ddpm', default='checkpoints/second_stage/ddpm_linear/23-07-28_054406/ddpm/best_model.pt', metavar='PATH',
                     dest='load_checkpoint_ddpm', help='Load model checkpoint and continue training')
-parser.add_argument('--load-ckpt-unet', default='checkpoints/second_stage/ddpm_linear/23-07-26_203236/unet/best_model.pt', metavar='PATH',
+parser.add_argument('--load-ckpt-unet', default='checkpoints/second_stage/ddpm_linear/23-07-28_054406/unet/best_model.pt', metavar='PATH',
                     dest='load_checkpoint_unet', help='Load model checkpoint and continue training')
 parser.add_argument('--vae-path', default='checkpoints/vqgan/23-06-30_045831/e100.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
