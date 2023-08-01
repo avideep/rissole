@@ -93,7 +93,7 @@ def sample_images_gen(model, n_images, image_path, device):
             sample_size = max_sample_size
         else:
             sample_size = n_images
-        z = torch.randn(n_images, model.latent_size).to(device)
+        z = torch.randn(n_images, latent_dim).to(device)
         images = model.decode(z).cpu()
         for n, img in enumerate(images):
             img = tensor_to_image(img)
