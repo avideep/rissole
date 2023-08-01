@@ -59,12 +59,12 @@ logger = Logger(LOG_DIR)
 def loss_fn(x, recon_x, mu, logvar, beta):
     log = {}
     recon_loss = nn.MSELoss(reduction='sum')(recon_x, x)
-    log['recons_loss'] = recon_loss.item()
+    log['recons_loss'] = recon_loss.item() / x.shape[0]
     kl_diverge = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-    log['kl_loss'] = kl_diverge.item()
+    log['kl_loss'] = kl_diverge.item() / x.shape[0]
     loss = (recon_loss + beta * kl_diverge) / x.shape[0]
     log['loss'] = loss.item()
-    return loss, log  # divide total loss by batch size
+    return loss, log  
 
 def train(model, train_loader, optimizer, beta, device):
     model.train()
