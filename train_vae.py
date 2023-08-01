@@ -205,3 +205,10 @@ def main():
 
     elapsed_time = timer(t_start, time.time())
     print(f"Total training time: {elapsed_time}")
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("Exit training with keyboard interrupt!")
+        logger.save()
+        sys.exit(0)
