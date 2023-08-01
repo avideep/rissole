@@ -71,7 +71,7 @@ def main():
 
         global latent_dim
         latent_dim = cfg_vae['model']['latent_dim']
-        sample_images_gen(vae_model, args.image_count, args.gen_image_path, args.image_size, device)
+        sample_images_gen(vae_model, args.image_count, args.gen_image_path, device)
 
 
 def sample_images_real(data_loader, n_images, real_image_path):
@@ -85,12 +85,8 @@ def sample_images_real(data_loader, n_images, real_image_path):
             break
 
 
-def sample_images_gen(model, block_size, n_images, image_path, image_size, device):
+def sample_images_gen(model, n_images, image_path, device):
     model.eval()
-
-    # we only want to sample x0 images
-    sample_step = 0
-
     max_sample_size = 128
     step_count = 0
 
@@ -99,37 +95,14 @@ def sample_images_gen(model, block_size, n_images, image_path, image_size, devic
             sample_size = max_sample_size
         else:
             sample_size = n_images
-        images = [0]*1000
-        channels = 3
-        img = torch.randn((n_images, channels, image_size, image_size), device=device)
-        for i in range(len(images)):
-            images[i] = img
-        prev_block = torch.rand_like(img[:, :, :block_size, :block_size]).to(device)
-        prev_block = model.encode(prev_block)
-        for i in range(0, img.shape[-1], block_size):
-            for j in range(0, img.shape[-1], block_size):
-                curr_block = model.sample(16, prev_block, batch_size=n_images, channels=latent_dim)
-                prev_block = curr_block[0]
-                for k in range(len(curr_block)):
-                    images[k][:, :, i:i+block_size, j:j+block_size] = model.decode(curr_block[k])
-        # images = model.sample(16, batch_size=sample_size, channels=latent_dim, sample_step=sample_step)
-        images = [img for img in images[0]]
-        images = torch.stack(images)
-        # images = model.decode(images)
-
+        z = torch.randn(n_images, model.latent_size).to(device)
+        images = model.decode(z).cpu()
         for n, img in enumerate(images):
             img = tensor_to_image(img)
             img.save(f"{image_path}/{step_count}_{n}.jpg")
 
         n_images -= sample_size
         step_count += 1
-    """
-            model.eval()
-            z = torch.randn(num, model.latent_size).to(device)
-            with torch.no_grad():
-            return model.decode(z).cpu()
-    """
-
 
 if __name__ == "__main__":
     try:
