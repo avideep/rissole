@@ -11,7 +11,7 @@ from PIL import Image
 
 
 class CelebA:
-    def __init__(self, batch_size: int = 16):
+    def __init__(self, batch_size: int = 16, img_size = 64):
         """
         Wrapper to load, preprocess and deprocess CIFAR-10 dataset.
         Args:
@@ -27,8 +27,8 @@ class CelebA:
 
         self.train_transform = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Resize(64),
-            transforms.CenterCrop(64),
+            transforms.Resize(img_size),
+            transforms.CenterCrop(img_size),
             transforms.RandomHorizontalFlip(p=0.5),
             transforms.Normalize(self.mean, self.std)
         ])

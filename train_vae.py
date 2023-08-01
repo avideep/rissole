@@ -7,7 +7,7 @@ import argparse
 from tqdm import tqdm
 from datetime import datetime
 import torch
-
+import torch.nn as nn
 from model import VAE
 from model.losses import LossFn
 from utils.logger import Logger
@@ -31,8 +31,10 @@ parser.add_argument('--epochs', default=5,
                     type=int, metavar='N', help='Number of epochs to run (default: 2)')
 parser.add_argument('--batch-size', default=64, metavar='N',
                     type=int, help='Mini-batch size (default: 64)')
-parser.add_argument('--image-size', default=128, metavar='N',
+parser.add_argument('--image-size', default=32, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
+parser.add_argument('--beta', default=1, metavar='N',
+                    type=int, help='beta in beta-VAE')
 parser.add_argument('--num-workers', default=0, metavar='N',
                     type=int, help='Number of workers for the dataloader (default: 0)')
 parser.add_argument('--lr', default=0.0001,
@@ -53,6 +55,75 @@ parser.add_argument('--log-save-interval', default=5, type=int, metavar='N',
                     dest='save_interval', help="Interval in which logs are saved to disk (default: 5)")
 
 logger = Logger(LOG_DIR)
+
+def loss_fn(x, recon_x, mu, logvar, beta):
+    log = {}
+    recon_loss = nn.BCELoss(recon_x, x, reduction='sum')
+    log['recons_loss'] = recon_loss.item()
+    kl_diverge = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+    log['kl_loss'] = kl_diverge.item()
+    loss = (recon_loss + beta * kl_diverge) / x.shape[0]
+    log['loss'] = loss.item()
+    return loss, log  # divide total loss by batch size
+
+def train(model, train_loader, optimizer, device):
+    model.train()
+
+    logs_keys = None
+    for x, _ in tqdm(train_loader, desc="Training"):
+        x = x.to(device)
+
+        recon_x, mu, logvar = model(x)
+
+        # compute loss
+        loss, logs = loss_fn(x, recon_x, mu, logvar)
+        if logs_keys is None:
+            logs_keys = logs.keys()
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        logger.log_metrics(logs, phase='train', aggregate=True, n=x.shape[0])
+
+        if logger.global_train_step % 150 == 0:
+            log2tensorboard_vqvae(logger, 'Train', logs_keys)
+            ims = get_original_reconstruction_image(x, recon_x, n_ims=8)
+            logger.tensorboard.add_image('Train: Original vs. Reconstruction', ims,
+                                         global_step=logger.global_train_step, dataformats='HWC')
+
+        logger.global_train_step += 1
+
+    log2tensorboard_vqvae(logger, 'Train', logs_keys)
+
+
+@torch.no_grad()
+def validate(model, val_loader, criterion, device):
+    model.eval()
+
+    is_first = True
+    logs_keys = None
+    for x, _ in tqdm(val_loader, desc="Validation"):
+        x = x.to(device)
+
+        recon_x, mu, logvar = model(x)
+
+        # compute loss
+        loss, logs = loss_fn(x, recon_x, mu, logvar)
+
+        # logging
+        logs = {'val_' + k: v for k, v in logs.items()}
+        if logs_keys is None:
+            logs_keys = logs.keys()
+        logger.log_metrics(logs, phase='val', aggregate=True, n=x.shape[0])
+
+        if is_first:
+            is_first = False
+            ims = get_original_reconstruction_image(x, recon_x, n_ims=8)
+            logger.tensorboard.add_image('Val: Original vs. Reconstruction', ims,
+                                         global_step=logger.global_train_step, dataformats='HWC')
+
+    log2tensorboard_vqvae(logger, 'Val', logs_keys)
 
 def main():
     args = parser.parse_args()
@@ -82,7 +153,7 @@ def main():
     # load data
     if args.debug:
         # data = CIFAR10(args.batch_size)
-        data = CelebA(args.batch_size)
+        data = CelebA(args.batch_size, args.image_size)
     else:
         data_cfg = yaml.load(open(args.data_config, 'r'), Loader=yaml.Loader)
         data = PlantNet(**data_cfg, batch_size=args.batch_size,
@@ -97,9 +168,6 @@ def main():
     model.to(device)
 
     optimizer = torch.optim.Adam(model.parameters(), args.lr)
-
-    criterion = LossFn(**cfg['loss'], last_decoder_layer=model.decoder.out)
-    criterion.to(device)
 
     # resume training
     if args.load_checkpoint:
@@ -118,9 +186,9 @@ def main():
         logger.init_epoch(epoch)
         print(f"Epoch [{epoch + 1} / {args.epochs}]")
 
-        train(model, data.train, optimizer, criterion, block_size, device)
+        train(model, data.train, optimizer, block_size, device)
 
-        validate(model, data.val, criterion, block_size, device)
+        validate(model, data.val, block_size, device)
 
         # logging
         output = ' - '.join([f'{k}: {v.avg:.4f}' for k, v in logger.epoch.items()])
@@ -132,7 +200,7 @@ def main():
             logger.save()
             if args.save_checkpoint:
                 save_model_checkpoint(model, running_ckpt_dir, logger)
-                save_model_checkpoint(criterion, running_ckpt_dir, logger, prefix='disc')
+                # save_model_checkpoint(criterion, running_ckpt_dir, logger, prefix='disc')
             prev_loss = loss
 
     elapsed_time = timer(t_start, time.time())

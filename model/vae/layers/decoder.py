@@ -10,7 +10,7 @@ class Decoder(nn.Module):
         self.decoder = nn.Sequential(
             self._deconv(64, 64),
             self._deconv(64, 32),
-            self._deconv(32, 32, 1),
+            self._deconv(32, 32),
             self._deconv(32, 3),
             nn.Sigmoid()
         )
@@ -19,10 +19,10 @@ class Decoder(nn.Module):
         return nn.Sequential(
             nn.ConvTranspose2d(
                 in_channels, out_channels,
-                kernel_size=4, stride=2, output_padding=out_padding
+                kernel_size=2, stride=2, output_padding=out_padding
             ),
             nn.BatchNorm2d(out_channels),
-            nn.ReLU()
+            nn.LeakyReLU(0.2)
         )
     def forward(self, z):
         z = self.fc_z(z)

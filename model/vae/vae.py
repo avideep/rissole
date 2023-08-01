@@ -33,7 +33,7 @@ class VAE(nn.Module):
 
 
 if __name__ == "__main__":
-    ipt = torch.randn((16, 3, 64, 64))
+    ipt = torch.randn((16, 3, 32, 32))
 
     vqvae = VAE(3, 10)
     rec, mu, logvar = vqvae(ipt)

@@ -6,10 +6,10 @@ class Encoder(nn.Module):
         super(Encoder, self).__init__()
 
         self.encoder = nn.Sequential(
-            self._conv(in_channels, 32),
-            self._conv(32, 32),
-            self._conv(32, 64),
-            self._conv(64, 64),
+            self._conv(in_channels, 32), # 31 x 31
+            self._conv(32, 32), # 14 x 14
+            self._conv(32, 64), # 6 x 6
+            self._conv(64, 64), # 2 x 2
         )
         self.fc_mu = nn.Linear(256, latent_dim)
         self.fc_var = nn.Linear(256, latent_dim)
@@ -18,10 +18,10 @@ class Encoder(nn.Module):
         return nn.Sequential(
             nn.Conv2d(
                 in_channels, out_channels,
-                kernel_size=4, stride=2
+                kernel_size=2, stride=2,
             ),
             nn.BatchNorm2d(out_channels),
-            nn.ReLU()
+            nn.LeakyReLU(0.2)
         )
     
     def forward(self, x):
