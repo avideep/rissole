@@ -98,7 +98,7 @@ def train(model, train_loader, optimizer, device):
 
 
 @torch.no_grad()
-def validate(model, val_loader, criterion, device):
+def validate(model, val_loader, device):
     model.eval()
 
     is_first = True
@@ -178,7 +178,6 @@ def main():
         start_epoch = 0
 
     # start run
-    block_size = args.block_size
     logger.log_hparams({**cfg, **vars(args)})
     t_start = time.time()
     prev_loss = torch.inf
@@ -186,9 +185,9 @@ def main():
         logger.init_epoch(epoch)
         print(f"Epoch [{epoch + 1} / {args.epochs}]")
 
-        train(model, data.train, optimizer, block_size, device)
+        train(model, data.train, optimizer, device)
 
-        validate(model, data.val, block_size, device)
+        validate(model, data.val, device)
 
         # logging
         output = ' - '.join([f'{k}: {v.avg:.4f}' for k, v in logger.epoch.items()])
