@@ -66,7 +66,7 @@ def loss_fn(x, recon_x, mu, logvar, beta):
     log['loss'] = loss.item()
     return loss, log  # divide total loss by batch size
 
-def train(model, train_loader, optimizer, device):
+def train(model, train_loader, optimizer, beta, device):
     model.train()
 
     logs_keys = None
@@ -76,7 +76,7 @@ def train(model, train_loader, optimizer, device):
         recon_x, mu, logvar = model(x)
 
         # compute loss
-        loss, logs = loss_fn(x, recon_x, mu, logvar)
+        loss, logs = loss_fn(x, recon_x, mu, logvar, beta)
         if logs_keys is None:
             logs_keys = logs.keys()
 
@@ -98,7 +98,7 @@ def train(model, train_loader, optimizer, device):
 
 
 @torch.no_grad()
-def validate(model, val_loader, device):
+def validate(model, val_loader, beta, device):
     model.eval()
 
     is_first = True
@@ -109,7 +109,7 @@ def validate(model, val_loader, device):
         recon_x, mu, logvar = model(x)
 
         # compute loss
-        loss, logs = loss_fn(x, recon_x, mu, logvar)
+        loss, logs = loss_fn(x, recon_x, mu, logvar, beta)
 
         # logging
         logs = {'val_' + k: v for k, v in logs.items()}
@@ -185,9 +185,9 @@ def main():
         logger.init_epoch(epoch)
         print(f"Epoch [{epoch + 1} / {args.epochs}]")
 
-        train(model, data.train, optimizer, device)
+        train(model, data.train, optimizer, args.beta, device)
 
-        validate(model, data.val, device)
+        validate(model, data.val, args.beta, device)
 
         # logging
         output = ' - '.join([f'{k}: {v.avg:.4f}' for k, v in logger.epoch.items()])
