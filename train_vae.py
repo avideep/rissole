@@ -58,7 +58,7 @@ logger = Logger(LOG_DIR)
 
 def loss_fn(x, recon_x, mu, logvar, beta):
     log = {}
-    recon_loss = nn.MSELoss(recon_x, x, reduction='sum')
+    recon_loss = nn.MSELoss(reduction='sum')(recon_x, x)
     log['recons_loss'] = recon_loss.item()
     kl_diverge = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
     log['kl_loss'] = kl_diverge.item()
