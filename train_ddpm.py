@@ -8,7 +8,7 @@ import torch
 import yaml
 
 from tqdm import tqdm
-
+import torchvision.transforms.functional as F
 from dataloader import PlantNet, CIFAR10, CelebA
 from model import VQGANLight, VQVAE
 from model.ddpm.ddpm import DDPM
@@ -113,7 +113,7 @@ def main():
     cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
     cfg_unet = yaml.load(open(args.unet_config, 'r'), Loader=yaml.Loader)
     cfg_vae = yaml.load(open(args.vae_config, 'r'), Loader=yaml.Loader)
-
+    # cfg_vae2 = yaml.load(open(args.vae))
     vae_model = VQGANLight(**cfg_vae['model'])
     vae_model, _, _ = load_model_checkpoint(vae_model, args.vae_path, device)
     vae_model.to(device)
@@ -206,6 +206,7 @@ def train(model, train_loader, optimizer, block_size, device):
     # num_blocks = img_size // block_size
     for x, _ in tqdm(train_loader, desc="Training"):
         x = x.to(device)
+        x_resized = F.resize(x, [block_size], antialias = True)
         prev_block = torch.rand_like(x[:, :, :block_size, :block_size]).to(device)
         optimizer.zero_grad()
         for i in range(0, x.shape[-1], block_size):
