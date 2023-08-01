@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 
-from layers import Encoder
-from layers import Decoder
+from model.vae.layers import Encoder
+from model.vae.layers import Decoder
 
 
 class VAE(nn.Module):
