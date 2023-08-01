@@ -40,7 +40,7 @@ parser.add_argument('--num-workers', default=0, metavar='N',
 parser.add_argument('--lr', default=0.0001,
                     type=float, metavar='LR', help='Initial learning rate (default: 0.0001)')
 parser.add_argument('--config', default='configs/vqvae.yaml',
-                    metavar='PATH', help='Path to model config file (default: configs/vqvae.yaml)')
+                    metavar='PATH', help='Path to model config file (default: configs/vae.yaml)')
 parser.add_argument('--data-config', default='configs/data_se.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/data_se.yaml)')
 parser.add_argument('--debug', action='store_true',
