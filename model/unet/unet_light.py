@@ -35,6 +35,7 @@ class UNetLight(nn.Module):
 
         # initial convolutional layer
         self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=3)
+        self.cond_attn = Attention(in_channels//3, dim_keys, n_heads)
 
         # contracting path
         self.down_blocks = nn.ModuleList([])
@@ -74,6 +75,8 @@ class UNetLight(nn.Module):
 
     def forward(self, x: torch.Tensor, x_cond: torch.Tensor, low_res_cond: torch.Tensor, t: torch.Tensor):
         t = self.time_embedding(t)
+        x_cond = self.cond_attn(x_cond)
+        low_res_cond = self.cond_attn(low_res_cond)
         x = torch.cat((x,x_cond,low_res_cond),dim=1)
         x = self.init_conv(x)
 
