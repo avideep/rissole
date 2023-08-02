@@ -16,6 +16,7 @@ from model.unet import UNet
 from model.unet.unet_light import UNetLight
 from utils.helpers import timer, save_model_checkpoint, load_model_checkpoint, log2tensorboard_ddpm
 from utils.logger import Logger
+from utils.helpers import count_parameters
 from utils.visualization import get_sample_images_for_ddpm
 
 # TODO: check if this is necessary
@@ -136,6 +137,10 @@ def main():
     vae.to(device)
     global vae_latent_dim
     vae_latent_dim = cfg_vae['model']['latent_dim']
+    print("{:<16}: {}".format('VAE model params', count_parameters(vae)))
+    print("{:<16}: {}".format('VQGAN model params', count_parameters(vqgan_model)))
+    print("{:<16}: {}".format('UNet model params', count_parameters(unet)))
+    print("{:<16}: {}".format('DDPM model params', count_parameters(ddpm)))
 
     block_size = args.block_size
     optimizer = torch.optim.Adam(unet.parameters(), args.lr)
