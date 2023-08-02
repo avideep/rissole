@@ -222,7 +222,7 @@ class DDPM(nn.Module):
         # create noise
         img = torch.randn(shape, device=device)
         imgs = []
-        print(img.shape, cond_block.shape)
+        # print(img.shape, cond_block.shape)
         for i in tqdm(reversed(range(0, self.n_steps)), desc='sampling loop time step', total=self.n_steps):
             img = self.p_sample(img, cond_block, low_res_cond, torch.full((b,), i, device=device, dtype=torch.long), i)
             if sample_step is not None and i == sample_step:

@@ -151,7 +151,7 @@ def main():
         args.epochs += start_epoch
     else:
         start_epoch = 0
-    debug(ddpm, data.train, device)
+    # debug(ddpm, data.train, device)
 
     # start run
     logger.log_hparams({**cfg, **vars(args)})
