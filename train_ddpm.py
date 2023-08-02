@@ -131,16 +131,14 @@ def main():
     unet.to(device)
 
     ddpm = DDPM(eps_model=unet, vae_model=vqgan_model, **cfg)
+    print("{:<16}: {}".format('DDPM model params', count_parameters(ddpm)))
     ddpm.to(device)
 
     vae = VAE(**cfg_vae['model'])
+    vae, _, _ = load_model_checkpoint(vae, args.vae_path, device)
     vae.to(device)
     global vae_latent_dim
     vae_latent_dim = cfg_vae['model']['latent_dim']
-    print("{:<16}: {}".format('VAE model params', count_parameters(vae)))
-    print("{:<16}: {}".format('VQGAN model params', count_parameters(vqgan_model)))
-    print("{:<16}: {}".format('UNet model params', count_parameters(unet)))
-    print("{:<16}: {}".format('DDPM model params', count_parameters(ddpm)))
 
     block_size = args.block_size
     optimizer = torch.optim.Adam(unet.parameters(), args.lr)
