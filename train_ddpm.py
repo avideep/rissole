@@ -10,7 +10,7 @@ import yaml
 from tqdm import tqdm
 import torchvision.transforms.functional as F
 from dataloader import PlantNet, CIFAR10, CelebA
-from model import VQGANLight, VQVAE
+from model import VQGANLight, VAE
 from model.ddpm.ddpm import DDPM
 from model.unet import UNet
 from model.unet.unet_light import UNetLight
@@ -61,10 +61,15 @@ parser.add_argument('--load-ckpt_unet', default=None, metavar='PATH',
                     dest='load_checkpoint_unet', help='Load model checkpoint and continue training')
 parser.add_argument('--log-save-interval', default=5, type=int, metavar='N',
                     dest='save_interval', help="Interval in which logs are saved to disk (default: 5)")
-parser.add_argument('--vae-path', default='checkpoints/vqgan/23-07-25_093150/best_model.pt',
+parser.add_argument('--vqgan-path', default='checkpoints/vqgan/23-07-25_093150/best_model.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
-parser.add_argument('--vae-config', default='configs/vqgan_cifar10.yaml',
+parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
+parser.add_argument('--vae-path', default='checkpoints/vae/23-08-01_105355/best_model.pt',
+                    metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
+parser.add_argument('--vae-config', default='configs/vae.yaml',
+                    metavar='PATH', help='Path to model config file (default: configs/vaeyaml)')
+
 
 logger = Logger(LOG_DIR)
 latent_dim = None
@@ -112,19 +117,26 @@ def main():
     # read config file for model
     cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
     cfg_unet = yaml.load(open(args.unet_config, 'r'), Loader=yaml.Loader)
-    cfg_vae = yaml.load(open(args.vae_config, 'r'), Loader=yaml.Loader)
-    # cfg_vae2 = yaml.load(open(args.vae))
-    vae_model = VQGANLight(**cfg_vae['model'])
-    vae_model, _, _ = load_model_checkpoint(vae_model, args.vae_path, device)
-    vae_model.to(device)
+    cfg_vqgan = yaml.load(open(args.vqgan_config, 'r'), Loader=yaml.Loader)
+    cfg_vae = yaml.load(open(args.vae_config,'r'),Loader=yaml.Loader)
+
+    vqgan_model = VQGANLight(**cfg_vqgan['model'])
+    vqgan_model, _, _ = load_model_checkpoint(vqgan_model, args.vqgan_path, device)
+    vqgan_model.to(device)
     global latent_dim
-    latent_dim = cfg_vae['model']['latent_dim']
+    latent_dim = cfg_vqgan['model']['latent_dim']
 
     unet = UNetLight(**cfg_unet)
     unet.to(device)
 
-    ddpm = DDPM(eps_model=unet, vae_model=vae_model, **cfg)
+    ddpm = DDPM(eps_model=unet, vae_model=vqgan_model, **cfg)
     ddpm.to(device)
+
+    vae = VAE(**cfg_vae['model'])
+    vae.to(device)
+    global vae_latent_dim
+    vae_latent_dim = cfg_vae['model']['latent_dim']
+
     block_size = args.block_size
     optimizer = torch.optim.Adam(unet.parameters(), args.lr)
 
@@ -150,7 +162,7 @@ def main():
 
         train(ddpm, data.train, optimizer, block_size, device)
 
-        validate(ddpm, data.train, block_size, device)
+        validate(ddpm, data.train, block_size, vae, device)
 
         # logging
         output = ' - '.join([f'{k}: {v.avg:.4f}' for k, v in logger.epoch.items()])
@@ -199,11 +211,6 @@ def train(model, train_loader, optimizer, block_size, device):
     model.train()
 
     ema_loss = None
-    # l = []
-    # img, _ = next(iter(train_loader))
-    # img = img.to(device)
-    # img_size = img.size(2)
-    # num_blocks = img_size // block_size
     for x, _ in tqdm(train_loader, desc="Training"):
         x = x.to(device)
         x_resized = F.resize(x, [block_size], antialias = True)
@@ -212,7 +219,7 @@ def train(model, train_loader, optimizer, block_size, device):
         for i in range(0, x.shape[-1], block_size):
             for j in range(0, x.shape[-1], block_size):
                 curr_block = x[:, :, i:i+block_size, j:j+block_size]
-                loss = model.p_losses(curr_block, prev_block)
+                loss = model.p_losses(curr_block, prev_block, x_resized)
                 prev_block = curr_block
                 loss.backward()
         optimizer.step()
@@ -224,9 +231,13 @@ def train(model, train_loader, optimizer, block_size, device):
 
         metrics = {'ema_loss': ema_loss, 'loss': loss}
         logger.log_metrics(metrics, phase='Train', aggregate=True, n=curr_block.shape[0])
-
 @torch.no_grad()
-def validate(model, data_loader, block_size, device):
+def sample_from_vae(n_images, model, device):
+    z = torch.randn(n_images, vae_latent_dim).to(device)
+    images = model.decode(z)
+    return images
+@torch.no_grad()
+def validate(model, data_loader, block_size, vae, device):
     model.eval()
     x, _ = next(iter(data_loader))
     n_images = 8
@@ -237,9 +248,11 @@ def validate(model, data_loader, block_size, device):
         images[i] = img
     prev_block = torch.rand_like(img[:, :, :block_size, :block_size]).to(device)
     prev_block = model.encode(prev_block)
+    low_res_cond = sample_from_vae(n_images, vae, device)
+    low_res_cond = model.encode(low_res_cond)
     for i in range(0, img.shape[-1], block_size):
         for j in range(0, img.shape[-1], block_size):
-            curr_block = model.sample(16, prev_block, batch_size=n_images, channels=latent_dim)
+            curr_block = model.sample(16, prev_block, low_res_cond, batch_size=n_images, channels=latent_dim)
             prev_block = curr_block[0]
             for k in range(len(curr_block)):
                 images[k][:, :, i:i+block_size, j:j+block_size] = model.decode(curr_block[k])

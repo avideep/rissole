@@ -70,11 +70,11 @@ class UNetLight(nn.Module):
             prev_channel = c
 
         # final output 1x1 convolution
-        self.final_conv = nn.Conv2d(self.channels[0], in_channels//2, 1)
+        self.final_conv = nn.Conv2d(self.channels[0], in_channels//3, 1)
 
-    def forward(self, x: torch.Tensor, x_cond: torch.Tensor, t: torch.Tensor):
+    def forward(self, x: torch.Tensor, x_cond: torch.Tensor, low_res_cond: torch.Tensor, t: torch.Tensor):
         t = self.time_embedding(t)
-        x = torch.cat((x,x_cond),dim=1)
+        x = torch.cat((x,x_cond,low_res_cond),dim=1)
         x = self.init_conv(x)
 
         skips = []

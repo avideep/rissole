@@ -1,4 +1,4 @@
-in_channels: 20
+in_channels: 30
 
 # time embedding
 pos_emb_dim: 64     # embedding dimension for the fixed sinusoidal positional embedding
@@ -17,4 +17,4 @@ channels:
   - 32
   - 64
   - 128
-#  - 256
+  - 256
