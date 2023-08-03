@@ -217,7 +217,7 @@ def train(model, train_loader, optimizer, block_size, vae, device):
     for x, _ in tqdm(train_loader, desc="Training"):
         x = x.to(device)
         # x_resized = F.resize(x, [block_size], antialias = True)
-        x_resized = sample_from_vae(x.shape[0],vae, vae_latent_dim)
+        x_resized = sample_from_vae(x.shape[0],vae, device)
         prev_block = torch.rand_like(x[:, :, :block_size, :block_size]).to(device)
         optimizer.zero_grad()
         loss_agg = 0
