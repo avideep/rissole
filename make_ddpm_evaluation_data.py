@@ -31,7 +31,7 @@ parser.add_argument('--load-ckpt-ddpm', default='checkpoints/second_stage/ddpm_l
                     dest='load_checkpoint_ddpm', help='Load model checkpoint and continue training')
 parser.add_argument('--load-ckpt-unet', default='checkpoints/second_stage/ddpm_linear/23-08-02_071025/unet/best_model.pt', metavar='PATH',
                     dest='load_checkpoint_unet', help='Load model checkpoint and continue training')
-parser.add_argument('--vqgan-path', default='checkpoints/vqgan/23-06-30_045831/e100.pt',
+parser.add_argument('--vqgan-path', default='checkpoints/vqgan/23-07-25_093150/best_model.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
