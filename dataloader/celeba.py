@@ -45,7 +45,7 @@ class CelebA:
         test_size = 50000 - train_size
 
         self.train_set_full = ImageFolder(IMAGE_PATH, self.train_transform)
-        self.train_loader, self.val_loader, self.test_loader = self.train_val_test_split(self.train_set_full, self.batch_size)
+        self.train_loader, self.val_loader = self.train_val_test_split(self.train_set_full, self.batch_size)
         # invert normalization for tensor to image transform
         self.inv_normalize = transforms.Compose([
             transforms.Normalize(mean=0, std=[1./s for s in self.std]),
@@ -60,28 +60,24 @@ class CelebA:
         #print('data_indices = ', data_indices)
         np.random.shuffle(data_indices)
 
-        test_size = int(np.floor(len(data_indices) * test_ratio))
+        val_size = int(np.floor(len(data_indices) * val_ratio))
         #print('test_size = ', test_size )
-        train_val_size = len(data_indices) - test_size
-        val_size = int(np.floor(train_val_size * val_ratio))
-        train_size = train_val_size - val_size
+        train_size = len(data_indices) - val_size
 
         all_indices = list(data_indices)
-        test_indices = random.sample(all_indices, test_size)
+        val_indices = random.sample(all_indices, val_size)
         
-        all_indices = np.setdiff1d(list(all_indices), test_indices)
-        val_indices = random.sample(list(all_indices), val_size)
-
         all_indices = np.setdiff1d(list(all_indices), val_indices)
+        
         train_indices = list(all_indices)
 
         train_loader = DataLoader(dataset, batch_size=batch_size, sampler=SubsetRandomSampler(train_indices), num_workers=12, pin_memory=True)
 
         val_loader = DataLoader(dataset, batch_size=batch_size, sampler=SubsetRandomSampler(val_indices), num_workers=12, pin_memory=True)
 
-        test_loader = DataLoader(dataset, batch_size=batch_size, sampler=SubsetRandomSampler(test_indices), num_workers=12, pin_memory=True)
+        # test_loader = DataLoader(dataset, batch_size=batch_size, sampler=SubsetRandomSampler(test_indices), num_workers=12, pin_memory=True)
 
-        return train_loader, val_loader, test_loader
+        return train_loader, val_loader
 
     @property
     def train(self):
@@ -93,10 +89,10 @@ class CelebA:
         """ Return validation dataloader. """
         return self.val_loader
 
-    @property
-    def test(self):
-        """ Return test dataloader. """
-        return self.test_loader
+    # @property
+    # def test(self):
+    #     """ Return test dataloader. """
+    #     return self.test_loader
 
     def idx2label(self, idx):
         """ Return class label for given index. """

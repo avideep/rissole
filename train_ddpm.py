@@ -32,7 +32,7 @@ parser.add_argument('--name', '-n', default='',
                     type=str, metavar='NAME', help='Model name and folder where logs are stored')
 parser.add_argument('--epochs', default=100,
                     type=int, metavar='N', help='Number of epochs to run (default: 100)')
-parser.add_argument('--batch-size', default=64, metavar='N',
+parser.add_argument('--batch-size', default=128, metavar='N',
                     type=int, help='Mini-batch size (default: 64)')
 parser.add_argument('--image-size', default=64, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
@@ -42,7 +42,7 @@ parser.add_argument('--image-channels', default=3, metavar='N',
                     type=int, help='Number of image channels (default: 3)')
 parser.add_argument('--num-workers', default=0, metavar='N',
                     type=int, help='Number of workers for the dataloader (default: 0)')
-parser.add_argument('--lr', default=0.0002,
+parser.add_argument('--lr', default=0.0005,
                     type=float, metavar='LR', help='Initial learning rate (default: 0.0002)')
 parser.add_argument('--config', default='configs/ddpm_linear.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/ddpm_linear.yaml)')
@@ -165,7 +165,7 @@ def main():
 
         train(ddpm, data.train, optimizer, block_size, vae, device)
 
-        validate(ddpm, data.train, block_size, vae, device)
+        validate(ddpm, data.val, block_size, vae, device)
 
         # logging
         output = ' - '.join([f'{k}: {v.avg:.4f}' for k, v in logger.epoch.items()])
