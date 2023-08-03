@@ -163,7 +163,7 @@ def main():
         logger.global_train_step = logger.running_epoch
         print(f"Epoch [{epoch + 1} / {args.epochs}]")
 
-        train(ddpm, data.train, optimizer, block_size, device)
+        train(ddpm, data.train, optimizer, block_size, vae, device)
 
         validate(ddpm, data.train, block_size, vae, device)
 
@@ -210,13 +210,14 @@ def debug(model,data_loader,device):
     print(model.encode(x).shape)
 
 
-def train(model, train_loader, optimizer, block_size, device):
+def train(model, train_loader, optimizer, block_size, vae, device):
     model.train()
 
     ema_loss = None
     for x, _ in tqdm(train_loader, desc="Training"):
         x = x.to(device)
-        x_resized = F.resize(x, [block_size], antialias = True)
+        # x_resized = F.resize(x, [block_size], antialias = True)
+        x_resized = sample_from_vae(x.shape[0],vae, vae_latent_dim)
         prev_block = torch.rand_like(x[:, :, :block_size, :block_size]).to(device)
         optimizer.zero_grad()
         for i in range(0, x.shape[-1], block_size):
@@ -234,11 +235,13 @@ def train(model, train_loader, optimizer, block_size, device):
 
         metrics = {'ema_loss': ema_loss, 'loss': loss}
         logger.log_metrics(metrics, phase='Train', aggregate=True, n=curr_block.shape[0])
+
 @torch.no_grad()
 def sample_from_vae(n_images, model, device):
     z = torch.randn(n_images, vae_latent_dim).to(device)
     images = model.decode(z)
     return images
+
 @torch.no_grad()
 def validate(model, data_loader, block_size, vae, device):
     model.eval()
