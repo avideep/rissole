@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 from utils.visualization import tensor_to_image
 from dataloader import PlantNet
-from model import VQGANLight
+from model import VQGANLight, VAE
 from model.ddpm.ddpm import DDPM
 from model.unet.unet_light import UNetLight
 from utils.helpers import load_model_checkpoint
@@ -27,13 +27,13 @@ parser.add_argument('--config', default='configs/ddpm_linear.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/ddpm_linear.yaml)')
 parser.add_argument('--unet-config', default='configs/unet.yaml',
                     metavar='PATH', help='Path to unet model config file (default: configs/unet.yaml)')
-parser.add_argument('--load-ckpt-ddpm', default='checkpoints/second_stage/ddpm_linear/23-07-28_054406/ddpm/best_model.pt', metavar='PATH',
+parser.add_argument('--load-ckpt-ddpm', default='checkpoints/second_stage/ddpm_linear/23-08-02_071025/ddpm/best_model.pt', metavar='PATH',
                     dest='load_checkpoint_ddpm', help='Load model checkpoint and continue training')
-parser.add_argument('--load-ckpt-unet', default='checkpoints/second_stage/ddpm_linear/23-07-28_054406/unet/best_model.pt', metavar='PATH',
+parser.add_argument('--load-ckpt-unet', default='checkpoints/second_stage/ddpm_linear/23-08-02_071025/unet/best_model.pt', metavar='PATH',
                     dest='load_checkpoint_unet', help='Load model checkpoint and continue training')
-parser.add_argument('--vae-path', default='checkpoints/vqgan/23-06-30_045831/e100.pt',
+parser.add_argument('--vqgan-path', default='checkpoints/vqgan/23-06-30_045831/e100.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
-parser.add_argument('--vae-config', default='configs/vqgan_cifar10.yaml',
+parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
 parser.add_argument('--real-image-path', default='',
                     metavar='PATH', help='Path to load samples from the source images into')
@@ -47,6 +47,11 @@ parser.add_argument('--sample_gen', action='store_true',
                     help='If true, samples images from the ddpm')
 parser.add_argument('--data-config', default='configs/data_se.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/data_se.yaml)')
+parser.add_argument('--vae-path', default='checkpoints/vae/23-08-01_105355/best_model.pt',
+                    metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
+parser.add_argument('--vae-config', default='configs/vae.yaml',
+                    metavar='PATH', help='Path to model config file (default: configs/vaeyaml)')
+
 
 
 def main():
@@ -78,24 +83,29 @@ def main():
         # read config file for model
         cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
         cfg_unet = yaml.load(open(args.unet_config, 'r'), Loader=yaml.Loader)
-        cfg_vae = yaml.load(open(args.vae_config, 'r'), Loader=yaml.Loader)
+        cfg_vqgan = yaml.load(open(args.vqgan_config, 'r'), Loader=yaml.Loader)
+        cfg_vae = yaml.load(open(args.vae_config,'r'),Loader=yaml.Loader)
 
-        vae_model = VQGANLight(**cfg_vae['model'])
-        vae_model, _, _ = load_model_checkpoint(vae_model, args.vae_path, device)
-        vae_model.to(device)
+        vqgan_model = VQGANLight(**cfg_vqgan['model'])
+        vqgan_model, _, _ = load_model_checkpoint(vqgan_model, args.vqgan_path, device)
+        vqgan_model.to(device)
 
         unet = UNetLight(**cfg_unet)
         unet, _, _ = load_model_checkpoint(unet, args.load_checkpoint_unet, device)
         unet.to(device)
 
-        ddpm = DDPM(eps_model=unet, vae_model=vae_model, **cfg)
+        ddpm = DDPM(eps_model=unet, vae_model=vqgan_model, **cfg)
         ddpm, _, _ = load_model_checkpoint(ddpm, args.load_checkpoint_ddpm, device)
         ddpm.to(device)
-
+        vae = VAE(**cfg_vae['model'])
+        vae, _, _ = load_model_checkpoint(vae, args.vae_path, device)
+        vae.to(device)
+        global vae_latent_dim
+        vae_latent_dim = cfg_vae['model']['latent_dim']
         global latent_dim
-        latent_dim = cfg_vae['model']['latent_dim']
+        latent_dim = cfg_vqgan['model']['latent_dim']
         block_size = args.block_size
-        sample_images_gen(ddpm, block_size, args.image_count, args.gen_image_path, args.image_size, device)
+        sample_images_gen(ddpm, block_size, args.image_count, args.gen_image_path, args.image_size, vae, device)
 
 
 def sample_images_real(data_loader, n_images, real_image_path):
@@ -108,8 +118,11 @@ def sample_images_real(data_loader, n_images, real_image_path):
         if count == n_images:
             break
 
-
-def sample_images_gen(model, block_size, n_images, image_path, image_size, device):
+def sample_from_vae(n_images, model, device):
+    z = torch.randn(n_images, vae_latent_dim).to(device)
+    images = model.decode(z)
+    return images
+def sample_images_gen(model, block_size, n_images, image_path, image_size, vae, device):
     model.eval()
 
     # we only want to sample x0 images
@@ -130,9 +143,11 @@ def sample_images_gen(model, block_size, n_images, image_path, image_size, devic
             images[i] = img
         prev_block = torch.rand_like(img[:, :, :block_size, :block_size]).to(device)
         prev_block = model.encode(prev_block)
+        low_res_cond = sample_from_vae(n_images, vae, device)
+        low_res_cond = model.encode(low_res_cond)
         for i in range(0, img.shape[-1], block_size):
             for j in range(0, img.shape[-1], block_size):
-                curr_block = model.sample(16, prev_block, batch_size=n_images, channels=latent_dim)
+                curr_block = model.sample(16, prev_block, low_res_cond, batch_size=n_images, channels=latent_dim)
                 prev_block = curr_block[0]
                 for k in range(len(curr_block)):
                     images[k][:, :, i:i+block_size, j:j+block_size] = model.decode(curr_block[k])
