@@ -251,7 +251,7 @@ def validate(model, data_loader, block_size, vae, device):
     n_images = 8
     _, c, w, h = x.size()
     images = [0]*1000
-    img = torch.randn((n_images, c, w, h), device=device)
+    img = torch.ones((n_images, c, w, h), device=device)
     for i in range(len(images)):
         images[i] = img
     prev_block = torch.rand_like(img[:, :, :block_size, :block_size]).to(device)
@@ -264,7 +264,7 @@ def validate(model, data_loader, block_size, vae, device):
             prev_block = curr_block[0]
             for k in range(len(curr_block)):
                 images[k][:, :, i:i+block_size, j:j+block_size] = model.decode(curr_block[k])
-    logger.tensorboard.add_figure('Val: DDPM',
+            logger.tensorboard.add_figure('Val: DDPM',
                                   get_sample_images_for_ddpm(images, n_ims=n_images),
                                   global_step=logger.global_train_step)
 
