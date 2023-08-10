@@ -130,7 +130,7 @@ class DDPM(nn.Module):
 
         return sqrt_alphas_cumprod_t * x_start + sqrt_one_minus_alphas_cumprod_t * noise
 
-    def p_losses(self, x_start, x_cond, low_res_cond, noise=None):
+    def p_losses(self, x_start, x_cond, noise=None):
         """
         runs a forward step and calculates the loss
 
@@ -149,7 +149,7 @@ class DDPM(nn.Module):
         t = torch.randint(0, self.n_steps, (x_start.shape[0],)).to(x_start.device)  # t ~ Uniform({1, ..., T})
 
         x_noisy = self.q_sample(x_start, t, noise)
-        predicted_noise = self.eps_model(x_noisy, x_cond, low_res_cond, t)
+        predicted_noise = self.eps_model(x_noisy, x_cond, t)
 
         return self.calculate_loss(noise, predicted_noise)
 
