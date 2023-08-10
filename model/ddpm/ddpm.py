@@ -150,7 +150,7 @@ class DDPM(nn.Module):
 
         x_noisy = self.q_sample(x_start, t, noise)
         predicted_noise = self.eps_model(x_noisy, x_cond, t)
-
+        print(noise.shape, predicted_noise.shape)
         return self.calculate_loss(noise, predicted_noise)
 
     def calculate_loss(self, noise, predicted_noise):
