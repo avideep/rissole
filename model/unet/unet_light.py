@@ -115,7 +115,9 @@ class UNetLight(nn.Module):
     """
     def forward(self, x: torch.Tensor, x_cond: torch.Tensor, t: torch.Tensor):
         t = self.time_embedding(t)
+        print(x.shape, x_cond.shape)
         x = self.cond_attn(x, x_cond)
+        print(x.shape)
         x = self.init_conv(x)
 
         skips = []
