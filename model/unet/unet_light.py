@@ -53,7 +53,7 @@ class UNetLight(nn.Module):
 
         # bottleneck
         self.mid_block1 = ResidualBlock(self.channels[-1], self.channels[-1], time_emb_dim, n_groups)
-        self.mid_attn = Attention(self.channels[-1], dim_keys, n_heads)
+        self.mid_attn = CrossAttention(self.channels[-1], in_channels, dim_keys, n_heads)
         self.mid_block2 = ResidualBlock(self.channels[-1], self.channels[-1], time_emb_dim, n_groups)
 
         # expanding path
@@ -130,7 +130,7 @@ class UNetLight(nn.Module):
 
         # bottleneck
         x = self.mid_block1(x, t)
-        x = self.mid_attn(x)
+        x = self.mid_attn(x, x_cond)
         x = self.mid_block2(x, t)
 
         # up sample
