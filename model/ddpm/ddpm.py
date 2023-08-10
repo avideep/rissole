@@ -142,7 +142,7 @@ class DDPM(nn.Module):
         """
         x_start = self.encode(x_start)
         x_cond = self.encode(x_cond)
-        low_res_cond = self.encode(low_res_cond)
+        # low_res_cond = self.encode(low_res_cond)
         if noise is None:
             noise = torch.randn_like(x_start)
 
