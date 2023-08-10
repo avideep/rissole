@@ -115,7 +115,7 @@ def main():
     cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
     cfg_unet = yaml.load(open(args.unet_config, 'r'), Loader=yaml.Loader)
     cfg_vqgan = yaml.load(open(args.vqgan_config, 'r'), Loader=yaml.Loader)
-    cfg_vae = yaml.load(open(args.vae_config,'r'),Loader=yaml.Loader)
+    # cfg_vae = yaml.load(open(args.vae_config,'r'),Loader=yaml.Loader)
 
     vqgan_model = VQGANLight(**cfg_vqgan['model'])
     vqgan_model, _, _ = load_model_checkpoint(vqgan_model, args.vqgan_path, device)
