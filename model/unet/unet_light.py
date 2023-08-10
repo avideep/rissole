@@ -71,7 +71,7 @@ class UNetLight(nn.Module):
             prev_channel = c
 
         # final output 1x1 convolution
-        self.final_conv = nn.Conv2d(self.channels[0], in_channels//3, 1)
+        self.final_conv = nn.Conv2d(self.channels[0], in_channels, 1)
 
     """
         forward function if a low res condition sampled from a VAE is used
