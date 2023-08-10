@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 from model.layers import UpSample, DownSample
-from model.layers import LinearAttention, Attention
+from model.layers import LinearAttention, Attention, CrossAttention
 from model.layers import TimeEmbedding
 from model.layers import ResidualBlock
 from typing import List
@@ -10,8 +10,8 @@ from typing import List
 class UNetLight(nn.Module):
     def __init__(self,
                  in_channels: int, time_emb_dim: int, pos_emb_dim: int,
-                 channels: List[int] = None,
-                 n_groups: int = 8, dim_keys: int = 64, n_heads: int = 4):
+                 channels: List[int] = None, n_groups: int = 8, 
+                 dim_keys: int = 64, n_heads: int = 4):
         """
         U-Net model, first proposed in (https://arxiv.org/abs/1505.04597) and equipped for
         our DDPM with (linear) attention and time conditioning.
@@ -35,7 +35,7 @@ class UNetLight(nn.Module):
 
         # initial convolutional layer
         self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=3)
-        self.cond_attn = Attention(in_channels//3, dim_keys, n_heads)
+        self.cond_attn = CrossAttention(in_channels, in_channels, dim_keys, n_heads)
 
         # contracting path
         self.down_blocks = nn.ModuleList([])
@@ -73,11 +73,49 @@ class UNetLight(nn.Module):
         # final output 1x1 convolution
         self.final_conv = nn.Conv2d(self.channels[0], in_channels//3, 1)
 
-    def forward(self, x: torch.Tensor, x_cond: torch.Tensor, low_res_cond: torch.Tensor, t: torch.Tensor):
+    """
+        forward function if a low res condition sampled from a VAE is used
+    """
+    # def forward(self, x: torch.Tensor, x_cond: torch.Tensor, low_res_cond: torch.Tensor, t: torch.Tensor):
+    #     t = self.time_embedding(t)
+    #     x_cond = self.cond_attn(x_cond)
+    #     low_res_cond = self.cond_attn(low_res_cond)
+    #     x = torch.cat((x,x_cond,low_res_cond),dim=1)
+    #     x = self.init_conv(x)
+
+    #     skips = []
+
+    #     # down sample
+    #     for block1, block2, norm, downsample in self.down_blocks:
+    #         x = block1(x, t)
+    #         x = block2(x, t)
+    #         x = norm(x)
+    #         skips.append(x)
+    #         x = downsample(x)
+
+    #     # bottleneck
+    #     x = self.mid_block1(x, t)
+    #     x = self.mid_attn(x)
+    #     x = self.mid_block2(x, t)
+
+    #     # up sample
+    #     for upsample, block1, block2, norm in self.up_blocks:
+    #         x = upsample(x)
+    #         x = torch.cat((x, skips.pop()), dim=1)
+    #         x = block1(x, t)
+    #         x = block2(x, t)
+    #         x = norm(x)
+
+    #     # output convolution
+    #     x = self.final_conv(x)
+
+    #     return x
+    """
+        forward function if a low res condition sampled from a VAE is NOT used
+    """
+    def forward(self, x: torch.Tensor, x_cond: torch.Tensor, t: torch.Tensor):
         t = self.time_embedding(t)
-        x_cond = self.cond_attn(x_cond)
-        low_res_cond = self.cond_attn(low_res_cond)
-        x = torch.cat((x,x_cond,low_res_cond),dim=1)
+        x = self.cond_attn(x, x_cond)
         x = self.init_conv(x)
 
         skips = []
