@@ -11,7 +11,7 @@ class UNetLight(nn.Module):
     def __init__(self,
                  in_channels: int, time_emb_dim: int, pos_emb_dim: int,
                  channels: List[int] = None, n_groups: int = 8, 
-                 dim_keys: int = 64, n_heads: int = 4):
+                 dim_keys: int = 64, n_heads: int = 8):
         """
         U-Net model, first proposed in (https://arxiv.org/abs/1505.04597) and equipped for
         our DDPM with (linear) attention and time conditioning.
@@ -35,7 +35,7 @@ class UNetLight(nn.Module):
 
         # initial convolutional layer
         self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=3)
-        self.cond_attn = CrossAttention(in_channels, in_channels, dim_keys, n_heads)
+        self.cond_attn = CrossAttention(in_channels//2, in_channels//2, dim_keys, n_heads)
 
         # contracting path
         self.down_blocks = nn.ModuleList([])
@@ -53,7 +53,7 @@ class UNetLight(nn.Module):
 
         # bottleneck
         self.mid_block1 = ResidualBlock(self.channels[-1], self.channels[-1], time_emb_dim, n_groups)
-        self.mid_attn = CrossAttention(self.channels[-1], in_channels, dim_keys, n_heads)
+        self.mid_attn = CrossAttention(self.channels[-1], in_channels//2, dim_keys, n_heads)
         self.mid_block2 = ResidualBlock(self.channels[-1], self.channels[-1], time_emb_dim, n_groups)
 
         # expanding path
@@ -71,7 +71,7 @@ class UNetLight(nn.Module):
             prev_channel = c
 
         # final output 1x1 convolution
-        self.final_conv = nn.Conv2d(self.channels[0], in_channels, 1)
+        self.final_conv = nn.Conv2d(self.channels[0], in_channels//2, 1)
 
     """
         forward function if a low res condition sampled from a VAE is used
@@ -115,7 +115,8 @@ class UNetLight(nn.Module):
     """
     def forward(self, x: torch.Tensor, x_cond: torch.Tensor, t: torch.Tensor):
         t = self.time_embedding(t)
-        x = self.cond_attn(x, x_cond)
+        x_cross = self.cond_attn(x, x_cond)
+        x = torch.cat((x,x_cross), dim=1)
         x = self.init_conv(x)
 
         skips = []
