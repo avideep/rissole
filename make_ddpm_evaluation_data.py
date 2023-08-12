@@ -147,9 +147,9 @@ def sample_images_gen(model, block_size, n_images, image_path, image_size, vae, 
         low_res_cond = model.encode(low_res_cond)
         for i in range(0, img.shape[-1], block_size):
             for j in range(0, img.shape[-1], block_size):
-                if j==0 and i>0:
-                    prev_block = img[:,:,i-block_size:i, j:j+block_size]
-                    prev_block = model.encode(prev_block)
+                # if j==0 and i>0:
+                #     prev_block = img[:,:,i-block_size:i, j:j+block_size]
+                #     prev_block = model.encode(prev_block)
                 curr_block = model.sample(16, prev_block, low_res_cond, batch_size=n_images, channels=latent_dim)
                 prev_block = curr_block[0]
                 for k in range(len(curr_block)):
