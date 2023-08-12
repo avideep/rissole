@@ -53,8 +53,8 @@ class UNetLight(nn.Module):
 
         # bottleneck
         self.mid_block1 = ResidualBlock(self.channels[-1], self.channels[-1], time_emb_dim, n_groups)
-        self.mid_attn = Attention(self.channels[-1], dim_keys, n_heads)
-        self.mid_block2 = ResidualBlock(self.channels[-1], self.channels[-1], time_emb_dim, n_groups)
+        self.mid_attn = CrossAttention( self.channels[-1], in_channels//2, dim_keys, n_heads)
+        self.mid_block2 = ResidualBlock(2 * self.channels[-1], self.channels[-1], time_emb_dim, n_groups)
 
         # expanding path
         self.up_blocks = nn.ModuleList([])
@@ -115,8 +115,8 @@ class UNetLight(nn.Module):
     """
     def forward(self, x: torch.Tensor, x_cond: torch.Tensor, t: torch.Tensor):
         t = self.time_embedding(t)
-        x_cross = self.cond_attn(x, x_cond)
-        x = torch.cat((x,x_cross), dim=1)
+        # x_cross = self.cond_attn(x, x_cond)
+        x = torch.cat((x,x_cond), dim=1)
         x = self.init_conv(x)
 
         skips = []
@@ -131,8 +131,8 @@ class UNetLight(nn.Module):
 
         # bottleneck
         x = self.mid_block1(x, t)
-        x = self.mid_attn(x)
-        # x = torch.cat((x, x_mid_cross), dim=1)
+        x_mid_cross = self.mid_attn(x, x_cond)
+        x = torch.cat((x, x_mid_cross), dim=1)
         x = self.mid_block2(x, t)
 
         # up sample
