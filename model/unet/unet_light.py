@@ -35,7 +35,6 @@ class UNetLight(nn.Module):
         # time embedding
         self.time_embedding = TimeEmbedding(time_emb_dim, pos_emb_dim)
         self.cond_embedding = ConditionalEmbedding(cond_emb_dim, self.channels[0])
-        cond_emb_dim = self.channels[0]
         # initial convolutional layer
         self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=3)
         # self.cond_attn = CrossAttention(in_channels, in_channels, dim_keys, n_heads)
@@ -44,6 +43,7 @@ class UNetLight(nn.Module):
         self.down_blocks = nn.ModuleList([])
         prev_channel = self.channels[0]
         for c in self.channels:
+            cond_emb_dim = prev_channel
             self.down_blocks.append(
                 nn.ModuleList([
                     ResidualBlockUNet(prev_channel, c, time_emb_dim, cond_emb_dim, n_groups),
@@ -51,7 +51,7 @@ class UNetLight(nn.Module):
                     ResidualBlockUNet(c, c, time_emb_dim, cond_emb_dim, n_groups),
                     CrossAttention(c, cond_emb_dim, dim_keys, n_heads),
                     nn.GroupNorm(1, c),
-                    DownSample(c)
+                    DownSample(c, cond_emb_dim)
                 ])
             )
             prev_channel = c
