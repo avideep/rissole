@@ -43,7 +43,7 @@ class UNetLight(nn.Module):
         self.down_blocks = nn.ModuleList([])
         prev_channel = self.channels[0]
         for c in self.channels:
-            cond_emb_dim = prev_channel
+            cond_emb_dim = c
             self.down_blocks.append(
                 nn.ModuleList([
                     ResidualBlockUNet(prev_channel, c, time_emb_dim, cond_emb_dim, n_groups),
@@ -65,7 +65,7 @@ class UNetLight(nn.Module):
         self.up_blocks = nn.ModuleList([])
         prev_channel = self.channels[-1]
         for c in reversed(self.channels):
-            cond_emb_dim = prev_channel
+            cond_emb_dim = c
             self.up_blocks.append(
                 nn.ModuleList([
                     UpSample(prev_channel),
