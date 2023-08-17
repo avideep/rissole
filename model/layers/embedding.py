@@ -69,7 +69,7 @@ class ConditionalEmbedding(nn.Module):
 
     def forward(self, x_cond: torch.Tensor):
 
-        return self.conv(x_cond)
+        return self.conv(x_cond) if self.conv is not None else x_cond
 
 
 if __name__ == "__main__":

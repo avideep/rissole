@@ -3,7 +3,7 @@ import torch.nn as nn
 
 
 class ResidualBlock(nn.Module):
-    def __init__(self, in_channels: int, out_channels: int, time_emb_dim: int = None, n_groups: int = 8):
+    def __init__(self, in_channels: int, out_channels: int, time_emb_dim: int = None, cond_emb_dim: int = None, n_groups: int = 8):
         """
         Residual block with time conditioning.
 
@@ -11,6 +11,7 @@ class ResidualBlock(nn.Module):
             in_channels: Input channels to residual block
             out_channels: Output channels of residual block
             time_emb_dim: Dimension of time embedding
+            cond_emb_dim: Dimension of the conditional information
             n_groups: Number of groups for group normalization
         """
         super().__init__()
@@ -33,7 +34,11 @@ class ResidualBlock(nn.Module):
             self.shortcut = nn.Identity()
 
         self.time_emb = nn.Linear(time_emb_dim, out_channels) if time_emb_dim is not None else None
-        self.cond_emb = None
+        self.cond_emb = nn.Sequential(
+            nn.Conv2d(cond_emb_dim, out_channels, kernel_size=3, padding=1),
+            nn.GroupNorm(n_groups, out_channels),
+            nn.SiLU()
+        )
 
     def forward(self, x: torch.Tensor, t: torch.Tensor = None, x_cond: torch.Tensor = None):
         identity = self.shortcut(x)
