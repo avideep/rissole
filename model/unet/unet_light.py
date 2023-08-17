@@ -108,7 +108,7 @@ class UNetLight(nn.Module):
             x = torch.cat((x, skips.pop()), dim=1)
             x = block1(x, c, t)
             x = attn1(x, c)
-            x = block2(x, t)
+            x = block2(x, c, t)
             x = attn2(x, c)
             x = norm(x)
 
