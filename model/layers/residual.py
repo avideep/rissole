@@ -87,7 +87,7 @@ class ResidualBlockUNet(nn.Module):
             nn.SiLU()
         )
 
-    def forward(self, x: torch.Tensor, t: torch.Tensor = None, x_cond: torch.Tensor = None):
+    def forward(self, x: torch.Tensor, x_cond: torch.Tensor = None, t: torch.Tensor = None):
         identity = self.shortcut(x)
 
         x = self.block1(x)
