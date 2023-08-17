@@ -96,6 +96,7 @@ class UNetLight(nn.Module):
             x = norm(x)
             skips.append(x)
             x = downsample(x)
+            c = downsample(c)
 
         # bottleneck
         x = self.mid_block1(x, c, t)
@@ -105,6 +106,7 @@ class UNetLight(nn.Module):
         # up sample
         for upsample, block1, attn1, block2, attn2, norm in self.up_blocks:
             x = upsample(x)
+            c = upsample(c)
             x = torch.cat((x, skips.pop()), dim=1)
             x = block1(x, c, t)
             x = attn1(x, c)
