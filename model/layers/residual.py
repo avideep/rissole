@@ -33,8 +33,9 @@ class ResidualBlock(nn.Module):
             self.shortcut = nn.Identity()
 
         self.time_emb = nn.Linear(time_emb_dim, out_channels) if time_emb_dim is not None else None
+        self.cond_emb = None
 
-    def forward(self, x: torch.Tensor, t: torch.Tensor = None):
+    def forward(self, x: torch.Tensor, t: torch.Tensor = None, x_cond: torch.Tensor = None):
         identity = self.shortcut(x)
 
         x = self.block1(x)
@@ -43,7 +44,9 @@ class ResidualBlock(nn.Module):
         if self.time_emb is not None:
             t = self.time_emb(t)        # [bs, out_channels]
             x += t[:, :, None, None]
-
+        if self.cond_emb is not None:
+            c = self.cond_emb(x_cond)
+            x += c
         x = self.block2(x)
 
         return x + identity

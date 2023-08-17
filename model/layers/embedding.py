@@ -51,6 +51,25 @@ class TimeEmbedding(nn.Module):
         t_emb = self.mlp(t_pos_emb)
 
         return t_emb
+    
+class ConditionalEmbedding(nn.Module):
+    def __init__(self, cond_emb_dim: int = 10):
+        """
+        Time embedding for time step t. First, t is embedded using a fixed sinusoidal positional
+        embedding, as described in "Attention Is All You Need" (https://arxiv.org/abs/1706.03762),
+        followed by a two layer MLP.
+
+        Args:
+            time_emb_dim: Dimension of final time embedding
+            pos_emb_dim: Embedding dimension for the fixed sinusoidal positional embedding
+            max_len: Maximum number of time steps (default: 5000)
+        """
+        super().__init__()
+        self.conv = None
+
+    def forward(self, x_cond: torch.Tensor):
+
+        return self.conv(x_cond)
 
 
 if __name__ == "__main__":
