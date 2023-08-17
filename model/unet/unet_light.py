@@ -51,7 +51,7 @@ class UNetLight(nn.Module):
                     ResidualBlockUNet(c, c, time_emb_dim, cond_emb_dim, n_groups),
                     CrossAttention(c, cond_emb_dim, dim_keys, n_heads),
                     nn.GroupNorm(1, c),
-                    DownSample(c, cond_emb_dim)
+                    DownSample(c)
                 ])
             )
             prev_channel = c
@@ -65,6 +65,7 @@ class UNetLight(nn.Module):
         self.up_blocks = nn.ModuleList([])
         prev_channel = self.channels[-1]
         for c in reversed(self.channels):
+            cond_emb_dim = prev_channel
             self.up_blocks.append(
                 nn.ModuleList([
                     UpSample(prev_channel),
