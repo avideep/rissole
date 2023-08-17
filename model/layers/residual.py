@@ -81,6 +81,7 @@ class ResidualBlockUNet(nn.Module):
             self.shortcut = nn.Identity()
 
         self.time_emb = nn.Linear(time_emb_dim, out_channels) if time_emb_dim is not None else None
+        
         self.cond_emb = nn.Sequential(
             nn.Conv2d(cond_emb_dim, out_channels, kernel_size=3, padding=1),
             nn.GroupNorm(n_groups, out_channels),
