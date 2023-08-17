@@ -4,7 +4,7 @@ import torch.nn as nn
 from model.layers import UpSample, DownSample
 from model.layers import LinearAttention, Attention, CrossAttention
 from model.layers import TimeEmbedding, ConditionalEmbedding
-from model.layers import ResidualBlock
+from model.layers import ResidualBlockUNet
 
 from typing import List
 
@@ -45,9 +45,9 @@ class UNetLight(nn.Module):
         for c in self.channels:
             self.down_blocks.append(
                 nn.ModuleList([
-                    ResidualBlock(prev_channel, c, time_emb_dim, cond_emb_dim, n_groups),
+                    ResidualBlockUNet(prev_channel, c, time_emb_dim, cond_emb_dim, n_groups),
                     CrossAttention(c, cond_emb_dim, dim_keys, n_heads),
-                    ResidualBlock(c, c, time_emb_dim, cond_emb_dim, n_groups),
+                    ResidualBlockUNet(c, c, time_emb_dim, cond_emb_dim, n_groups),
                     CrossAttention(c, cond_emb_dim, dim_keys, n_heads),
                     nn.GroupNorm(1, c),
                     DownSample(c)
@@ -56,9 +56,9 @@ class UNetLight(nn.Module):
             prev_channel = c
 
         # bottleneck
-        self.mid_block1 = ResidualBlock(self.channels[-1], self.channels[-1], time_emb_dim, cond_emb_dim, n_groups)
+        self.mid_block1 = ResidualBlockUNet(self.channels[-1], self.channels[-1], time_emb_dim, cond_emb_dim, n_groups)
         self.mid_attn = CrossAttention( self.channels[-1], cond_emb_dim, dim_keys, n_heads)
-        self.mid_block2 = ResidualBlock(self.channels[-1], self.channels[-1], time_emb_dim, cond_emb_dim, n_groups)
+        self.mid_block2 = ResidualBlockUNet(self.channels[-1], self.channels[-1], time_emb_dim, cond_emb_dim, n_groups)
 
         # expanding path
         self.up_blocks = nn.ModuleList([])
@@ -67,9 +67,9 @@ class UNetLight(nn.Module):
             self.up_blocks.append(
                 nn.ModuleList([
                     UpSample(prev_channel),
-                    ResidualBlock(prev_channel + c, c, time_emb_dim, cond_emb_dim, n_groups),
+                    ResidualBlockUNet(prev_channel + c, c, time_emb_dim, cond_emb_dim, n_groups),
                     CrossAttention(c, cond_emb_dim, dim_keys, n_heads),
-                    ResidualBlock(c, c, time_emb_dim, cond_emb_dim, n_groups),
+                    ResidualBlockUNet(c, c, time_emb_dim, cond_emb_dim, n_groups),
                     CrossAttention(c, cond_emb_dim, dim_keys, n_heads),
                     nn.GroupNorm(1, c),
                 ])
