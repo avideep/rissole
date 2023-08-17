@@ -35,6 +35,7 @@ class UNetLight(nn.Module):
         # time embedding
         self.time_embedding = TimeEmbedding(time_emb_dim, pos_emb_dim)
         self.cond_embedding = ConditionalEmbedding(cond_emb_dim, self.channels[0])
+        cond_emb_dim = self.channels[0]
         # initial convolutional layer
         self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=3)
         # self.cond_attn = CrossAttention(in_channels, in_channels, dim_keys, n_heads)
