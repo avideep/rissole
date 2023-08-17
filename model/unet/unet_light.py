@@ -43,7 +43,6 @@ class UNetLight(nn.Module):
         self.down_blocks = nn.ModuleList([])
         prev_channel = self.channels[0]
         for c in self.channels:
-            cond_emb_dim = c
             self.down_blocks.append(
                 nn.ModuleList([
                     ResidualBlockUNet(prev_channel, c, time_emb_dim, cond_emb_dim, n_groups),
@@ -65,7 +64,6 @@ class UNetLight(nn.Module):
         self.up_blocks = nn.ModuleList([])
         prev_channel = self.channels[-1]
         for c in reversed(self.channels):
-            cond_emb_dim = c
             self.up_blocks.append(
                 nn.ModuleList([
                     UpSample(prev_channel),
@@ -97,7 +95,6 @@ class UNetLight(nn.Module):
             x = norm(x)
             skips.append(x)
             x = downsample(x)
-            c = downsample(c)
 
         # bottleneck
         x = self.mid_block1(x, c, t)
@@ -107,7 +104,6 @@ class UNetLight(nn.Module):
         # up sample
         for upsample, block1, attn1, block2, attn2, norm in self.up_blocks:
             x = upsample(x)
-            c = upsample(c)
             x = torch.cat((x, skips.pop()), dim=1)
             x = block1(x, c, t)
             x = attn1(x, c)
