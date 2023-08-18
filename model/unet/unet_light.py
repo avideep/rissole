@@ -90,7 +90,8 @@ class UNetLight(nn.Module):
         skips = []
 
         # down sample
-        for block1, attn1, block2, attn2, norm, downsample in self.down_blocks:
+        # for block1, attn1, block2, attn2, norm, downsample in self.down_blocks:
+        for block1, block2, norm, downsample in self.down_blocks:
             x = block1(x, c, t)
             # x = attn1(x, c)
             x = block2(x, c, t)
@@ -106,7 +107,8 @@ class UNetLight(nn.Module):
         x = self.mid_block2(x, c, t)
 
         # up sample
-        for upsample, block1, attn1, block2, attn2, norm in self.up_blocks:
+        # for upsample, block1, attn1, block2, attn2, norm in self.up_blocks:
+        for upsample, block1, block2, norm in self.up_blocks:
             x = upsample(x)
             x = torch.cat((x, skips.pop()), dim=1)
             x = block1(x, c, t)
