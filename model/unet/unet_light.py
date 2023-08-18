@@ -34,7 +34,8 @@ class UNetLight(nn.Module):
 
         # time embedding
         self.time_embedding = TimeEmbedding(time_emb_dim, pos_emb_dim)
-        self.cond_embedding = ConditionalEmbedding(cond_emb_dim, self.channels[0])
+        # self.cond_embedding = ConditionalEmbedding(cond_emb_dim, self.channels[0])
+        self.cond_embedding = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=3)
         # initial convolutional layer
         self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=3)
         # self.cond_attn = CrossAttention(in_channels, in_channels, dim_keys, n_heads)
@@ -47,9 +48,9 @@ class UNetLight(nn.Module):
             self.down_blocks.append(
                 nn.ModuleList([
                     ResidualBlockUNet(prev_channel, c, time_emb_dim, cond_emb_dim, n_groups),
-                    CrossAttention(c, cond_emb_dim, dim_keys, n_heads),
+                    # CrossAttention(c, cond_emb_dim, dim_keys, n_heads),
                     ResidualBlockUNet(c, c, time_emb_dim, cond_emb_dim, n_groups),
-                    CrossAttention(c, cond_emb_dim, dim_keys, n_heads),
+                    # CrossAttention(c, cond_emb_dim, dim_keys, n_heads),
                     nn.GroupNorm(1, c),
                     DownSample(c)
                 ])
@@ -58,7 +59,8 @@ class UNetLight(nn.Module):
 
         # bottleneck
         self.mid_block1 = ResidualBlockUNet(self.channels[-1], self.channels[-1], time_emb_dim, cond_emb_dim, n_groups)
-        self.mid_attn = CrossAttention( self.channels[-1], cond_emb_dim, dim_keys, n_heads)
+        # self.mid_attn = CrossAttention( self.channels[-1], cond_emb_dim, dim_keys, n_heads)
+        self.mid_attn = Attention(self.channels[-1], dim_keys, n_heads)
         self.mid_block2 = ResidualBlockUNet(self.channels[-1], self.channels[-1], time_emb_dim, cond_emb_dim, n_groups)
 
         # expanding path
@@ -69,9 +71,9 @@ class UNetLight(nn.Module):
                 nn.ModuleList([
                     UpSample(prev_channel),
                     ResidualBlockUNet(prev_channel + c, c, time_emb_dim, cond_emb_dim, n_groups),
-                    CrossAttention(c, cond_emb_dim, dim_keys, n_heads),
+                    # CrossAttention(c, cond_emb_dim, dim_keys, n_heads),
                     ResidualBlockUNet(c, c, time_emb_dim, cond_emb_dim, n_groups),
-                    CrossAttention(c, cond_emb_dim, dim_keys, n_heads),
+                    # CrossAttention(c, cond_emb_dim, dim_keys, n_heads),
                     nn.GroupNorm(1, c),
                 ])
             )
@@ -90,16 +92,17 @@ class UNetLight(nn.Module):
         # down sample
         for block1, attn1, block2, attn2, norm, downsample in self.down_blocks:
             x = block1(x, c, t)
-            x = attn1(x, c)
+            # x = attn1(x, c)
             x = block2(x, c, t)
-            x = attn2(x, c)
+            # x = attn2(x, c)
             x = norm(x)
             skips.append(x)
             x = downsample(x)
 
         # bottleneck
         x = self.mid_block1(x, c, t)
-        x = self.mid_attn(x, c)
+        # x = self.mid_attn(x, c)
+        x = self.mid_attn(x)
         x = self.mid_block2(x, c, t)
 
         # up sample
@@ -107,9 +110,9 @@ class UNetLight(nn.Module):
             x = upsample(x)
             x = torch.cat((x, skips.pop()), dim=1)
             x = block1(x, c, t)
-            x = attn1(x, c)
+            # x = attn1(x, c)
             x = block2(x, c, t)
-            x = attn2(x, c)
+            # x = attn2(x, c)
             x = norm(x)
 
         # output convolution
