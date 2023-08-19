@@ -66,6 +66,7 @@ class ResidualBlockUNet(nn.Module):
         self.block1 = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
             nn.GroupNorm(n_groups, out_channels),
+            nn.Dropout(0.5),
             nn.SiLU()
         )
 
