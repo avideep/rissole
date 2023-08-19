@@ -86,6 +86,7 @@ class ResidualBlockUNet(nn.Module):
         self.cond_emb = nn.Sequential(
             nn.Conv2d(cond_emb_dim, out_channels, kernel_size=3, padding=1),
             nn.GroupNorm(n_groups, out_channels),
+            nn.Dropout(0.6),
             nn.SiLU()
         )
 
