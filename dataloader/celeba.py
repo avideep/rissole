@@ -39,7 +39,7 @@ class CelebA:
             transforms.CenterCrop(64),
             transforms.Normalize(self.mean, self.std)
         ])
-        IMAGE_PATH = 'data/celeba/processed/'
+        IMAGE_PATH = '/data/avideep/blockLDM/data/celeba/processed/'
         train_size = int(50000 * 0.9)
         # val size is 10000 in cifar10
         test_size = 50000 - train_size
