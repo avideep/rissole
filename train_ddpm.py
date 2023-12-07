@@ -217,18 +217,19 @@ def train(model, train_loader, optimizer, block_size, device):
         prev_block = torch.rand_like(x[:, :, :block_size, :block_size]).to(device)
         optimizer.zero_grad()
         loss_agg = 0
+        position = 0
         for i in range(0, x.shape[-1], block_size):
             for j in range(0, x.shape[-1], block_size):
                 # if j==0 and i>0:
                 #         prev_block = x[:,:,i-block_size:i, j:j+block_size]
-                prev_block_pos = 0
+                block_pos = torch.full((x.size(0),),position)
                 curr_block = x[:, :, i:i+block_size, j:j+block_size]
                 block_pos = x.size(0)
-                loss = model.p_losses(curr_block, prev_block, prev_block_pos)
+                loss = model.p_losses(curr_block, prev_block, block_pos)
                 prev_block = curr_block
                 loss_agg += loss.item()
                 loss.backward()
-                prev_block_pos += 1
+                position += 1
         optimizer.step()
 
         if ema_loss is None:
