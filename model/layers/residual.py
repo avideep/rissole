@@ -100,11 +100,9 @@ class ResidualBlockUNet(nn.Module):
         # condition with time if required
         if self.time_emb is not None:
             t = self.time_emb(t)        # [bs, out_channels]
-            print(t.shape)
             x += t[:, :, None, None]
         if self.pos_emb is not None:
             p = self.pos_emb(p)
-            print(p.shape)
             x += p[:, :, None, None]
         if self.cond_emb is not None:
             c = self.cond_emb(x_cond)
