@@ -159,7 +159,7 @@ def main():
         logger.global_train_step = logger.running_epoch
         print(f"Epoch [{epoch + 1} / {args.epochs}]")
 
-        # train(ddpm, data.train, optimizer, block_size, device)
+        train(ddpm, data.train, optimizer, block_size, device)
 
         validate(ddpm, data.val, block_size, device)
 
@@ -265,7 +265,7 @@ def validate(model, data_loader, block_size, device):
             # if j==0 and i>0:
             #     prev_block = img[:,:,i-block_size:i, j:j+block_size]
             #     prev_block = model.encode(prev_block)
-            block_pos = torch.full((x.size(0),),position, dtype=torch.int64).to(device)
+            block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
             curr_block = model.sample(16, prev_block, block_pos, batch_size=n_images, channels=latent_dim)
             prev_block = curr_block[0]
             position += 1
