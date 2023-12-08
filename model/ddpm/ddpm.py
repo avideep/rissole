@@ -72,6 +72,7 @@ class DDPM(nn.Module):
         # calculations for posterior q(x_{t-1} | x_t, x_0)
         self.posterior_variance = self.betas * (1.0 - self.alphas_cumprod_prev) / (1.0 - self.alphas_cumprod)
 
+
     def extract(self, a, t, x_shape):
         """
         extracts an appropriate t index for a batch of indices
@@ -150,7 +151,7 @@ class DDPM(nn.Module):
         t = torch.randint(0, self.n_steps, (x_start.shape[0],)).to(x_start.device)  # t ~ Uniform({1, ..., T})
 
         x_noisy = self.q_sample(x_start, t, noise)
-        predicted_noise = self.eps_model(x_noisy, x_cond, position, t)
+        predicted_noise = self.eps_model(x_noisy, x_cond, t, position)
         return self.calculate_loss(noise, predicted_noise)
 
     def calculate_loss(self, noise, predicted_noise):
@@ -175,7 +176,7 @@ class DDPM(nn.Module):
         return loss
 
     @torch.no_grad()
-    def p_sample(self, x, x_recon, t, t_index):
+    def p_sample(self, x, x_recon, position, t, t_index):
         """
         samples an image from the latent space
 
@@ -194,7 +195,7 @@ class DDPM(nn.Module):
         # Equation 11 in https://arxiv.org/abs/2006.11239
         # Use our model (noise predictor) to predict the mean
         model_mean = sqrt_recip_alphas_t * (
-                x - betas_t * self.eps_model(x, x_recon, t) / sqrt_one_minus_alphas_cumprod_t
+                x - betas_t * self.eps_model(x, x_recon, t, position) / sqrt_one_minus_alphas_cumprod_t
         )
 
         if t_index == 0:
@@ -206,7 +207,7 @@ class DDPM(nn.Module):
             return model_mean + torch.sqrt(posterior_variance_t) * noise
         
     @torch.no_grad()
-    def p_sample_loop(self, cond_block, shape, sample_step=None):
+    def p_sample_loop(self, cond_block, position, shape, sample_step=None):
         """
         Implements Algorithm 2 of https://arxiv.org/abs/2006.11239 for sampling
 
@@ -224,7 +225,7 @@ class DDPM(nn.Module):
         imgs = []
         # print(img.shape, cond_block.shape)
         for i in tqdm(reversed(range(0, self.n_steps)), desc='sampling loop time step', total=self.n_steps):
-            img = self.p_sample(img, cond_block, torch.full((b,), i, device=device, dtype=torch.long), i)
+            img = self.p_sample(img, cond_block, position, torch.full((b,), i, device=device, dtype=torch.long), i)
             if sample_step is not None and i == sample_step:
                 imgs.append(img)
             elif sample_step is None:
@@ -232,7 +233,7 @@ class DDPM(nn.Module):
         return imgs
 
     @torch.no_grad()
-    def sample(self, image_size, cond_block, batch_size=16, channels=3, sample_step=None):
+    def sample(self, image_size, cond_block, position, batch_size=16, channels=3, sample_step=None):
         """
         sampling from the latent space
 
@@ -244,5 +245,5 @@ class DDPM(nn.Module):
         Returns:
             sampled images
         """
-        return  self.p_sample_loop(cond_block, shape=(batch_size, channels, image_size, image_size), sample_step=sample_step)
+        return  self.p_sample_loop(cond_block, position, shape=(batch_size, channels, image_size, image_size), sample_step=sample_step)
 
