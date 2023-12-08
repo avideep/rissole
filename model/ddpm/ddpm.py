@@ -225,7 +225,7 @@ class DDPM(nn.Module):
         imgs = []
         # print(img.shape, cond_block.shape)
         for i in tqdm(reversed(range(0, self.n_steps)), desc='sampling loop time step', total=self.n_steps):
-            img = self.p_sample(img, cond_block, position, torch.full((b,), i, device=device, dtype=torch.long), i)
+            img = self.p_sample(img, cond_block, position, torch.full((b,), i, device=device, dtype=torch.int64), i)
             if sample_step is not None and i == sample_step:
                 imgs.append(img)
             elif sample_step is None:
