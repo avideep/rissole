@@ -148,7 +148,7 @@ class DDPM(nn.Module):
         if noise is None:
             noise = torch.randn_like(x_start)
 
-        t = torch.randint(0, self.n_steps, (x_start.shape[0],)).to(x_start.device)  # t ~ Uniform({1, ..., T})
+        t = torch.randint(0, self.n_steps, (x_start.shape[0],), dtype=torch.float64).to(x_start.device)  # t ~ Uniform({1, ..., T})
 
         x_noisy = self.q_sample(x_start, t, noise)
         predicted_noise = self.eps_model(x_noisy, x_cond, t, position)

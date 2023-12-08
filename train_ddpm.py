@@ -222,7 +222,7 @@ def train(model, train_loader, optimizer, block_size, device):
             for j in range(0, x.shape[-1], block_size):
                 # if j==0 and i>0:
                 #         prev_block = x[:,:,i-block_size:i, j:j+block_size]
-                block_pos = torch.full((x.size(0),),position).to(device)
+                block_pos = torch.full((x.size(0),),position, dtype=torch.float64).to(device)
                 curr_block = x[:, :, i:i+block_size, j:j+block_size]
                 block_pos = x.size(0)
                 loss = model.p_losses(curr_block, prev_block, block_pos)
@@ -266,7 +266,7 @@ def validate(model, data_loader, block_size, device):
             # if j==0 and i>0:
             #     prev_block = img[:,:,i-block_size:i, j:j+block_size]
             #     prev_block = model.encode(prev_block)
-            block_pos = torch.full((x.size(0),),position).to(device)
+            block_pos = torch.full((x.size(0),),position, dtype=torch.float64).to(device)
             curr_block = model.sample(16, prev_block, block_pos, batch_size=n_images, channels=latent_dim)
             prev_block = curr_block[0]
             position += 1
