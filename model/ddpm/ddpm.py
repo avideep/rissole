@@ -155,7 +155,7 @@ class DDPM(nn.Module):
 
         x_noisy = self.q_sample(x_start, t, noise)
         predicted_noise = self.eps_model(x_noisy, x_cond, t, position)
-        if random_time <= 2:
+        if random_time <= 5:
             x_recon = self.reconstruction_loop(x_start, x_noisy, x_cond, position, t)
             self.count += 1
             return self.calculate_loss(noise, predicted_noise, x_start, x_recon)
