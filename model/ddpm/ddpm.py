@@ -183,7 +183,7 @@ class DDPM(nn.Module):
         # create noise
         img = x_noisy
         # print(img.shape, cond_block.shape)
-        for t_index in tqdm(reversed(range(0, b)), desc='reconstruction loop time step', total=b):
+        for t_index in reversed(range(0, b)):
             img = self.p_sample(img, x_cond, position, t, t_index)
         return img
     
