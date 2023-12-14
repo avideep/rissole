@@ -71,6 +71,7 @@ class DDPM(nn.Module):
 
         # calculations for posterior q(x_{t-1} | x_t, x_0)
         self.posterior_variance = self.betas * (1.0 - self.alphas_cumprod_prev) / (1.0 - self.alphas_cumprod)
+        self.count = 0
 
 
     def extract(self, a, t, x_shape):
@@ -156,6 +157,7 @@ class DDPM(nn.Module):
         predicted_noise = self.eps_model(x_noisy, x_cond, t, position)
         if random_time <= 2:
             x_recon = self.reconstruction_loop(x_start, x_noisy, x_cond, position, t)
+            self.count += 1
             return self.calculate_loss(noise, predicted_noise, x_start, x_recon)
         return self.calculate_loss(noise, predicted_noise)
 
