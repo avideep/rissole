@@ -152,9 +152,10 @@ class DDPM(nn.Module):
 
         x_noisy = self.q_sample(x_start, t, noise)
         predicted_noise = self.eps_model(x_noisy, x_cond, t, position)
-        return self.calculate_loss(noise, predicted_noise)
+        x_recon = self.reconstruction_loop(x_start, x_noisy, x_cond, position, t)
+        return self.calculate_loss(noise, predicted_noise, x_start, x_recon)
 
-    def calculate_loss(self, noise, predicted_noise):
+    def calculate_loss(self, noise, predicted_noise, x_start, x_recon):
         """
         calculates the loss according to the defined loss function
 
@@ -173,8 +174,19 @@ class DDPM(nn.Module):
         else:
             raise NotImplementedError()
 
-        return loss
+        return loss + F.mse_loss(x_start, x_recon)
 
+    def reconstruction_loop(self, x, x_noisy, x_cond, position, t):
+        device = next(self.eps_model.parameters()).device
+
+        b = x.shape[0]
+        # create noise
+        img = x_noisy
+        # print(img.shape, cond_block.shape)
+        for t_index in tqdm(reversed(range(0, b)), desc='reconstruction loop time step', total=b):
+            img = self.p_sample(img, x_cond, position, t, t_index)
+        return img
+    
     @torch.no_grad()
     def p_sample(self, x, x_recon, position, t, t_index):
         """
