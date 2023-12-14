@@ -149,14 +149,17 @@ class DDPM(nn.Module):
             noise = torch.randn_like(x_start)
 
         # t = torch.randint(0, self.n_steps, (x_start.shape[0],), dtype=torch.int64).to(x_start.device)  # t ~ Uniform({1, ..., T})
-        t = torch.full((x_start.shape[0],), torch.randint(0, self.n_steps, (1,)).item(), dtype=torch.int64).to(x_start.device)
+        random_time = torch.randint(0, self.n_steps, (1,)).item()
+        t = torch.full((x_start.shape[0],), random_time, dtype=torch.int64).to(x_start.device)
 
         x_noisy = self.q_sample(x_start, t, noise)
         predicted_noise = self.eps_model(x_noisy, x_cond, t, position)
-        x_recon = self.reconstruction_loop(x_start, x_noisy, x_cond, position, t)
-        return self.calculate_loss(noise, predicted_noise, x_start, x_recon)
+        if random_time <= 2:
+            x_recon = self.reconstruction_loop(x_start, x_noisy, x_cond, position, t)
+            return self.calculate_loss(noise, predicted_noise, x_start, x_recon)
+        return self.calculate_loss(noise, predicted_noise)
 
-    def calculate_loss(self, noise, predicted_noise, x_start, x_recon):
+    def calculate_loss(self, noise, predicted_noise, x_start = None, x_recon = None):
         """
         calculates the loss according to the defined loss function
 
@@ -174,8 +177,9 @@ class DDPM(nn.Module):
             loss = F.smooth_l1_loss(noise, predicted_noise)
         else:
             raise NotImplementedError()
-
-        return loss + F.mse_loss(x_start, x_recon)
+        if x_start is not None:
+            return loss + F.mse_loss(x_start, x_recon)
+        return loss
 
     def reconstruction_loop(self, x, x_noisy, x_cond, position, t):
         device = next(self.eps_model.parameters()).device
