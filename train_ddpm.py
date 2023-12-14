@@ -238,7 +238,9 @@ def train(model, train_loader, optimizer, block_size, device):
 
         metrics = {'ema_loss': ema_loss, 'loss': loss_agg}
         logger.log_metrics(metrics, phase='Train', aggregate=True, n=curr_block.shape[0])
+    print("#"*30)
     print(model.count)
+    print("#"*30)
     model.count = 0
 
 # @torch.no_grad()
