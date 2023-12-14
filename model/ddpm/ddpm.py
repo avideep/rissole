@@ -148,7 +148,8 @@ class DDPM(nn.Module):
         if noise is None:
             noise = torch.randn_like(x_start)
 
-        t = torch.randint(0, self.n_steps, (x_start.shape[0],), dtype=torch.int64).to(x_start.device)  # t ~ Uniform({1, ..., T})
+        # t = torch.randint(0, self.n_steps, (x_start.shape[0],), dtype=torch.int64).to(x_start.device)  # t ~ Uniform({1, ..., T})
+        t = torch.full((x_start.shape[0],), torch.randint(0, self.n_steps, (1,)).item(), dtype=torch.int64).to(x_start.device)
 
         x_noisy = self.q_sample(x_start, t, noise)
         predicted_noise = self.eps_model(x_noisy, x_cond, t, position)
@@ -183,8 +184,8 @@ class DDPM(nn.Module):
         # create noise
         img = x_noisy
         # print(img.shape, cond_block.shape)
-        for t_index in reversed(range(0, b)):
-            img = self.p_sample(img, x_cond, position, t, t_index)
+        for t_index in reversed(range(0, t[0])):
+            img = self.p_sample(img, x_cond, position, torch.full((b,), t_index, device=device, dtype=torch.int64), t_index)
         return img
     
     @torch.no_grad()
