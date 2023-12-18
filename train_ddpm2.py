@@ -258,10 +258,11 @@ def validate(model, vqgan_model, data_loader, block_size, device):
     _, _, x = vqgan_model(x)
     n_images = 8
     _, c, w, h = x.size()
-    images = [0]*1000
-    img = torch.ones((n_images, c, w, h), device=device)
+    images_decoded = images = [0]*model.n_steps
+    img_decoded = img = torch.ones((n_images, c, w, h), device=device)
     for i in range(len(images)):
         images[i] = img
+        images_decoded[i] = img_decoded
     prev_block = torch.rand_like(img[:, :, :block_size, :block_size]).to(device)
     # prev_block = model.encode(prev_block)
     # low_res_cond = sample_from_vae(n_images, vae, device)
@@ -278,9 +279,10 @@ def validate(model, vqgan_model, data_loader, block_size, device):
             position += 1
             for k in range(len(curr_block)):
                 images[k][:, :, i:i+block_size, j:j+block_size] = curr_block[k]
-            
+    for k in range(len(images)):
+        images_decoded[k] = vqgan_model.decode(images[k])
     logger.tensorboard.add_figure('Val: DDPM',
-                                  get_sample_images_for_ddpm(images, n_ims=n_images),
+                                  get_sample_images_for_ddpm(images_decoded, n_ims=n_images),
                                   global_step=logger.global_train_step)
 
 
