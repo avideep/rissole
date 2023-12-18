@@ -145,124 +145,94 @@ def main():
     print(f"Total training time: {elapsed_time}")
 
 
-# def train(model, train_loader, optimizer, criterion, device):
-#     model.train()
-
-#     for x, _ in tqdm(train_loader, desc="Training"):
-#         x = x.to(device)
-
-#         x_hat, z_e, z_q = model(x)
-
-#         # compute loss
-#         if criterion.disc_weight > 0 and logger.global_train_step > criterion.disc_warm_up_iters:
-#             # update generator
-#             loss, logs = criterion(x_hat, x, z_e, z_q, disc_training=True)
-#             optimizer.zero_grad()
-#             loss.backward()
-#             optimizer.step()
-#             # update discriminator
-#             _, disc_logs = criterion.update_discriminator(x_hat, x)
-#             logs.update(disc_logs)
-#         else:
-#             loss, logs = criterion(x_hat, x, z_e, z_q)
-#             optimizer.zero_grad()
-#             loss.backward()
-#             optimizer.step()
-
-#         logger.log_metrics(logs, phase='train', aggregate=True, n=x.shape[0])
-
-#         if logger.global_train_step % 150 == 0:
-#             log2tensorboard_vqvae(logger, 'Train', logs.keys())
-#             ims = get_original_reconstruction_image(x, x_hat, n_ims=8)
-#             logger.tensorboard.add_image('Train: Original vs. Reconstruction', ims,
-#                                          global_step=logger.global_train_step, dataformats='HWC')
-
-#         logger.global_train_step += 1
-
-#     log2tensorboard_vqvae(logger, 'Train', logger.epoch.keys())
-
-def train(model, train_loader, optimizer, criterion, block_size, device):
+def train(model, train_loader, optimizer, criterion, device):
     model.train()
+
     for x, _ in tqdm(train_loader, desc="Training"):
-        #num_blocks = x // block_size
         x = x.to(device)
-        x_recon = torch.zeros_like(x).to(device)
-        optimizer.zero_grad()
-        for i in range(0, x.shape[-1], block_size):
-            for j in range(0, x.shape[-1], block_size):
-                block = x[:, :, i:i+block_size, j:j+block_size]
-                x_hat, z_e, z_q = model(block)
-                x_recon[:, :, i:i+block_size, j:j+block_size] = x_hat
-                # compute loss
-                if criterion.disc_weight > 0 and logger.global_train_step > criterion.disc_warm_up_iters:
-                    # update generator
-                    loss, logs = criterion(x_hat, block, z_e, z_q, disc_training=True)
-                    optimizer.zero_grad()
-                    loss.backward()
-                    # update discriminator
-                    _, disc_logs = criterion.update_discriminator(x_hat, block)
-                    logs.update(disc_logs)
-                else:
-                    loss, logs = criterion(x_hat, block, z_e, z_q)
-                    optimizer.zero_grad()
-                    loss.backward()
-        optimizer.step()
+
+        x_hat, z_e, z_q = model(x)
+
+        # compute loss
+        if criterion.disc_weight > 0 and logger.global_train_step > criterion.disc_warm_up_iters:
+            # update generator
+            loss, logs = criterion(x_hat, x, z_e, z_q, disc_training=True)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            # update discriminator
+            _, disc_logs = criterion.update_discriminator(x_hat, x)
+            logs.update(disc_logs)
+        else:
+            loss, logs = criterion(x_hat, x, z_e, z_q)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
         logger.log_metrics(logs, phase='train', aggregate=True, n=x.shape[0])
 
         if logger.global_train_step % 150 == 0:
             log2tensorboard_vqvae(logger, 'Train', logs.keys())
-            ims = get_original_reconstruction_image(x, x_recon, n_ims=8)
+            ims = get_original_reconstruction_image(x, x_hat, n_ims=8)
             logger.tensorboard.add_image('Train: Original vs. Reconstruction', ims,
-                                        global_step=logger.global_train_step, dataformats='HWC')
+                                         global_step=logger.global_train_step, dataformats='HWC')
 
         logger.global_train_step += 1
 
     log2tensorboard_vqvae(logger, 'Train', logger.epoch.keys())
 
-
-# @torch.no_grad()
-# def validate(model, val_loader, criterion, device):
-#     model.eval()
-
-#     is_first = True
-#     logs_keys = None
-#     for x, _ in tqdm(val_loader, desc="Validation"):
+# def train(model, train_loader, optimizer, criterion, block_size, device):
+#     model.train()
+#     for x, _ in tqdm(train_loader, desc="Training"):
+#         #num_blocks = x // block_size
 #         x = x.to(device)
+#         x_recon = torch.zeros_like(x).to(device)
+#         optimizer.zero_grad()
+#         for i in range(0, x.shape[-1], block_size):
+#             for j in range(0, x.shape[-1], block_size):
+#                 block = x[:, :, i:i+block_size, j:j+block_size]
+#                 x_hat, z_e, z_q = model(block)
+#                 x_recon[:, :, i:i+block_size, j:j+block_size] = x_hat
+#                 # compute loss
+#                 if criterion.disc_weight > 0 and logger.global_train_step > criterion.disc_warm_up_iters:
+#                     # update generator
+#                     loss, logs = criterion(x_hat, block, z_e, z_q, disc_training=True)
+#                     optimizer.zero_grad()
+#                     loss.backward()
+#                     # update discriminator
+#                     _, disc_logs = criterion.update_discriminator(x_hat, block)
+#                     logs.update(disc_logs)
+#                 else:
+#                     loss, logs = criterion(x_hat, block, z_e, z_q)
+#                     optimizer.zero_grad()
+#                     loss.backward()
+#         optimizer.step()
+#         logger.log_metrics(logs, phase='train', aggregate=True, n=x.shape[0])
 
-#         x_hat, z_e, z_q = model(x)
+#         if logger.global_train_step % 150 == 0:
+#             log2tensorboard_vqvae(logger, 'Train', logs.keys())
+#             ims = get_original_reconstruction_image(x, x_recon, n_ims=8)
+#             logger.tensorboard.add_image('Train: Original vs. Reconstruction', ims,
+#                                         global_step=logger.global_train_step, dataformats='HWC')
 
-#         # compute loss
-#         loss, logs = criterion(x_hat, x, z_e, z_q)
+#         logger.global_train_step += 1
 
-#         # logging
-#         logs = {'val_' + k: v for k, v in logs.items()}
-#         if logs_keys is None:
-#             logs_keys = logs.keys()
-#         logger.log_metrics(logs, phase='val', aggregate=True, n=x.shape[0])
+#     log2tensorboard_vqvae(logger, 'Train', logger.epoch.keys())
 
-#         if is_first:
-#             is_first = False
-#             ims = get_original_reconstruction_image(x, x_hat, n_ims=8)
-#             logger.tensorboard.add_image('Val: Original vs. Reconstruction', ims,
-#                                          global_step=logger.global_train_step, dataformats='HWC')
 
-#     log2tensorboard_vqvae(logger, 'Val', logs_keys)
-def validate(model, val_loader, criterion, block_size, device):
+@torch.no_grad()
+def validate(model, val_loader, criterion, device):
     model.eval()
 
     is_first = True
     logs_keys = None
     for x, _ in tqdm(val_loader, desc="Validation"):
         x = x.to(device)
-        x_recon = torch.zeros_like(x).to(device)
-        #prev_block = torch.rand_like(x[:, :, :block_size, :block_size]).to(device)
-        for i in range(0, x.shape[-1], block_size):
-            for j in range(0, x.shape[-1], block_size):
-                block = x[:, :, i:i+block_size, j:j+block_size]
-                x_hat, z_e, z_q = model(block)
-                x_recon[:, :, i:i+block_size, j:j+block_size] = x_hat
-                # compute loss
-                loss, logs = criterion(x_hat, block, z_e, z_q)
+
+        x_hat, z_e, z_q = model(x)
+
+        # compute loss
+        loss, logs = criterion(x_hat, x, z_e, z_q)
 
         # logging
         logs = {'val_' + k: v for k, v in logs.items()}
@@ -272,12 +242,42 @@ def validate(model, val_loader, criterion, block_size, device):
 
         if is_first:
             is_first = False
-            ims = get_original_reconstruction_image(x, x_recon, n_ims=8)
+            ims = get_original_reconstruction_image(x, x_hat, n_ims=8)
             logger.tensorboard.add_image('Val: Original vs. Reconstruction', ims,
-                                            global_step=logger.global_train_step, dataformats='HWC')
+                                         global_step=logger.global_train_step, dataformats='HWC')
 
     log2tensorboard_vqvae(logger, 'Val', logs_keys)
-    return loss
+# def validate(model, val_loader, criterion, block_size, device):
+#     model.eval()
+
+#     is_first = True
+#     logs_keys = None
+#     for x, _ in tqdm(val_loader, desc="Validation"):
+#         x = x.to(device)
+#         x_recon = torch.zeros_like(x).to(device)
+#         #prev_block = torch.rand_like(x[:, :, :block_size, :block_size]).to(device)
+#         for i in range(0, x.shape[-1], block_size):
+#             for j in range(0, x.shape[-1], block_size):
+#                 block = x[:, :, i:i+block_size, j:j+block_size]
+#                 x_hat, z_e, z_q = model(block)
+#                 x_recon[:, :, i:i+block_size, j:j+block_size] = x_hat
+#                 # compute loss
+#                 loss, logs = criterion(x_hat, block, z_e, z_q)
+
+#         # logging
+#         logs = {'val_' + k: v for k, v in logs.items()}
+#         if logs_keys is None:
+#             logs_keys = logs.keys()
+#         logger.log_metrics(logs, phase='val', aggregate=True, n=x.shape[0])
+
+#         if is_first:
+#             is_first = False
+#             ims = get_original_reconstruction_image(x, x_recon, n_ims=8)
+#             logger.tensorboard.add_image('Val: Original vs. Reconstruction', ims,
+#                                             global_step=logger.global_train_step, dataformats='HWC')
+
+#     log2tensorboard_vqvae(logger, 'Val', logs_keys)
+#     return loss
 
 
 if __name__ == "__main__":

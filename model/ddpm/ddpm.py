@@ -142,10 +142,17 @@ class DDPM(nn.Module):
         Returns:
             loss between the noise and the predicted noise of the epsilon model
         """
+        print("x_start_shape:" , x_start.shape)
+        print("x_cond_shape:" , x_cond.shape)
+        print("position_shape:" , position.shape)
+        print("low_res_cond_shape:" , low_res_cond.shape)
         x_start = self.encode(x_start)
         x_cond = self.encode(x_cond)
         if low_res_cond is not None:
             low_res_cond = self.encode(low_res_cond)
+        print("after encoding x_start_shape:" , x_start.shape)
+        print("after encoding x_cond_shape:" , x_cond.shape)
+        print("after encoding low_res_cond_shape:" , low_res_cond.shape)
         if noise is None:
             noise = torch.randn_like(x_start)
 
