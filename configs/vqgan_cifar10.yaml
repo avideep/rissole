@@ -7,7 +7,7 @@ model:
     n_heads: 4
 
   latent_dim: 10
-  n_embeddings: 256
+  n_embeddings: 1024
 
 loss:
   rec_loss_type: 'L2'
