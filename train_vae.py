@@ -31,7 +31,7 @@ parser.add_argument('--epochs', default=5,
                     type=int, metavar='N', help='Number of epochs to run (default: 2)')
 parser.add_argument('--batch-size', default=64, metavar='N',
                     type=int, help='Mini-batch size (default: 64)')
-parser.add_argument('--image-size', default=32, metavar='N',
+parser.add_argument('--image-size', default=64, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
 parser.add_argument('--beta', default=1, metavar='N',
                     type=int, help='beta in beta-VAE')
