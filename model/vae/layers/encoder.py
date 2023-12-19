@@ -9,10 +9,10 @@ class Encoder(nn.Module):
             self._conv(in_channels, 32), # 31 x 31
             self._conv(32, 32), # 14 x 14
             self._conv(32, 64), # 6 x 6
-            self._conv(64, 64), # 2 x 2
+            self._conv(64, 64), # 2 x 2 
         )
-        self.fc_mu = nn.Linear(256, latent_dim)
-        self.fc_var = nn.Linear(256, latent_dim)
+        self.fc_mu = nn.Linear(1024, latent_dim)
+        self.fc_var = nn.Linear(1024, latent_dim)
 
     def _conv(self, in_channels, out_channels):
         return nn.Sequential(

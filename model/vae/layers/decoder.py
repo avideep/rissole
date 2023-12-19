@@ -14,7 +14,7 @@ class Decoder(nn.Module):
             self._deconv(32, 3),
             nn.Sigmoid()
         )
-        self.fc_z = nn.Linear(latent_dim, 256)
+        self.fc_z = nn.Linear(latent_dim, 1024)
     def _deconv(self, in_channels, out_channels, out_padding=0):
         return nn.Sequential(
             nn.ConvTranspose2d(
