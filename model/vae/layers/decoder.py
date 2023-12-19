@@ -25,6 +25,7 @@ class Decoder(nn.Module):
             nn.LeakyReLU(0.2)
         )
     def forward(self, z):
+        print(z.shape)
         z = self.fc_z(z)
         print(z.shape)
         z = z.view(-1, 16, 4, 4)
