@@ -8,9 +8,9 @@ class Decoder(nn.Module):
 
         # decoder
         self.decoder = nn.Sequential(
-            self._deconv(16, 64),
+            self._deconv(16, 32),
+            self._deconv(32, 64),
             self._deconv(64, 32),
-            self._deconv(32, 32),
             self._deconv(32, 3),
             nn.Sigmoid()
         )
@@ -26,7 +26,9 @@ class Decoder(nn.Module):
         )
     def forward(self, z):
         z = self.fc_z(z)
+        print(z.shape)
         z = z.view(-1, 16, 4, 4)
+        print(z.shape)
         return self.decoder(z)
 
 
