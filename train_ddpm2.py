@@ -159,9 +159,9 @@ def main():
         logger.global_train_step = logger.running_epoch
         print(f"Epoch [{epoch + 1} / {args.epochs}]")
 
-        train(ddpm, vqgan_model, data.train, optimizer, block_size, device)
+        train(ddpm, data.train, optimizer, block_size, device)
 
-        validate(ddpm, vqgan_model, data.val, block_size, device)
+        validate(ddpm, data.val, block_size, device)
 
         # logging
         output = ' - '.join([f'{k}: {v.avg:.4f}' for k, v in logger.epoch.items()])
@@ -206,13 +206,13 @@ def debug(model,data_loader,device):
     print(model.encode(x).shape)
 
 
-def train(model, vqgan_model, train_loader, optimizer, block_size, device):
+def train(model, train_loader, optimizer, block_size, device):
     model.train()
 
     ema_loss = None
     for x, _ in tqdm(train_loader, desc="Training"):
         x = x.to(device)
-        _, _, x = vqgan_model(x) # encoding the whole image
+        model.encode(x) # encoding the whole image
         # x_resized = F.resize(x, [block_size], antialias = True)
         # x_resized = sample_from_vae(x.shape[0],vae, device)
         prev_block = torch.rand_like(x[:, :, :block_size, :block_size]).to(device)
@@ -251,12 +251,12 @@ def train(model, vqgan_model, train_loader, optimizer, block_size, device):
 #     return images
 
 @torch.no_grad()
-def validate(model, vqgan_model, data_loader, block_size, device):
+def validate(model, data_loader, block_size, device):
     model.eval()
     x, _ = next(iter(data_loader))
     _, oc, ow, oh = x.size()
     x = x.to(device)
-    _, _, x = vqgan_model(x)
+    x = model.encode(x)
     n_images = 8
     _, c, w, h = x.size()
     images_decoded = images = [0]*model.n_steps
@@ -281,7 +281,7 @@ def validate(model, vqgan_model, data_loader, block_size, device):
             for k in range(len(curr_block)):
                 images[k][:, :, i:i+block_size, j:j+block_size] = curr_block[k]
     for k in range(len(images)):
-        images_decoded[k] = vqgan_model.decode(images[k])
+        images_decoded[k] = model.decode(images[k])
     logger.tensorboard.add_figure('Val: DDPM',
                                   get_sample_images_for_ddpm(images_decoded, n_ims=n_images),
                                   global_step=logger.global_train_step)
