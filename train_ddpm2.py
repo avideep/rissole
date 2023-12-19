@@ -212,7 +212,7 @@ def train(model, train_loader, optimizer, block_size, device):
     ema_loss = None
     for x, _ in tqdm(train_loader, desc="Training"):
         x = x.to(device)
-        model.encode(x) # encoding the whole image
+        x = model.encode(x) # encoding the whole image
         # x_resized = F.resize(x, [block_size], antialias = True)
         # x_resized = sample_from_vae(x.shape[0],vae, device)
         prev_block = torch.rand_like(x[:, :, :block_size, :block_size]).to(device)
