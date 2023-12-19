@@ -255,6 +255,7 @@ def validate(model, vqgan_model, data_loader, block_size, device):
     model.eval()
     x, _ = next(iter(data_loader))
     _, oc, ow, oh = x.size()
+    x = x.to(device)
     _, _, x = vqgan_model(x)
     n_images = 8
     _, c, w, h = x.size()
