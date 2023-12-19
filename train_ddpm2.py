@@ -62,7 +62,7 @@ parser.add_argument('--load-ckpt_unet', default=None, metavar='PATH',
                     dest='load_checkpoint_unet', help='Load model checkpoint and continue training')
 parser.add_argument('--log-save-interval', default=5, type=int, metavar='N',
                     dest='save_interval', help="Interval in which logs are saved to disk (default: 5)")
-parser.add_argument('--vqgan-path', default='checkpoints/vqgan/23-07-25_093150/best_model.pt',
+parser.add_argument('--vqgan-path', default='checkpoints/vqgan/23-12-18_175014/best_model.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
