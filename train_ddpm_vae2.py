@@ -36,7 +36,7 @@ parser.add_argument('--batch-size', default=128, metavar='N',
                     type=int, help='Mini-batch size (default: 64)')
 parser.add_argument('--image-size', default=64, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
-parser.add_argument('--block-size', default=32, metavar='N',
+parser.add_argument('--block-size', default=16, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
 parser.add_argument('--image-channels', default=3, metavar='N',
                     type=int, help='Number of image channels (default: 3)')
