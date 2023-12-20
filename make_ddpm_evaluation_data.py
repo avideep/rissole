@@ -19,7 +19,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 parser = argparse.ArgumentParser(description="PyTorch Second Stage Training")
 parser.add_argument('--image-size', default=64, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
-parser.add_argument('--block-size', default=32, metavar='N',
+parser.add_argument('--block-size', default=16, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
 parser.add_argument('--image-count', default=50,
                     type=int, help='number of images that should be generated for comparison')
@@ -136,26 +136,30 @@ def sample_images_gen(model, block_size, n_images, image_path, image_size, devic
             sample_size = max_sample_size
         else:
             sample_size = n_images
-        images = [0]*1000
+        images_decoded = images = [0]*model.n_steps
         channels = 3
-        img = torch.randn((n_images, channels, image_size, image_size), device=device)
+        img = torch.randn((n_images, channels, image_size//2, image_size//2), device=device)
         for i in range(len(images)):
             images[i] = img
         prev_block = torch.rand_like(img[:, :, :block_size, :block_size]).to(device)
         prev_block = model.encode(prev_block)
         # low_res_cond = sample_from_vae(n_images, vae, device)
         # low_res_cond = model.encode(low_res_cond)
+        position = 0
         for i in range(0, img.shape[-1], block_size):
             for j in range(0, img.shape[-1], block_size):
                 # if j==0 and i>0:
                 #     prev_block = img[:,:,i-block_size:i, j:j+block_size]
                 #     prev_block = model.encode(prev_block)
-                curr_block = model.sample(16, prev_block, batch_size=n_images, channels=latent_dim)
+                block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
+                curr_block = model.sample(16, prev_block, block_pos, batch_size=n_images, channels=latent_dim)
                 prev_block = curr_block[0]
                 for k in range(len(curr_block)):
-                    images[k][:, :, i:i+block_size, j:j+block_size] = model.decode(curr_block[k])
+                    images[k][:, :, i:i+block_size, j:j+block_size] = curr_block[k]
+        for k in range(len(images)):
+            images_decoded[k] = model.decode(images[k])
         # images = model.sample(16, batch_size=sample_size, channels=latent_dim, sample_step=sample_step)
-        images = [img for img in images[0]]
+        images = [img for img in images_decoded[0]]
         images = torch.stack(images)
         # images = model.decode(images)
 
