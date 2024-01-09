@@ -179,21 +179,9 @@ class DDPM(nn.Module):
             Returns:
                 loss between the noise and the predicted noise of the epsilon model
             """
-            # print("x_start_shape:" , x_start.shape)
-            # print("x_cond_shape:" , x_cond.shape)
-            # print("position_shape:" , position.shape)
-            # print("low_res_cond_shape:" , low_res_cond.shape)
-            # x_start = self.encode(x_start)
-            # x_cond = self.encode(x_cond)
-            # if low_res_cond is not None:
-            #     low_res_cond = self.encode(low_res_cond)
-            # print("after encoding x_start_shape:" , x_start.shape)
-            # print("after encoding x_cond_shape:" , x_cond.shape)
-            # print("after encoding low_res_cond_shape:" , low_res_cond.shape)
             if noise is None:
                 noise = torch.randn_like(x_start)
 
-            # t = torch.randint(0, self.n_steps, (x_start.shape[0],), dtype=torch.int64).to(x_start.device)  # t ~ Uniform({1, ..., T})
             random_time = torch.randint(0, self.n_steps, (1,)).item()
             t = torch.full((x_start.shape[0],), random_time, dtype=torch.int64).to(x_start.device)
 
@@ -201,10 +189,6 @@ class DDPM(nn.Module):
             if low_res_cond is not None:
                 predicted_noise = self.eps_model(x_noisy, x_cond, t, position, low_res_cond)
             predicted_noise = self.eps_model(x_noisy, x_cond, t, position)
-            # if random_time <= 5:
-            #     x_recon = self.reconstruction_loop(x_start, x_noisy, x_cond, position, t)
-            #     self.count += 1
-            #     return self.calculate_loss(noise, predicted_noise, x_start, x_recon)
             return self.calculate_loss(noise, predicted_noise)
 
     def calculate_loss(self, noise, predicted_noise, x_start = None, x_recon = None):
