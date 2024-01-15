@@ -16,7 +16,7 @@ from utils.helpers import load_model_checkpoint, save_model_checkpoint
 from utils.helpers import log2tensorboard_vqvae
 from utils.helpers import count_parameters
 from utils.visualization import get_original_reconstruction_image
-from dataloader import CIFAR10, PlantNet, CelebA
+from dataloader import CIFAR10, PlantNet, CelebA, CelebAHQ
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
@@ -33,7 +33,7 @@ parser.add_argument('--epochs', default=100,
                     type=int, metavar='N', help='Number of epochs to run (default: 2)')
 parser.add_argument('--batch-size', default=64, metavar='N',
                     type=int, help='Mini-batch size (default: 64)')
-parser.add_argument('--image-size', default=64, metavar='N',
+parser.add_argument('--image-size', default=256, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
 parser.add_argument('--block-size', default=32, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
@@ -90,9 +90,8 @@ def main():
         # data = CIFAR10(args.batch_size)
         data = CelebA(args.batch_size)
     else:
-        data_cfg = yaml.load(open(args.data_config, 'r'), Loader=yaml.Loader)
-        data = PlantNet(**data_cfg, batch_size=args.batch_size,
-                        image_size=args.image_size, num_workers=args.num_workers)
+        # data_cfg = yaml.load(open(args.data_config, 'r'), Loader=yaml.Loader)
+        data = CelebAHQ(args.batch_size)
 
     # read config file for model
     cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
@@ -156,6 +155,7 @@ def train(model, train_loader, optimizer, criterion, device):
         x = x.to(device)
 
         x_hat, z_e, z_q = model(x)
+        print(z_q.shape)
         # compute loss
         if criterion.disc_weight > 0 and logger.global_train_step > criterion.disc_warm_up_iters:
             # update generator
