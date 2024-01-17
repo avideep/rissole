@@ -8,7 +8,7 @@ class Decoder(nn.Module):
         self.latent_dim = latent_dim
         # decoder
         self.decoder = nn.Sequential(
-            self._deconv(latent_dim // 4, 64),
+            self._deconv(64, 64),
             self._deconv(64, 32),
             self._deconv(32, 32),
             self._deconv(32, 3),
