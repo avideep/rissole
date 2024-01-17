@@ -3,6 +3,7 @@ model:
     in_channels: 3
     channels:
       - 16
+      - 32
     dim_keys: 64
     n_heads: 4
 
