@@ -16,7 +16,7 @@ from utils.helpers import load_model_checkpoint, save_model_checkpoint
 from utils.helpers import log2tensorboard_vqvae
 from utils.helpers import count_parameters
 from utils.visualization import get_original_reconstruction_image
-from dataloader import PlantNet, CelebA
+from dataloader import PlantNet, CelebA, CelebAHQ
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
@@ -157,9 +157,8 @@ def main():
         # data = CIFAR10(args.batch_size)
         data = CelebA(args.batch_size, args.image_size)
     else:
-        data_cfg = yaml.load(open(args.data_config, 'r'), Loader=yaml.Loader)
-        data = PlantNet(**data_cfg, batch_size=args.batch_size,
-                        image_size=args.image_size, num_workers=args.num_workers)
+        data = CelebAHQ(args.batch_size)
+
 
     # read config file for model
     cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
