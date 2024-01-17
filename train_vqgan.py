@@ -97,7 +97,8 @@ def main():
     cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
 
     # create model and optimizer
-    model = VQGANLight(**cfg['model'])
+    # model = VQGANLight(**cfg['model'])
+    model = VQGAN(**cfg['model'])
     print("{:<16}: {}".format('model params', count_parameters(model)))
     model.to(device)
 
@@ -155,7 +156,7 @@ def train(model, train_loader, optimizer, criterion, device):
         x = x.to(device)
 
         x_hat, z_e, z_q = model(x)
-        # print(z_q.shape)
+        print(z_q.shape)
         # compute loss
         if criterion.disc_weight > 0 and logger.global_train_step > criterion.disc_warm_up_iters:
             # update generator
