@@ -4,7 +4,7 @@ import torch.nn as nn
 class Encoder(nn.Module):
     def __init__(self, in_channels: int, latent_dim: int):
         super(Encoder, self).__init__()
-
+        self.latent_dim = latent_dim
         self.encoder = nn.Sequential(
             self._conv(in_channels, 32), # 31 x 31
             self._conv(32, 32), # 14 x 14

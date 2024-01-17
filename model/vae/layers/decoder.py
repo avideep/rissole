@@ -5,7 +5,7 @@ import torch.nn as nn
 class Decoder(nn.Module):
     def __init__(self, latent_dim: int, out_channels: int):
         super(Decoder, self).__init__()
-
+        self.latent_dim = latent_dim
         # decoder
         self.decoder = nn.Sequential(
             self._deconv(64, 64),
@@ -26,7 +26,7 @@ class Decoder(nn.Module):
         )
     def forward(self, z):
         z = self.fc_z(z)
-        z = z.view(-1, 64, 2, 2)
+        z = z.view(-1, self.latent_dim // 4, 2, 2)
         return self.decoder(z)
 
 
