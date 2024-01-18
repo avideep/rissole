@@ -1,5 +1,5 @@
 import torch.nn as nn
-from residual import Residual_Block
+from .residual import Residual_Block
 
 # class Encoder(nn.Module):
 #     def __init__(self, in_channels: int, latent_dim: int):

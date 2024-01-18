@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from residual import Residual_Block
+from .residual import Residual_Block
 
 # class Decoder(nn.Module):
 #     def __init__(self, latent_dim: int, out_channels: int):
