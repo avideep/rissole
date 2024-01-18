@@ -127,9 +127,7 @@ def train(model, train_loader, optimizerE, optimizerG, beta, device, args):
         lossE = loss_rec  * args.weight_rec + loss_margin * args.weight_kl
         log['lossE'] = lossE.item()
         optimizerE.zero_grad()       
-        lossE.backward(retain_graph=True)
-        # nn.utils.clip_grad_norm(model.encoder.parameters(), 1.0)            
-        optimizerE.step()
+        
         
         #========= Update G ==================           
         rec_mu, rec_logvar = model.encode(rec)
@@ -139,11 +137,13 @@ def train(model, train_loader, optimizerE, optimizerG, beta, device, args):
         lossG_fake_kl = model.kl_loss(fake_mu, fake_logvar).mean()
         
         lossG = (lossG_rec_kl + lossG_fake_kl)* 0.5 * args.weight_kl      
-
         optimizerG.zero_grad()
-        lossG.backward(retain_graph = True)
         log['lossG'] = lossG.item()
-        # nn.utils.clip_grad_norm(model.decoder.parameters(), 1.0)
+        lossE.backward(retain_graph=True)
+        lossG.backward(retain_graph = True)
+        nn.utils.clip_grad_norm(model.encoder.parameters(), 1.0)            
+        nn.utils.clip_grad_norm(model.decoder.parameters(), 1.0)
+        optimizerE.step()
         optimizerG.step()
         if logs_keys is None:
             logs_keys = log.keys()
