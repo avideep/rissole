@@ -70,11 +70,6 @@ parser.add_argument('--beta1', type=float, default=0.5, help='beta1 for adam. de
 parser.add_argument("--momentum", default=0.9, type=float, help="Momentum, Default: 0.9")
 parser.add_argument('--clip', type=float, default=100, help='the threshod for clipping gradient')
 parser.add_argument("--step", type=int, default=500, help="Sets the learning rate to the initial LR decayed by momentum every n epochs, Default: n=500")
-parser.add_argument('--cuda', action='store_true', help='enables cuda')
-parser.add_argument('--outf', default='results/', help='folder to output images and model checkpoints')
-parser.add_argument('--manualSeed', type=int, help='manual seed')
-parser.add_argument('--tensorboard', action='store_true', help='enables tensorboard')
-parser.add_argument("--pretrained", default="", type=str, help="path to pretrained model (default: none)")
 
 logger = Logger(LOG_DIR)
 torch.autograd.set_detect_anomaly(True)
