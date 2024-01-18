@@ -1,2 +1,2 @@
-from .vae import VAE
+from .vae import VAE, IntroVAE
 from model import *
