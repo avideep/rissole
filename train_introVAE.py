@@ -27,13 +27,13 @@ LOG_DIR = os.path.join(pathlib.Path(__file__).parent.resolve(), 'logs')
 TIMESTAMP = datetime.now().strftime('%y-%m-%d_%H%M%S')
 
 parser = argparse.ArgumentParser(description="PyTorch Auxilliary VAE Training")
-parser.add_argument('--name', '-n', default='',
+parser.add_argument('--name', '-n', default='introVAE',
                     type=str, metavar='NAME', help='Model name and folder where logs are stored')
 parser.add_argument('--epochs', default=500,
                     type=int, metavar='N', help='Number of epochs to run (default: 2)')
-parser.add_argument('--batch-size', default=128, metavar='N',
+parser.add_argument('--batch-size', default=16, metavar='N',
                     type=int, help='Mini-batch size (default: 64)')
-parser.add_argument('--image-size', default=32, metavar='N',
+parser.add_argument('--image-size', default=256, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
 parser.add_argument('--beta', default=1, metavar='N',
                     type=int, help='beta in beta-VAE')
@@ -65,19 +65,6 @@ parser.add_argument("--hdim", type=int, default=512, help="dim of the latent cod
 parser.add_argument("--save_iter", type=int, default=1, help="Default=1")
 parser.add_argument("--test_iter", type=int, default=1000, help="Default=1000")
 parser.add_argument('--nrow', type=int, help='the number of images in each row', default=8)
-parser.add_argument('--trainfiles', default="celeba_hq_attr.list", type=str, help='the list of training files')
-parser.add_argument('--dataroot', default="/home/huaibo.huang/data/celeba-hq/celeba-hq-wx-256", type=str, help='path to dataset')
-parser.add_argument('--trainsize', type=int, help='number of training data', default=28000)
-parser.add_argument('--workers', type=int, help='number of data loading workers', default=12)
-parser.add_argument('--batchSize', type=int, default=64, help='input batch size')
-parser.add_argument('--input_height', type=int, default=128, help='the height  of the input image to network')
-parser.add_argument('--input_width', type=int, default=None, help='the width  of the input image to network')
-parser.add_argument('--output_height', type=int, default=128, help='the height  of the output image to network')
-parser.add_argument('--output_width', type=int, default=None, help='the width  of the output image to network')
-parser.add_argument('--crop_height', type=int, default=None, help='the width  of the output image to network')
-parser.add_argument('--crop_width', type=int, default=None, help='the width  of the output image to network')
-parser.add_argument("--nEpochs", type=int, default=500, help="number of epochs to train for")
-parser.add_argument("--start_epoch", default=1, type=int, help="Manual epoch number (useful on restarts)")
 parser.add_argument('--lr', type=float, default=0.0002, help='learning rate, default=0.0002')
 parser.add_argument('--beta1', type=float, default=0.5, help='beta1 for adam. default=0.5')
 parser.add_argument("--momentum", default=0.9, type=float, help="Momentum, Default: 0.9")
