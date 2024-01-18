@@ -4,7 +4,6 @@ import torch.optim as optim
 from torch.autograd import Variable
 import torch.nn.functional as F
 import torch.multiprocessing as multiprocessing
-from torch.nn.parallel import data_parallel
 
 from model.vae.layers import Encoder
 from model.vae.layers import Decoder
@@ -58,11 +57,11 @@ class IntroVAE(nn.Module):
         return y
     
     def encode(self, x):  
-        mu, logvar = data_parallel(self.encoder, x)
+        mu, logvar = self.encoder(x)
         return mu, logvar
         
     def decode(self, z):        
-        y = data_parallel(self.decoder, z)
+        y = self.decoder(z)
         return y
     
     def reparameterize(self, mu, logvar):
