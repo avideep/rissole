@@ -1,5 +1,5 @@
 import torch.nn as nn
-
+import torch
 
 class ResidualLayer(nn.Module):
     def __init__(self, in_channels: int, out_channels: int, hidden_dim: int):
