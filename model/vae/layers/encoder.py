@@ -1,5 +1,5 @@
 import torch.nn as nn
-from .residual import Residual_Block
+from model.vae.layers.residual import Residual_Block
 import torch
 
 # class Encoder(nn.Module):
