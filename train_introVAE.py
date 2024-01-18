@@ -143,7 +143,7 @@ def train(model, train_loader, optimizerE, optimizerG, beta, device, args):
         log['lossG'] = lossG.item()
                     
         # optimizerG.zero_grad()
-        lossG.backward()
+        lossG.backward(retain_graph = True)
         # nn.utils.clip_grad_norm(model.decoder.parameters(), 1.0)
         optimizerG.step()
         if logs_keys is None:
