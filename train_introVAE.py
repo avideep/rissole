@@ -77,7 +77,7 @@ parser.add_argument('--tensorboard', action='store_true', help='enables tensorbo
 parser.add_argument("--pretrained", default="", type=str, help="path to pretrained model (default: none)")
 
 logger = Logger(LOG_DIR)
-
+torch.autograd.set_detect_anomaly(True)
 def loss_fn(x, recon_x, mu, logvar, beta):
     log = {}
     recon_loss = nn.MSELoss(reduction='sum')(recon_x, x)
