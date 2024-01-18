@@ -1,5 +1,6 @@
 import torch.nn as nn
 from .residual import Residual_Block
+import torch
 
 # class Encoder(nn.Module):
 #     def __init__(self, in_channels: int, latent_dim: int):
@@ -62,7 +63,7 @@ class Encoder(nn.Module):
 if __name__ == "__main__":
     import torch
 
-    ipt = torch.randn((16, 3, 64, 64))
+    ipt = torch.randn((16, 3, 256, 256))
     enc = Encoder(3, 10)
     mu, logvar = enc(ipt)
 
