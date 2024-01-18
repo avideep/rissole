@@ -33,6 +33,34 @@ class ResidualLayer(nn.Module):
         x += identity
 
         return x
+class Residual_Block(nn.Module): 
+    def __init__(self, in_channels: int = 64, out_channels: int = 64, groups: int = 1, scale = 1.0):
+        super(Residual_Block, self).__init__()
+        
+        mid_channels=int(out_channels*scale)
+        
+        if in_channels is not out_channels:
+          self.conv_expand = nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1, stride=1, padding=0, groups=1, bias=False)
+        else:
+          self.conv_expand = None
+          
+        self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=mid_channels, kernel_size=3, stride=1, padding=1, groups=groups, bias=False)
+        self.bn1 = nn.BatchNorm2d(mid_channels)
+        self.relu1 = nn.LeakyReLU(0.2, inplace=True)
+        self.conv2 = nn.Conv2d(in_channels=mid_channels, out_channels=out_channels, kernel_size=3, stride=1, padding=1, groups=groups, bias=False)
+        self.bn2 = nn.BatchNorm2d(out_channels)
+        self.relu2 = nn.LeakyReLU(0.2, inplace=True)
+        
+    def forward(self, x): 
+        if self.conv_expand is not None:
+          identity_data = self.conv_expand(x)
+        else:
+          identity_data = x
+
+        output = self.relu1(self.bn1(self.conv1(x)))
+        output = self.conv2(output)
+        output = self.relu2(self.bn2(torch.add(output,identity_data)))
+        return output 
 
 
 if __name__ == "__main__":
