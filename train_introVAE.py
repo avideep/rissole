@@ -85,24 +85,15 @@ def loss_fn(x, recon_x, mu, logvar, beta):
 
 def train(model, train_loader, optimizerE, optimizerG, beta, device, args):
     model.train()
-
     logs_keys = None
     for x, _ in tqdm(train_loader, desc="Training"):
         log = {}
         x = x.to(device)
         if len(x.size()) == 3:
                 x = x.unsqueeze(0)
-                
         batch_size = x.size(0)
-        
-        noise = Variable(torch.zeros(batch_size, args.hdim).normal_(0, 1)).cuda() 
-            
-        real= Variable(x).cuda() 
-        
-        # info = "\n====> Cur_iter: [{}]: Epoch[{}]({}/{}): time: {:4.4f}: ".format(cur_iter, epoch, iteration, len(train_data_loader), time.time()-start_time)
-        
-        # loss_info = '[loss_rec, loss_margin, lossE_real_kl, lossE_rec_kl, lossE_fake_kl, lossG_rec_kl, lossG_fake_kl,]'
-            
+        noise = Variable(torch.zeros(batch_size, args.hdim).normal_(0, 1)).cuda()
+        real= Variable(x).cuda()             
         #=========== Update E ================ 
         fake = model.sample(noise)            
         real_mu, real_logvar, z, rec = model(real)
@@ -117,13 +108,9 @@ def train(model, train_loader, optimizerE, optimizerG, beta, device, args):
         loss_margin = lossE_real_kl + \
                     (F.relu(args.m_plus-lossE_rec_kl) + \
                     F.relu(args.m_plus-lossE_fake_kl)) * 0.5 * args.weight_neg
-        
-                    
         lossE = loss_rec  * args.weight_rec + loss_margin * args.weight_kl
         log['lossE'] = lossE.item()
         optimizerE.zero_grad()       
-        
-        
         #========= Update G ==================           
         rec_mu, rec_logvar = model.encode(rec)
         fake_mu, fake_logvar = model.encode(fake)
@@ -159,7 +146,6 @@ def train(model, train_loader, optimizerE, optimizerG, beta, device, args):
 @torch.no_grad()
 def validate(model, val_loader, beta, device):
     model.eval()
-
     is_first = True
     logs_keys = None
     for x, _ in tqdm(val_loader, desc="Validation"):
