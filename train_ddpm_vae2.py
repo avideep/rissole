@@ -9,8 +9,8 @@ import yaml
 
 from tqdm import tqdm
 import torchvision.transforms.functional as F
-from dataloader import PlantNet, CIFAR10, CelebA
-from model import VQGANLight, VAE
+from dataloader import PlantNet, CIFAR10, CelebA, CelebAHQ
+from model import VQGANLight, VAE, IntroVAE
 from model.ddpm.ddpm import DDPM
 from model.unet import UNet
 from model.unet.unet_light import UNetLight
@@ -32,9 +32,9 @@ parser.add_argument('--name', '-n', default='',
                     type=str, metavar='NAME', help='Model name and folder where logs are stored')
 parser.add_argument('--epochs', default=100,
                     type=int, metavar='N', help='Number of epochs to run (default: 100)')
-parser.add_argument('--batch-size', default=128, metavar='N',
+parser.add_argument('--batch-size', default=16, metavar='N',
                     type=int, help='Mini-batch size (default: 64)')
-parser.add_argument('--image-size', default=64, metavar='N',
+parser.add_argument('--image-size', default=256, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
 parser.add_argument('--block-size', default=16, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
@@ -62,11 +62,11 @@ parser.add_argument('--load-ckpt_unet', default=None, metavar='PATH',
                     dest='load_checkpoint_unet', help='Load model checkpoint and continue training')
 parser.add_argument('--log-save-interval', default=5, type=int, metavar='N',
                     dest='save_interval', help="Interval in which logs are saved to disk (default: 5)")
-parser.add_argument('--vqgan-path', default='checkpoints/vqgan/23-12-18_175014/best_model.pt',
+parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-01-17_130119/best_model.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
-parser.add_argument('--vae-path', default='checkpoints/vae/23-12-20_004312/best_model.pt',
+parser.add_argument('--vae-path', default='checkpoints/vae/introVAE/24-01-18_162139/best_model.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 parser.add_argument('--vae-config', default='configs/vae.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vaeyaml)')
@@ -111,9 +111,7 @@ def main():
         #data = CIFAR10(args.batch_size)
         data = CelebA(args.batch_size)
     else:
-        data_cfg = yaml.load(open(args.data_config, 'r'), Loader=yaml.Loader)
-        data = PlantNet(**data_cfg, batch_size=args.batch_size, image_size=args.image_size,
-                        num_workers=args.num_workers)
+        data = CelebAHQ(args.batch_size)
 
     # read config file for model
     cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
@@ -134,7 +132,8 @@ def main():
     print("{:<16}: {}".format('DDPM model params', count_parameters(ddpm)))
     ddpm.to(device)
 
-    vae = VAE(**cfg_vae['model'])
+    # vae = VAE(**cfg_vae['model'])
+    vae = IntroVAE(**cfg_vae['model'])
     vae, _, _ = load_model_checkpoint(vae, args.vae_path, device)
     vae.to(device)
     global vae_latent_dim
@@ -217,9 +216,12 @@ def train(model, train_loader, optimizer, block_size, vae, device):
     for x, _ in tqdm(train_loader, desc="Training"):
         x = x.to(device)
         x = model.encode(x)
+        print(x.shape)
         # x_resized = F.resize(x, [block_size], antialias = True)
         x_resized = sample_from_vae(x.shape[0],vae, device)
+        print(x_resized.shape)
         x_resized = model.encode(x_resized)
+        print(x_resized.shape)
         prev_block = torch.rand_like(x[:, :, :block_size, :block_size]).to(device)
         optimizer.zero_grad()
         position = 0
