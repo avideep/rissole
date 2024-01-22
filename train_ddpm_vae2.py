@@ -216,12 +216,12 @@ def train(model, train_loader, optimizer, block_size, vae, device):
     for x, _ in tqdm(train_loader, desc="Training"):
         x = x.to(device)
         x = model.encode(x)
-        print(x.shape)
+        # print(x.shape)
         # x_resized = F.resize(x, [block_size], antialias = True)
         x_resized = sample_from_vae(x.shape[0],vae, device)
-        print(x_resized.shape)
+        # print(x_resized.shape)
         x_resized = model.encode(x_resized)
-        print(x_resized.shape)
+        # print(x_resized.shape)
         prev_block = torch.rand_like(x[:, :, :block_size, :block_size]).to(device)
         optimizer.zero_grad()
         position = 0
@@ -268,7 +268,7 @@ def validate(model, data_loader, block_size, vae, device):
     prev_block = torch.rand_like(img[:, :, :block_size, :block_size]).to(device)
     # prev_block = model.encode(prev_block)
     low_res_cond = sample_from_vae(n_images, vae, device)
-    low_res_cond = F.resize(low_res_cond, [block_size*2], antialias = True)
+    # low_res_cond = F.resize(low_res_cond, [block_size*2], antialias = True)
     low_res_cond = model.encode(low_res_cond)
     position = 0
     for i in range(0, img.shape[-1], block_size):
