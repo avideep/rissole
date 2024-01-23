@@ -150,7 +150,6 @@ def main():
         args.epochs += start_epoch
     else:
         start_epoch = 0
-    # debug(ddpm, data.train, device)
 
     # start run
     logger.log_hparams({**cfg, **vars(args)})
@@ -172,7 +171,6 @@ def main():
         loss = logger.epoch['ema_loss'].avg
         if loss < prev_loss:
         # save logs and checkpoint
-        #if (epoch + 1) % args.save_interval == 0 or (epoch + 1) == args.epochs:
             logger.save()
             if args.save_checkpoint:
                 save_model_checkpoint(unet, f"{running_ckpt_dir_unet}", logger)
@@ -184,25 +182,6 @@ def main():
     elapsed_time = timer(t_start, time.time())
     print(f"Total training time: {elapsed_time}")
 
-
-# def train(model, train_loader, optimizer, device):
-#     model.train()
-
-#     ema_loss = None
-#     for x, _ in tqdm(train_loader, desc="Training"):
-#         optimizer.zero_grad()
-#         x = x.to(device)
-#         loss = model.p_losses(x)
-#         loss.backward()
-#         optimizer.step()
-
-#         if ema_loss is None:
-#             ema_loss = loss.item()
-#         else:
-#             ema_loss = 0.9 * ema_loss + 0.1 * loss.item()
-
-#         metrics = {'ema_loss': ema_loss, 'loss': loss}
-#         logger.log_metrics(metrics, phase='Train', aggregate=True, n=x.shape[0])
 def debug(model,data_loader,device):
     x, _ = next(iter(data_loader))
     x = x.to(device)
@@ -216,12 +195,9 @@ def train(model, train_loader, optimizer, block_size, vae, device):
     for x, _ in tqdm(train_loader, desc="Training"):
         x = x.to(device)
         x = model.encode(x)
-        # print(x.shape)
         x_hat = sample_from_vae(x.shape[0],vae, device)
-        # print(x_resized.shape)
         x_resized = model.encode(x_hat)
         low_res_cond = F.resize(x_resized, [block_size], antialias = True)
-        # print(x_resized.shape)
         prev_block = torch.rand_like(x[:, :, :block_size, :block_size]).to(device)
         optimizer.zero_grad()
         position = 0
@@ -266,24 +242,16 @@ def validate(model, data_loader, block_size, vae, device):
     for i in range(len(images)):
         images[i] = img
     prev_block = torch.rand_like(img[:, :, :block_size, :block_size]).to(device)
-    # prev_block = model.encode(prev_block)
     low_res_cond = sample_from_vae(n_images, vae, device)
-    # low_res_cond = F.resize(low_res_cond, [block_size*2], antialias = True)
     low_res_cond = model.encode(low_res_cond)
     low_res_cond = F.resize(low_res_cond, [block_size], antialias = True)
-    # print(low_res_cond.shape)
     position = 0
     for i in range(0, img.shape[-1], block_size):
         for j in range(0, img.shape[-1], block_size):
-            # if j==0 and i>0:
-            #     prev_block = img[:,:,i-block_size:i, j:j+block_size]
-            #     prev_block = model.encode(prev_block)
             block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
             curr_block = model.sample(block_size, prev_block, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim)
-            # print(len(curr_block), curr_block[0].shape)
             curr_block[0] = curr_block[0] - low_res_cond 
             prev_block = curr_block[0]
-
             position += 1
             for k in range(len(curr_block)):
                 images[k][:, :, i:i+block_size, j:j+block_size] = curr_block[k]
