@@ -270,6 +270,7 @@ def validate(model, data_loader, block_size, vae, device):
     low_res_cond = sample_from_vae(n_images, vae, device)
     # low_res_cond = F.resize(low_res_cond, [block_size*2], antialias = True)
     low_res_cond = model.encode(low_res_cond)
+    print(low_res_cond.shape)
     position = 0
     for i in range(0, img.shape[-1], block_size):
         for j in range(0, img.shape[-1], block_size):
@@ -278,8 +279,10 @@ def validate(model, data_loader, block_size, vae, device):
             #     prev_block = model.encode(prev_block)
             block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
             curr_block = model.sample(block_size, prev_block, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim)
+            print(len(curr_block), curr_block[0].shape)
             curr_block[0] = curr_block[0] - low_res_cond 
             prev_block = curr_block[0]
+
             position += 1
             for k in range(len(curr_block)):
                 images[k][:, :, i:i+block_size, j:j+block_size] = curr_block[k]
