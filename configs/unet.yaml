@@ -15,7 +15,7 @@ n_heads: 4  # number of heads for self-attention
 
 # UNet
 channels:
-  - 32
   - 64
   - 128
   - 256
+  - 512
