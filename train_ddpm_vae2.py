@@ -217,10 +217,10 @@ def train(model, train_loader, optimizer, block_size, vae, device):
         x = x.to(device)
         x = model.encode(x)
         # print(x.shape)
-        # x_resized = F.resize(x, [block_size], antialias = True)
-        x_resized = sample_from_vae(x.shape[0],vae, device)
+        x_hat = sample_from_vae(x.shape[0],vae, device)
         # print(x_resized.shape)
-        x_resized = model.encode(x_resized)
+        x_resized = model.encode(x_hat)
+        low_res_cond = F.resize(x_resized, [block_size], antialias = True)
         # print(x_resized.shape)
         prev_block = torch.rand_like(x[:, :, :block_size, :block_size]).to(device)
         optimizer.zero_grad()
@@ -232,7 +232,7 @@ def train(model, train_loader, optimizer, block_size, vae, device):
                 #         prev_block = x[:,:,i-block_size:i, j:j+block_size]
                 block_pos = torch.full((x.size(0),),position, dtype=torch.int64).to(device)
                 curr_block = x[:, :, i:i+block_size, j:j+block_size]
-                loss = model.p_losses2(curr_block, prev_block, block_pos, x_resized)
+                loss = model.p_losses2(curr_block, prev_block, block_pos, low_res_cond)
                 prev_block = curr_block
                 loss_agg += loss.item()
                 loss.backward()
@@ -270,7 +270,8 @@ def validate(model, data_loader, block_size, vae, device):
     low_res_cond = sample_from_vae(n_images, vae, device)
     # low_res_cond = F.resize(low_res_cond, [block_size*2], antialias = True)
     low_res_cond = model.encode(low_res_cond)
-    print(low_res_cond.shape)
+    low_res_cond = F.resize(low_res_cond, [block_size], antialias = True)
+    # print(low_res_cond.shape)
     position = 0
     for i in range(0, img.shape[-1], block_size):
         for j in range(0, img.shape[-1], block_size):
@@ -279,7 +280,7 @@ def validate(model, data_loader, block_size, vae, device):
             #     prev_block = model.encode(prev_block)
             block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
             curr_block = model.sample(block_size, prev_block, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim)
-            print(len(curr_block), curr_block[0].shape)
+            # print(len(curr_block), curr_block[0].shape)
             curr_block[0] = curr_block[0] - low_res_cond 
             prev_block = curr_block[0]
 
