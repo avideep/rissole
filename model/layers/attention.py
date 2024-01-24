@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from torch import nn, einsum
 from einops import rearrange, repeat
 from inspect import isfunction
 
@@ -110,43 +111,85 @@ def zero_module(module):
 def Normalize(in_channels):
     return torch.nn.GroupNorm(num_groups=32, num_channels=in_channels, eps=1e-6, affine=True)
 
+# class CrossAttention(nn.Module):
+#     def __init__(self, n_channels: int, n_channels_cond: int, dim_keys: int = 32, n_heads: int = 2):
+#         """
+#         Applies self-attention like in "Attention Is All You Need" (https://arxiv.org/abs/1706.03762)
+#         to an image by reshaping it into a sequence. Only for small field sizes.
+
+#         Args:
+#             n_channels (int): Number of channels of the input feature maps
+#             n_channels_cond (int): Number of channels of the condtional feature map
+#             dim_keys (int): Dimension of queries, keys, and values
+#             n_heads (int): Number of heads for attention
+#         """
+#         super().__init__()
+#         self.scale = dim_keys ** -0.5
+#         self.heads = n_heads
+#         hidden_dim = dim_keys * n_heads
+#         self.to_q = nn.Conv2d(n_channels, hidden_dim, 1, bias=False)
+#         self.to_k = nn.Conv2d(n_channels_cond, hidden_dim, 1, bias=False)
+#         self.to_v = nn.Conv2d(n_channels_cond, hidden_dim, 1, bias=False)
+#         self.to_out = nn.Conv2d(hidden_dim, n_channels, 1)
+
+#     def forward(self, x, cond):
+#         b, c, h, w = x.shape
+#         q = self.to_q(x)
+#         k = self.to_k(cond)
+#         v = self.to_v(cond)
+#         q, k, v = map(lambda t: rearrange(t, "b (h c) x y -> b h c (x y)", h=self.heads), (q, k , v))
+#         q = q * self.scale
+
+#         sim = torch.einsum("b h d i, b h d j -> b h i j", q, k)
+#         sim = sim - sim.amax(dim=-1, keepdim=True).detach()
+#         attention = sim.softmax(dim=-1)
+
+#         res = torch.einsum("b h i j, b h d j -> b h i d", attention, v)
+#         res = rearrange(res, "b h (x y) d -> b (h d) x y", x=h, y=w)
+
+#         return self.to_out(res)
 class CrossAttention(nn.Module):
-    def __init__(self, n_channels: int, n_channels_cond: int, dim_keys: int = 32, n_heads: int = 2):
-        """
-        Applies self-attention like in "Attention Is All You Need" (https://arxiv.org/abs/1706.03762)
-        to an image by reshaping it into a sequence. Only for small field sizes.
-
-        Args:
-            n_channels (int): Number of channels of the input feature maps
-            n_channels_cond (int): Number of channels of the condtional feature map
-            dim_keys (int): Dimension of queries, keys, and values
-            n_heads (int): Number of heads for attention
-        """
+    def __init__(self, query_dim, context_dim=None, heads=8, dim_head=64, dropout=0.):
         super().__init__()
-        self.scale = dim_keys ** -0.5
-        self.heads = n_heads
-        hidden_dim = dim_keys * n_heads
-        self.to_q = nn.Conv2d(n_channels, hidden_dim, 1, bias=False)
-        self.to_k = nn.Conv2d(n_channels_cond, hidden_dim, 1, bias=False)
-        self.to_v = nn.Conv2d(n_channels_cond, hidden_dim, 1, bias=False)
-        self.to_out = nn.Conv2d(hidden_dim, n_channels, 1)
+        inner_dim = dim_head * heads
+        context_dim = default(context_dim, query_dim)
 
-    def forward(self, x, cond):
-        b, c, h, w = x.shape
+        self.scale = dim_head ** -0.5
+        self.heads = heads
+
+        self.to_q = nn.Linear(query_dim, inner_dim, bias=False)
+        self.to_k = nn.Linear(context_dim, inner_dim, bias=False)
+        self.to_v = nn.Linear(context_dim, inner_dim, bias=False)
+
+        self.to_out = nn.Sequential(
+            nn.Linear(inner_dim, query_dim),
+            nn.Dropout(dropout)
+        )
+
+    def forward(self, x, context=None, mask=None):
+        h = self.heads
+
         q = self.to_q(x)
-        k = self.to_k(cond)
-        v = self.to_v(cond)
-        q, k, v = map(lambda t: rearrange(t, "b (h c) x y -> b h c (x y)", h=self.heads), (q, k , v))
-        q = q * self.scale
+        context = default(context, x)
+        k = self.to_k(context)
+        v = self.to_v(context)
 
-        sim = torch.einsum("b h d i, b h d j -> b h i j", q, k)
-        sim = sim - sim.amax(dim=-1, keepdim=True).detach()
-        attention = sim.softmax(dim=-1)
+        q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> (b h) n d', h=h), (q, k, v))
 
-        res = torch.einsum("b h i j, b h d j -> b h i d", attention, v)
-        res = rearrange(res, "b h (x y) d -> b (h d) x y", x=h, y=w)
+        sim = einsum('b i d, b j d -> b i j', q, k) * self.scale
 
-        return self.to_out(res)
+        if exists(mask):
+            mask = rearrange(mask, 'b ... -> b (...)')
+            max_neg_value = -torch.finfo(sim.dtype).max
+            mask = repeat(mask, 'b j -> (b h) () j', h=h)
+            sim.masked_fill_(~mask, max_neg_value)
+
+        # attention, what we cannot get enough of
+        attn = sim.softmax(dim=-1)
+
+        out = einsum('b i j, b j d -> b i d', attn, v)
+        out = rearrange(out, '(b h) n d -> b n (h d)', h=h)
+        return self.to_out(out)
 
 class LinearAttention(nn.Module):
     def __init__(self, n_channels: int, dim_keys: int = 32, n_heads: int = 2):
