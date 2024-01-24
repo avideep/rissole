@@ -251,6 +251,7 @@ def validate(model, data_loader, block_size, vae, device):
             block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
             curr_block = model.sample(block_size, prev_block, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim)
             curr_block[0] = curr_block[0] - low_res_cond 
+            curr_block[0] = curr_block[0] - prev_block
             prev_block = curr_block[0]
             position += 1
             for k in range(len(curr_block)):
