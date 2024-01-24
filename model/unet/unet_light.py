@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 from model.layers import UpSample, DownSample
-from model.layers import LinearAttention, Attention, CrossAttention
+from model.layers import LinearAttention, Attention, CrossAttention, SpatialTransformer
 from model.layers import TimeEmbedding, ConditionalEmbedding
 from model.layers import ResidualBlockUNet
 
@@ -12,7 +12,7 @@ class UNetLight(nn.Module):
     def __init__(self,
                  in_channels: int, time_emb_dim: int, pos_emb_dim: int, cond_emb_dim: int,
                  channels: List[int] = None, n_groups: int = 8, 
-                 dim_keys: int = 64, n_heads: int = 4):
+                 dim_keys: int = 64, n_heads: int = 4, use_spatial_transformer: bool = True):
         """
         U-Net model, first proposed in (https://arxiv.org/abs/1505.04597) and equipped for
         our DDPM with (linear) attention and time conditioning.
@@ -51,8 +51,10 @@ class UNetLight(nn.Module):
                 nn.ModuleList([
                     ResidualBlockUNet(prev_channel, c, time_emb_dim, cond_emb_dim, n_groups),
                     # CrossAttention(c, cond_emb_dim, dim_keys, n_heads),
+                    SpatialTransformer(c, n_heads, dim_keys, depth=1, context_dim= cond_emb_dim),
                     ResidualBlockUNet(c, c, time_emb_dim, cond_emb_dim, n_groups),
                     # CrossAttention(c, cond_emb_dim, dim_keys, n_heads),
+                    SpatialTransformer(c, n_heads, dim_keys, depth=1, context_dim= cond_emb_dim),
                     nn.GroupNorm(1, c),
                     DownSample(c)
                 ])
@@ -62,7 +64,9 @@ class UNetLight(nn.Module):
         # bottleneck
         self.mid_block1 = ResidualBlockUNet(self.channels[-1], self.channels[-1], time_emb_dim, cond_emb_dim, n_groups)
         # self.mid_attn = CrossAttention( self.channels[-1], cond_emb_dim, dim_keys, n_heads)
-        self.mid_attn = Attention(self.channels[-1], dim_keys, n_heads)
+        # self.mid_attn = Attention(self.channels[-1], dim_keys, n_heads)
+        self.mid_attn = SpatialTransformer(c, n_heads, dim_keys, depth=1, context_dim= cond_emb_dim),
+
         self.mid_block2 = ResidualBlockUNet(self.channels[-1], self.channels[-1], time_emb_dim, cond_emb_dim, n_groups)
 
         # expanding path
@@ -74,8 +78,10 @@ class UNetLight(nn.Module):
                     UpSample(prev_channel),
                     ResidualBlockUNet(prev_channel + c, c, time_emb_dim, cond_emb_dim, n_groups),
                     # CrossAttention(c, cond_emb_dim, dim_keys, n_heads),
+                    SpatialTransformer(c, n_heads, dim_keys, depth=1, context_dim= cond_emb_dim),
                     ResidualBlockUNet(c, c, time_emb_dim, cond_emb_dim, n_groups),
                     # CrossAttention(c, cond_emb_dim, dim_keys, n_heads),
+                    SpatialTransformer(c, n_heads, dim_keys, depth=1, context_dim= cond_emb_dim),
                     nn.GroupNorm(1, c),
                 ])
             )
@@ -96,12 +102,12 @@ class UNetLight(nn.Module):
 
         if l is not None:
             # down sample
-            # for block1, attn1, block2, attn2, norm, downsample in self.down_blocks:
-            for block1, block2, norm, downsample in self.down_blocks:
+            for block1, attn1, block2, attn2, norm, downsample in self.down_blocks:
+            # for block1, block2, norm, downsample in self.down_blocks:
                 x = block1(x, c, t, p, l)
-                # x = attn1(x, c)
+                x = attn1(x, c)
                 x = block2(x, c, t, p, l)
-                # x = attn2(x, c)
+                x = attn2(x, c)
                 x = norm(x)
                 skips.append(x)
                 x = downsample(x)
@@ -113,14 +119,14 @@ class UNetLight(nn.Module):
             x = self.mid_block2(x, c, t, p, l)
 
             # up sample
-            # for upsample, block1, attn1, block2, attn2, norm in self.up_blocks:
-            for upsample, block1, block2, norm in self.up_blocks:
+            for upsample, block1, attn1, block2, attn2, norm in self.up_blocks:
+            # for upsample, block1, block2, norm in self.up_blocks:
                 x = upsample(x)
                 x = torch.cat((x, skips.pop()), dim=1)
                 x = block1(x, c, t, p, l)
-                # x = attn1(x, c)
+                x = attn1(x, c)
                 x = block2(x, c, t, p , l)
-                # x = attn2(x, c)
+                x = attn2(x, c)
                 x = norm(x)
         else:
             # down sample
