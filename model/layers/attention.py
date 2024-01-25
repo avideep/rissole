@@ -354,9 +354,10 @@ class SpatialTransformer(nn.Module):
         print('x.shape after rearrange', x.shape)
         print('cond.shape', context.shape)
         if context is not None:
+            b_c, c_c, h_c, w_c = context.shape
             context = self.proj_in_cond(self.norm_cond(context))
             print('context shape after norm cond and proj_in_cond', context.shape)
-            context = rearrange(context, 'b c h w -> b (h w) c')
+            context = rearrange(context, 'b_c c_c h_c w_c -> b_c (h_c w_c) c_c')
         for block in self.transformer_blocks:
             x = block(x, context=context)
         x = rearrange(x, 'b (h w) c -> b c h w', h=h, w=w)
