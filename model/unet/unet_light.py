@@ -132,31 +132,31 @@ class UNetLight(nn.Module):
                 x = norm(x)
         else:
             # down sample
-            # for block1, attn1, block2, attn2, norm, downsample in self.down_blocks:
-            for block1, block2, norm, downsample in self.down_blocks:
+            for block1, attn1, block2, attn2, norm, downsample in self.down_blocks:
+            # for block1, block2, norm, downsample in self.down_blocks:
                 x = block1(x, c, t, p)
-                # x = attn1(x, c)
+                x = attn1(x, c)
                 x = block2(x, c, t, p)
-                # x = attn2(x, c)
+                x = attn2(x, c)
                 x = norm(x)
                 skips.append(x)
                 x = downsample(x)
 
             # bottleneck
             x = self.mid_block1(x, c, t, p)
-            # x = self.mid_attn(x, c)
-            x = self.mid_attn(x)
+            x = self.mid_attn(x, c)
+            # x = self.mid_attn(x)
             x = self.mid_block2(x, c, t, p)
 
             # up sample
-            # for upsample, block1, attn1, block2, attn2, norm in self.up_blocks:
-            for upsample, block1, block2, norm in self.up_blocks:
+            for upsample, block1, attn1, block2, attn2, norm in self.up_blocks:
+            # for upsample, block1, block2, norm in self.up_blocks:
                 x = upsample(x)
                 x = torch.cat((x, skips.pop()), dim=1)
                 x = block1(x, c, t, p)
-                # x = attn1(x, c)
+                x = attn1(x, c)
                 x = block2(x, c, t, p)
-                # x = attn2(x, c)
+                x = attn2(x, c)
                 x = norm(x)
 
         # output convolution
