@@ -193,7 +193,7 @@ class CrossAttention(nn.Module):
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> (b h) n d', h=h), (q, k, v))
 
         sim = einsum('b i d, b j d -> b i j', q, k) * self.scale
-        print('sim.shape: ' sim.shape)
+        print('sim.shape: ', sim.shape)
         if exists(mask):
             mask = rearrange(mask, 'b ... -> b (...)')
             max_neg_value = -torch.finfo(sim.dtype).max
@@ -204,7 +204,7 @@ class CrossAttention(nn.Module):
         attn = sim.softmax(dim=-1)
         out = einsum('b i j, b j d -> b i d', attn, v)
         out = rearrange(out, '(b h) n d -> b n (h d)', h=h)
-        print('out:' out.shape)
+        print('out:', out.shape)
         return self.to_out(out)
 
 class LinearAttention(nn.Module):
