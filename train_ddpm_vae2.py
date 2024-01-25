@@ -202,6 +202,7 @@ def train(model, train_loader, optimizer, block_size, vae, device):
         optimizer.zero_grad()
         position = 0
         loss_agg = 0
+        print(low_res_cond.shape)
         for i in range(0, x.shape[-1], block_size):
             for j in range(0, x.shape[-1], block_size):
                 # if j==0 and i>0:
