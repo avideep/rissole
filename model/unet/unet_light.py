@@ -143,7 +143,7 @@ class UNetLight(nn.Module):
             # bottleneck
             x = self.mid_block1(x, c, t, p)
             # x = self.mid_attn(x, c)
-            x = self.mid_attn(x)
+            x = self.mid_attn(x, c)
             x = self.mid_block2(x, c, t, p)
 
             # up sample
