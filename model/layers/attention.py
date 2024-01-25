@@ -137,8 +137,10 @@ class CrossAttention(nn.Module):
             nn.Dropout(dropout)
         )
 
-    def forward(self, x, cond):
+    def forward(self, x, cond = None):
         b, c, h, w = x.shape
+        if cond is None:
+            cond = x
         q = self.to_q(x)
         k = self.to_k(cond)
         v = self.to_v(cond)
