@@ -189,7 +189,7 @@ class CrossAttention(nn.Module):
         print('cond.shape:', cond.shape)
         k = self.to_k(cond)
         v = self.to_v(cond)
-
+        print('q.shape, k.shape, v.shape:', q.shape, k.shape, v.shape)
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> (b h) n d', h=h), (q, k, v))
 
         sim = einsum('b i d, b j d -> b i j', q, k) * self.scale
