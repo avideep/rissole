@@ -314,6 +314,7 @@ class SpatialTransformer(nn.Module):
         self.in_channels = in_channels
         inner_dim = n_heads * d_head
         self.norm = Normalize(in_channels)
+        self.norm_cond = Normalize(context_dim)
 
         self.proj_in = nn.Conv2d(in_channels,
                                  inner_dim,
@@ -321,13 +322,13 @@ class SpatialTransformer(nn.Module):
                                  stride=1,
                                  padding=0)
 
-        # if context_dim is not None:
-        #     self.proj_in_cond = nn.Conv2d(context_dim,
-        #                     inner_dim,
-        #                     kernel_size=1,
-        #                     stride=1,
-        #                     padding=0)
-        print('context_dm', context_dim)
+        if context_dim is not None:
+            self.proj_in_cond = nn.Conv2d(context_dim,
+                            inner_dim,
+                            kernel_size=1,
+                            stride=1,
+                            padding=0)
+        # print('context_dm', context_dim)
         self.transformer_blocks = nn.ModuleList(
             [BasicTransformerBlock(inner_dim, n_heads, d_head, dropout=dropout, context_dim=context_dim)
                 for d in range(depth)]
@@ -352,7 +353,9 @@ class SpatialTransformer(nn.Module):
         x = rearrange(x, 'b c h w -> b (h w) c')
         print('x.shape after rearrange', x.shape)
         print('cond.shape', context.shape)
-        # context = rearrange(context, )
+        if context is not None:
+            context = self.proj_in_cond(self.norm_cond(context))
+            context = rearrange(context, 'b (h w) c -> b c h w', h=h, w=w)
         for block in self.transformer_blocks:
             x = block(x, context=context)
         x = rearrange(x, 'b (h w) c -> b c h w', h=h, w=w)
