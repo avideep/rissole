@@ -115,6 +115,8 @@ class UNetLight(nn.Module):
             # bottleneck
             x = self.mid_block1(x, c, t, p, l)
             # x = self.mid_attn(x, c)
+            print('x.type:', type(x))
+            print('c.type: ', type(c))
             x = self.mid_attn(x, c)
             x = self.mid_block2(x, c, t, p, l)
 
