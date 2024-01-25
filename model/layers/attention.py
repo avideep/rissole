@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch import nn, einsum
 from einops import rearrange, repeat
 from inspect import isfunction
-import torchvision.nn.functional as F
+import torch.nn.functional as F
 
 def exists(val):
     return val is not None
