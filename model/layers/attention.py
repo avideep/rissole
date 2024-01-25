@@ -139,8 +139,9 @@ class CrossAttention(nn.Module):
 
     def forward(self, x, cond = None):
         b, c, h, w = x.shape
-        if cond is None:
-            cond = x
+        # if cond is None:
+        #     cond = x
+        cond = default(cond, x)
         q = self.to_q(x)
         k = self.to_k(cond)
         v = self.to_v(cond)
