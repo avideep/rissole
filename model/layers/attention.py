@@ -286,6 +286,14 @@ class BasicTransformerBlock(nn.Module):
         return checkpoint(self._forward, (x, context), self.parameters(), self.checkpoint)
 
     def _forward(self, x, context=None):
+        print('x.shape before LayerNorm 1', x.shape)
+
+        x_norm = self.norm1(x)
+        print('x.shape after Layer norm 1', x_norm.shape)
+
+        x_attn = self.attn1(x_norm)
+        print('x.shape after self-attention', x_attn.shape)
+        x = x + x_attn
         x = self.attn1(self.norm1(x)) + x
         x = self.attn2(self.norm2(x), cond=context) + x
         x = self.ff(self.norm3(x)) + x
@@ -328,9 +336,15 @@ class SpatialTransformer(nn.Module):
         # note: if no context is given, cross-attention defaults to self-attention
         b, c, h, w = x.shape
         x_in = x
+        print('x.shape', x.shape)
         x = self.norm(x)
+        print('x.shape after group norm', x.shape)
         x = self.proj_in(x)
+        print('x.shape after proj_in', x.shape)
+        
         x = rearrange(x, 'b c h w -> b (h w) c')
+        print('x.shape after rearrange', x.shape)
+
         for block in self.transformer_blocks:
             x = block(x, context=context)
         x = rearrange(x, 'b (h w) c -> b c h w', h=h, w=w)
