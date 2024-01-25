@@ -172,9 +172,9 @@ class CrossAttention(nn.Module):
         self.to_q = nn.Linear(n_channels, hidden_dim, bias=False)
         self.to_k = nn.Linear(n_channels_cond, hidden_dim, bias=False)
         self.to_v = nn.Linear(n_channels_cond, hidden_dim, bias=False)
-        print('n_channels:', n_channels)
-        print('n_channels_cond',n_channels_cond)
-        print('hidden_dim', hidden_dim)
+        # print('n_channels:', n_channels)
+        # print('n_channels_cond',n_channels_cond)
+        # print('hidden_dim', hidden_dim)
         self.to_out = nn.Sequential(
             nn.Linear(hidden_dim, n_channels),
             nn.Dropout(dropout)
@@ -185,15 +185,15 @@ class CrossAttention(nn.Module):
 
         q = self.to_q(x)
         cond = default(cond, x)
-        print('x.shape: ',x.shape)
-        print('cond.shape:', cond.shape)
+        # print('x.shape: ',x.shape)
+        # print('cond.shape:', cond.shape)
         k = self.to_k(cond)
         v = self.to_v(cond)
-        print('q.shape, k.shape, v.shape:', q.shape, k.shape, v.shape)
+        # print('q.shape, k.shape, v.shape:', q.shape, k.shape, v.shape)
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> (b h) n d', h=h), (q, k, v))
 
         sim = einsum('b i d, b j d -> b i j', q, k) * self.scale
-        print('sim.shape: ', sim.shape)
+        # print('sim.shape: ', sim.shape)
         if exists(mask):
             mask = rearrange(mask, 'b ... -> b (...)')
             max_neg_value = -torch.finfo(sim.dtype).max
@@ -204,7 +204,7 @@ class CrossAttention(nn.Module):
         attn = sim.softmax(dim=-1)
         out = einsum('b i j, b j d -> b i d', attn, v)
         out = rearrange(out, '(b h) n d -> b n (h d)', h=h)
-        print('out:', out.shape)
+        # print('out:', out.shape)
         return self.to_out(out)
 
 class LinearAttention(nn.Module):
@@ -290,16 +290,16 @@ class BasicTransformerBlock(nn.Module):
         return checkpoint(self._forward, (x, context), self.parameters(), self.checkpoint)
 
     def _forward(self, x, context=None):
-        print('x.shape before LayerNorm 1', x.shape)
+        # print('x.shape before LayerNorm 1', x.shape)
 
         x_norm = self.norm1(x)
-        print('x.shape after Layer norm 1', x_norm.shape)
+        # print('x.shape after Layer norm 1', x_norm.shape)
 
         x_attn = self.attn1(x_norm)
-        print('x.shape after self-attention', x_attn.shape)
+        # print('x.shape after self-attention', x_attn.shape)
         x = x + x_attn
         x = self.attn1(self.norm1(x)) + x
-        print('context shape before sending to CrossAttn', context.shape)
+        # print('context shape before sending to CrossAttn', context.shape)
         x = self.attn2(self.norm2(x), cond=context) + x
         x = self.ff(self.norm3(x)) + x
         return x
@@ -333,7 +333,7 @@ class SpatialTransformer(nn.Module):
                             kernel_size=1,
                             stride=1,
                             padding=0)
-        # print('context_dm', context_dim)
+        # # print('context_dm', context_dim)
         self.transformer_blocks = nn.ModuleList(
             [BasicTransformerBlock(inner_dim, n_heads, d_head, dropout=dropout, context_dim=inner_dim)
                 for d in range(depth)]
@@ -349,21 +349,21 @@ class SpatialTransformer(nn.Module):
         # note: if no context is given, cross-attention defaults to self-attention
         b, c, h, w = x.shape
         x_in = x
-        print('x.shape', x.shape)
+        # print('x.shape', x.shape)
         x = self.norm(x)
-        print('x.shape after group norm', x.shape)
+        # print('x.shape after group norm', x.shape)
         x = self.proj_in(x)
-        print('x.shape after proj_in', x.shape)
-        print('x')
+        # print('x.shape after proj_in', x.shape)
+        # print('x')
         x = rearrange(x, 'b c h w -> b (h w) c')
-        print('x.shape after rearrange', x.shape)
-        print('cond.shape', context.shape)
+        # print('x.shape after rearrange', x.shape)
+        # print('cond.shape', context.shape)
         if context is not None:
             b_c, c_c, h_c, w_c = context.shape
             context = self.proj_in_cond(self.norm_cond(context))
-            print('context shape after norm cond and proj_in_cond', context.shape)
+            # print('context shape after norm cond and proj_in_cond', context.shape)
             context = rearrange(context, 'b_c c_c h_c w_c -> b_c (h_c w_c) c_c')
-            print('context shape after rearrange', context.shape)
+            # print('context shape after rearrange', context.shape)
 
         for block in self.transformer_blocks:
             x = block(x, context=context)
@@ -377,12 +377,12 @@ if __name__ == "__main__":
 
     attn = Attention(1024, dim_keys=32, n_heads=2)
     out = attn(ipt)
-    print("Attention")
-    print("\tInput:", ipt.shape)
-    print("\tOutput:", out.shape)
+    # print("Attention")
+    # print("\tInput:", ipt.shape)
+    # print("\tOutput:", out.shape)
 
     lin_attn = LinearAttention(1024, dim_keys=32, n_heads=2)
     out = lin_attn(ipt)
-    print("Linear Attention")
-    print("\tInput:", ipt.shape)
-    print("\tOutput:", out.shape)
+    # print("Linear Attention")
+    # print("\tInput:", ipt.shape)
+    # print("\tOutput:", out.shape)
