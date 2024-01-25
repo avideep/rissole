@@ -321,6 +321,13 @@ class SpatialTransformer(nn.Module):
                                  stride=1,
                                  padding=0)
 
+        # if context_dim is not None:
+        #     self.proj_in_cond = nn.Conv2d(context_dim,
+        #                     inner_dim,
+        #                     kernel_size=1,
+        #                     stride=1,
+        #                     padding=0)
+
         self.transformer_blocks = nn.ModuleList(
             [BasicTransformerBlock(inner_dim, n_heads, d_head, dropout=dropout, context_dim=context_dim)
                 for d in range(depth)]
@@ -341,10 +348,11 @@ class SpatialTransformer(nn.Module):
         print('x.shape after group norm', x.shape)
         x = self.proj_in(x)
         print('x.shape after proj_in', x.shape)
-        
+        print('x')
         x = rearrange(x, 'b c h w -> b (h w) c')
         print('x.shape after rearrange', x.shape)
-
+        print('cond.shape', context.shape)
+        # context = rearrange(context, )
         for block in self.transformer_blocks:
             x = block(x, context=context)
         x = rearrange(x, 'b (h w) c -> b c h w', h=h, w=w)
