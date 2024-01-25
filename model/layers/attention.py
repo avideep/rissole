@@ -183,6 +183,8 @@ class CrossAttention(nn.Module):
 
         q = self.to_q(x)
         cond = default(cond, x)
+        print('x.shape: ',x.shape)
+        print('cond.shape:', cond.shape)
         k = self.to_k(cond)
         v = self.to_v(cond)
 
@@ -295,6 +297,7 @@ class BasicTransformerBlock(nn.Module):
         print('x.shape after self-attention', x_attn.shape)
         x = x + x_attn
         x = self.attn1(self.norm1(x)) + x
+        print('context shape before sending to CrossAttn', context.shape)
         x = self.attn2(self.norm2(x), cond=context) + x
         x = self.ff(self.norm3(x)) + x
         return x
