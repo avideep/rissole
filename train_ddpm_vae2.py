@@ -209,7 +209,7 @@ def train(model, train_loader, optimizer, block_size, vae, device):
                 #         prev_block = x[:,:,i-block_size:i, j:j+block_size]
                 block_pos = torch.full((x.size(0),),position, dtype=torch.int64).to(device)
                 curr_block = x[:, :, i:i+block_size, j:j+block_size]
-                loss = model.p_losses2(curr_block, prev_block, block_pos, low_res_cond)
+                loss = model.p_losses2(curr_block, prev_block, position = block_pos, low_res_cond = low_res_cond)
                 prev_block = curr_block
                 loss_agg += loss.item()
                 loss.backward()
