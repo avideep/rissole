@@ -172,7 +172,9 @@ class CrossAttention(nn.Module):
         self.to_q = nn.Linear(n_channels, hidden_dim, bias=False)
         self.to_k = nn.Linear(n_channels_cond, hidden_dim, bias=False)
         self.to_v = nn.Linear(n_channels_cond, hidden_dim, bias=False)
-
+        print('n_channels:', n_channels)
+        print('n_channels_cond',n_channels_cond)
+        print('hidden_dim', hidden_dim)
         self.to_out = nn.Sequential(
             nn.Linear(hidden_dim, n_channels),
             nn.Dropout(dropout)
