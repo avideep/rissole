@@ -286,10 +286,12 @@ class BasicTransformerBlock(nn.Module):
         self.norm3 = nn.LayerNorm(dim)
         self.checkpoint = checkpoint
 
-    def forward(self, x, context=None):
-        return checkpoint(self._forward, (x, context), self.parameters(), self.checkpoint)
+    # def forward(self, x, context=None):
+    #     return checkpoint(self._forward, (x, context), self.parameters(), self.checkpoint)
 
-    def _forward(self, x, context=None):
+    # def _forward(self, x, context=None):
+    def forward(self, x, context=None):
+
         # print('x.shape before LayerNorm 1', x.shape)
 
         x_norm = self.norm1(x)
