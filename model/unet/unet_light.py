@@ -99,7 +99,6 @@ class UNetLight(nn.Module):
             l = self.low_cond_embedding(l)
 
         skips = []
-        print('Inside Unet: ', l is not None)
         if l is not None:
             # down sample
             for block1, attn1, block2, attn2, norm, downsample in self.down_blocks:

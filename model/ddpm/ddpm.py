@@ -163,7 +163,8 @@ class DDPM(nn.Module):
         x_noisy = self.q_sample(x_start, t, noise)
         if low_res_cond is not None:
             predicted_noise = self.eps_model(x_noisy, x_cond, t, position, low_res_cond)
-        predicted_noise = self.eps_model(x_noisy, x_cond, t, position)
+        else: 
+            predicted_noise = self.eps_model(x_noisy, x_cond, t, position)
         # if random_time <= 5:
         #     x_recon = self.reconstruction_loop(x_start, x_noisy, x_cond, position, t)
         #     self.count += 1
@@ -186,10 +187,10 @@ class DDPM(nn.Module):
             t = torch.full((x_start.shape[0],), random_time, dtype=torch.int64).to(x_start.device)
 
             x_noisy = self.q_sample(x_start, t, noise)
-            print('Inside DDPM: ', low_res_cond is not None)
             if low_res_cond is not None:
                 predicted_noise = self.eps_model(x_noisy, x_cond, t, position, low_res_cond)
-            predicted_noise = self.eps_model(x_noisy, x_cond, t, position)
+            else: 
+                predicted_noise = self.eps_model(x_noisy, x_cond, t, position)
             return self.calculate_loss(noise, predicted_noise)
 
     def calculate_loss(self, noise, predicted_noise, x_start = None, x_recon = None):
