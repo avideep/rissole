@@ -112,7 +112,7 @@ def Normalize(in_channels):
     return torch.nn.GroupNorm(num_groups=32, num_channels=in_channels, eps=1e-6, affine=True)
 
 class CrossAttention(nn.Module):
-    def __init__(self, n_channels: int, n_channels_cond: int, dim_keys: int = 32, n_heads: int = 2):
+    def __init__(self, n_channels: int, n_channels_cond: int = None, dim_keys: int = 32, n_heads: int = 2, dropout: float = 0):
         """
         Applies self-attention like in "Attention Is All You Need" (https://arxiv.org/abs/1706.03762)
         to an image by reshaping it into a sequence. Only for small field sizes.
@@ -127,10 +127,15 @@ class CrossAttention(nn.Module):
         self.scale = dim_keys ** -0.5
         self.heads = n_heads
         hidden_dim = dim_keys * n_heads
+        if n_channels_cond is None:
+            n_channels_cond = n_channels
         self.to_q = nn.Conv2d(n_channels, hidden_dim, 1, bias=False)
         self.to_k = nn.Conv2d(n_channels_cond, hidden_dim, 1, bias=False)
         self.to_v = nn.Conv2d(n_channels_cond, hidden_dim, 1, bias=False)
-        self.to_out = nn.Conv2d(hidden_dim, n_channels, 1)
+        self.to_out = nn.Sequential(
+            nn.Conv2d(hidden_dim, n_channels, 1),
+            nn.Dropout(dropout)
+        )
 
     def forward(self, x, cond):
         b, c, h, w = x.shape
@@ -261,10 +266,10 @@ class FeedForward(nn.Module):
 class BasicTransformerBlock(nn.Module):
     def __init__(self, dim, n_heads, d_head, dropout=0., context_dim=None, gated_ff=True, checkpoint=True):
         super().__init__()
-        self.attn1 = Attention(n_channels=dim, n_heads=n_heads, dim_keys=d_head)  # is a self-attention
+        self.attn1 = CrossAttention(n_channels=dim, n_heads=n_heads, dim_keys=d_head, dropout=dropout)  # is a self-attention
         self.ff = FeedForward(dim, dropout=dropout, glu=gated_ff)
         self.attn2 = CrossAttention(n_channels=dim, n_channels_cond=context_dim,
-                                    n_heads=n_heads, dim_keys=d_head)  # is self-attn if context is none
+                                    n_heads=n_heads, dim_keys=d_head, dropout=dropout)  # is self-attn if context is none
         self.norm1 = nn.LayerNorm(dim)
         self.norm2 = nn.LayerNorm(dim)
         self.norm3 = nn.LayerNorm(dim)
