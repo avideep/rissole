@@ -186,7 +186,7 @@ class DDPM(nn.Module):
             t = torch.full((x_start.shape[0],), random_time, dtype=torch.int64).to(x_start.device)
 
             x_noisy = self.q_sample(x_start, t, noise)
-            print(low_res_cond is not None)
+            print('Inside DDPM: 'low_res_cond is not None)
             if low_res_cond is not None:
                 predicted_noise = self.eps_model(x_noisy, x_cond, t, position, low_res_cond)
             predicted_noise = self.eps_model(x_noisy, x_cond, t, position)
