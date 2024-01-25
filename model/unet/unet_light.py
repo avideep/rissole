@@ -65,7 +65,7 @@ class UNetLight(nn.Module):
         self.mid_block1 = ResidualBlockUNet(self.channels[-1], self.channels[-1], time_emb_dim, cond_emb_dim, n_groups)
         # self.mid_attn = CrossAttention( self.channels[-1], cond_emb_dim, dim_keys, n_heads)
         # self.mid_attn = Attention(self.channels[-1], dim_keys, n_heads)
-        self.mid_attn = SpatialTransformer(c, n_heads, dim_keys, depth=1, context_dim= cond_emb_dim),
+        self.mid_attn = SpatialTransformer(self.channels[-1], n_heads, dim_keys, depth=1, context_dim= cond_emb_dim),
 
         self.mid_block2 = ResidualBlockUNet(self.channels[-1], self.channels[-1], time_emb_dim, cond_emb_dim, n_groups)
 
