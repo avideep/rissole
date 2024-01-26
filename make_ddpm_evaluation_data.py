@@ -18,9 +18,9 @@ from utils.helpers import load_model_checkpoint
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 parser = argparse.ArgumentParser(description="PyTorch Second Stage Training")
-parser.add_argument('--image-size', default=64, metavar='N',
+parser.add_argument('--image-size', default=256, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
-parser.add_argument('--block-size', default=16, metavar='N',
+parser.add_argument('--block-size', default=32, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
 parser.add_argument('--image-count', default=50,
                     type=int, help='number of images that should be generated for comparison')
