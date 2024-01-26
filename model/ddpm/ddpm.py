@@ -161,10 +161,8 @@ class DDPM(nn.Module):
         t = torch.full((x_start.shape[0],), random_time, dtype=torch.int64).to(x_start.device)
 
         x_noisy = self.q_sample(x_start, t, noise)
-        if low_res_cond is not None:
-            predicted_noise = self.eps_model(x_noisy, x_cond, t, position, low_res_cond)
-        else: 
-            predicted_noise = self.eps_model(x_noisy, x_cond, t, position)
+
+        predicted_noise = self.eps_model(x_noisy, x_cond, t, position, low_res_cond)
         # if random_time <= 5:
         #     x_recon = self.reconstruction_loop(x_start, x_noisy, x_cond, position, t)
         #     self.count += 1
@@ -187,10 +185,8 @@ class DDPM(nn.Module):
             t = torch.full((x_start.shape[0],), random_time, dtype=torch.int64).to(x_start.device)
 
             x_noisy = self.q_sample(x_start, t, noise)
-            if low_res_cond is not None:
-                predicted_noise = self.eps_model(x_noisy, x_cond, t, position, low_res_cond)
-            else: 
-                predicted_noise = self.eps_model(x_noisy, x_cond, t, position)
+            predicted_noise = self.eps_model(x_noisy, x_cond, t, position, low_res_cond)
+
             return self.calculate_loss(noise, predicted_noise)
 
     def calculate_loss(self, noise, predicted_noise, x_start = None, x_recon = None):
@@ -245,14 +241,10 @@ class DDPM(nn.Module):
 
         # Equation 11 in https://arxiv.org/abs/2006.11239
         # Use our model (noise predictor) to predict the mean
-        if low_res_cond is not None:
-            model_mean = sqrt_recip_alphas_t * (
-                    x - betas_t * self.eps_model(x, x_prev, t, position, low_res_cond) / sqrt_one_minus_alphas_cumprod_t
-            )
-        else:
-            model_mean = sqrt_recip_alphas_t * (
-                    x - betas_t * self.eps_model(x, x_prev, t, position) / sqrt_one_minus_alphas_cumprod_t
-            )
+
+        model_mean = sqrt_recip_alphas_t * (
+                x - betas_t * self.eps_model(x, x_prev, t, position, low_res_cond) / sqrt_one_minus_alphas_cumprod_t
+        )
         if t_index == 0:
             return model_mean
         else:

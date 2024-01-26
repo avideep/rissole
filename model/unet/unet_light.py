@@ -50,9 +50,9 @@ class UNetLight(nn.Module):
             self.down_blocks.append(
                 nn.ModuleList([
                     ResidualBlockUNet(prev_channel, c, time_emb_dim, cond_emb_dim, n_groups),
-                    # SpatialTransformer(c, n_heads, dim_keys, depth=1, context_dim= cond_emb_dim),
+                    SpatialTransformer(c, n_heads, dim_keys, depth=1, context_dim= cond_emb_dim) if use_spatial_transformer else None,
                     ResidualBlockUNet(c, c, time_emb_dim, cond_emb_dim, n_groups),
-                    # SpatialTransformer(c, n_heads, dim_keys, depth=1, context_dim= cond_emb_dim),
+                    SpatialTransformer(c, n_heads, dim_keys, depth=1, context_dim= cond_emb_dim) if use_spatial_transformer else None,
                     nn.GroupNorm(1, c),
                     DownSample(c)
                 ])
@@ -61,9 +61,8 @@ class UNetLight(nn.Module):
 
         # bottleneck
         self.mid_block1 = ResidualBlockUNet(self.channels[-1], self.channels[-1], time_emb_dim, cond_emb_dim, n_groups)
-        self.mid_attn = Attention(self.channels[-1], dim_keys, n_heads)
-        # self.mid_attn = SpatialTransformer(self.channels[-1], n_heads, dim_keys, depth=1, context_dim= cond_emb_dim)
-
+        self.mid_attn = SpatialTransformer(self.channels[-1], n_heads, dim_keys, depth=1, context_dim= cond_emb_dim) if use_spatial_transformer else None
+ 
         self.mid_block2 = ResidualBlockUNet(self.channels[-1], self.channels[-1], time_emb_dim, cond_emb_dim, n_groups)
 
         # expanding path
@@ -74,9 +73,9 @@ class UNetLight(nn.Module):
                 nn.ModuleList([
                     UpSample(prev_channel),
                     ResidualBlockUNet(prev_channel + c, c, time_emb_dim, cond_emb_dim, n_groups),
-                    # SpatialTransformer(c, n_heads, dim_keys, depth=1, context_dim= cond_emb_dim),
+                    SpatialTransformer(c, n_heads, dim_keys, depth=1, context_dim= cond_emb_dim) if use_spatial_transformer else None,
                     ResidualBlockUNet(c, c, time_emb_dim, cond_emb_dim, n_groups),
-                    # SpatialTransformer(c, n_heads, dim_keys, depth=1, context_dim= cond_emb_dim),
+                    SpatialTransformer(c, n_heads, dim_keys, depth=1, context_dim= cond_emb_dim) if use_spatial_transformer else None,
                     nn.GroupNorm(1, c),
                 ])
             )
@@ -94,66 +93,38 @@ class UNetLight(nn.Module):
             l = self.low_cond_embedding(l)
 
         skips = []
-        if l is not None:
-            # down sample
-            # for block1, attn1, block2, attn2, norm, downsample in self.down_blocks:
-            for block1, block2, norm, downsample in self.down_blocks:
-                x = block1(x, c, t, p, l)
-                # x = attn1(x, c)
-                x = block2(x, c, t, p, l)
-                # x = attn2(x, c)
-                x = norm(x)
-                skips.append(x)
-                x = downsample(x)
 
-            # bottleneck
-            x = self.mid_block1(x, c, t, p, l)
-            x = self.mid_attn(x)
-            # print('x.type:', type(x))
-            # print('c.type: ', type(c))
-            # print('mid_attn_type:', type(self.mid_attn))
-            # x = self.mid_attn(x, c)
-            x = self.mid_block2(x, c, t, p, l)
-
-            # up sample
-            # for upsample, block1, attn1, block2, attn2, norm in self.up_blocks:
-            for upsample, block1, block2, norm in self.up_blocks:
-                x = upsample(x)
-                x = torch.cat((x, skips.pop()), dim=1)
-                x = block1(x, c, t, p, l)
-                # x = attn1(x, c)
-                x = block2(x, c, t, p , l)
-                # x = attn2(x, c)
-                x = norm(x)
-        else:
-            # down sample
-            for block1, attn1, block2, attn2, norm, downsample in self.down_blocks:
-            # for block1, block2, norm, downsample in self.down_blocks:
-                x = block1(x, c, t, p)
+        # down sample
+        for block1, attn1, block2, attn2, norm, downsample in self.down_blocks:
+        # for block1, block2, norm, downsample in self.down_blocks:
+            x = block1(x, c, t, p, l)
+            if attn1 is not None:
                 x = attn1(x, c)
-                x = block2(x, c, t, p)
+            x = block2(x, c, t, p, l)
+            if attn2 is not None:
                 x = attn2(x, c)
-                x = norm(x)
-                skips.append(x)
-                x = downsample(x)
+            x = norm(x)
+            skips.append(x)
+            x = downsample(x)
 
-            # bottleneck
-            x = self.mid_block1(x, c, t, p)
-            x = self.mid_attn(x, c)
-            # x = self.mid_attn(x)
-            x = self.mid_block2(x, c, t, p)
+        # bottleneck
+        x = self.mid_block1(x, c, t, p, l)
+        if self.mid_attn is not None:
+            x = self.mid_attn(x,c)
+        x = self.mid_block2(x, c, t, p, l)
 
-            # up sample
-            for upsample, block1, attn1, block2, attn2, norm in self.up_blocks:
-            # for upsample, block1, block2, norm in self.up_blocks:
-                x = upsample(x)
-                x = torch.cat((x, skips.pop()), dim=1)
-                x = block1(x, c, t, p)
+        # up sample
+        for upsample, block1, attn1, block2, attn2, norm in self.up_blocks:
+        # for upsample, block1, block2, norm in self.up_blocks:
+            x = upsample(x)
+            x = torch.cat((x, skips.pop()), dim=1)
+            x = block1(x, c, t, p, l)
+            if attn1 is not None:
                 x = attn1(x, c)
-                x = block2(x, c, t, p)
+            x = block2(x, c, t, p , l)
+            if attn2 is not None:
                 x = attn2(x, c)
-                x = norm(x)
-
+            x = norm(x)
         # output convolution
         x = self.final_conv(x)  
 
