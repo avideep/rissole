@@ -8,9 +8,10 @@ from tqdm import tqdm
 
 from utils.visualization import tensor_to_image
 from dataloader import PlantNet
-from model import VQGANLight, VAE
+from model import VQGANLight, VAE, IntroVAE
 from model.ddpm.ddpm import DDPM
 from model.unet.unet_light import UNetLight
+import torchvision.transforms.functional as F
 from utils.helpers import load_model_checkpoint
 
 # from: https://stackoverflow.com/questions/20554074/sklearn-omp-error-15-initializing-libiomp5md-dll-but-found-mk2iomp5md-dll-a
@@ -27,11 +28,11 @@ parser.add_argument('--config', default='configs/ddpm_linear.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/ddpm_linear.yaml)')
 parser.add_argument('--unet-config', default='configs/unet.yaml',
                     metavar='PATH', help='Path to unet model config file (default: configs/unet.yaml)')
-parser.add_argument('--load-ckpt-ddpm', default='checkpoints/second_stage/ddpm_linear/23-12-19_151444/ddpm/best_model.pt', metavar='PATH',
+parser.add_argument('--load-ckpt-ddpm', default='checkpoints/second_stage/ddpm_linear/24-01-24_003546/ddpm/best_model.pt', metavar='PATH',
                     dest='load_checkpoint_ddpm', help='Load model checkpoint and continue training')
-parser.add_argument('--load-ckpt-unet', default='checkpoints/second_stage/ddpm_linear/23-12-19_151444/unet/best_model.pt', metavar='PATH',
+parser.add_argument('--load-ckpt-unet', default='checkpoints/second_stage/ddpm_linear/24-01-24_003546/unet/best_model.pt', metavar='PATH',
                     dest='load_checkpoint_unet', help='Load model checkpoint and continue training')
-parser.add_argument('--vqgan-path', default='checkpoints/vqgan/23-12-18_175014/best_model.pt',
+parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-01-17_130119/best_model.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
@@ -47,10 +48,10 @@ parser.add_argument('--sample_gen', action='store_true',
                     help='If true, samples images from the ddpm')
 parser.add_argument('--data-config', default='configs/data_se.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/data_se.yaml)')
-# parser.add_argument('--vae-path', default='checkpoints/vae/23-08-01_105355/best_model.pt',
-#                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
-# parser.add_argument('--vae-config', default='configs/vae.yaml',
-#                     metavar='PATH', help='Path to model config file (default: configs/vaeyaml)')
+parser.add_argument('--vae-path', default='checkpoints/vae/introVAE/24-01-18_162139/best_model.pt',
+                    metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
+parser.add_argument('--vae-config', default='configs/vae.yaml',
+                    metavar='PATH', help='Path to model config file (default: configs/vaeyaml)')
 
 
 
@@ -84,7 +85,7 @@ def main():
         cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
         cfg_unet = yaml.load(open(args.unet_config, 'r'), Loader=yaml.Loader)
         cfg_vqgan = yaml.load(open(args.vqgan_config, 'r'), Loader=yaml.Loader)
-        # cfg_vae = yaml.load(open(args.vae_config,'r'),Loader=yaml.Loader)
+        cfg_vae = yaml.load(open(args.vae_config,'r'),Loader=yaml.Loader)
 
         vqgan_model = VQGANLight(**cfg_vqgan['model'])
         vqgan_model, _, _ = load_model_checkpoint(vqgan_model, args.vqgan_path, device)
@@ -97,15 +98,15 @@ def main():
         ddpm = DDPM(eps_model=unet, vae_model=vqgan_model, **cfg)
         ddpm, _, _ = load_model_checkpoint(ddpm, args.load_checkpoint_ddpm, device)
         ddpm.to(device)
-        # vae = VAE(**cfg_vae['model'])
-        # vae, _, _ = load_model_checkpoint(vae, args.vae_path, device)
-        # vae.to(device)
-        # global vae_latent_dim
-        # vae_latent_dim = cfg_vae['model']['latent_dim']
+        vae = IntroVAE(**cfg_vae['model'])
+        vae, _, _ = load_model_checkpoint(vae, args.vae_path, device)
+        vae.to(device)
+        global vae_latent_dim
+        vae_latent_dim = cfg_vae['model']['latent_dim']
         global latent_dim
         latent_dim = cfg_vqgan['model']['latent_dim']
         block_size = args.block_size
-        sample_images_gen(ddpm, block_size, args.image_count, args.gen_image_path, args.image_size, device)
+        sample_images_gen(ddpm, vae, block_size, args.image_count, args.gen_image_path, args.image_size, device)
 
 
 def sample_images_real(data_loader, n_images, real_image_path):
@@ -118,11 +119,11 @@ def sample_images_real(data_loader, n_images, real_image_path):
         if count == n_images:
             break
 
-# def sample_from_vae(n_images, model, device):
-#     z = torch.randn(n_images, vae_latent_dim).to(device)
-#     images = model.decode(z)
-#     return images
-def sample_images_gen(model, block_size, n_images, image_path, image_size, device):
+def sample_from_vae(n_images, model, device):
+    z = torch.randn(n_images, vae_latent_dim).to(device)
+    images = model.decode(z)
+    return images
+def sample_images_gen(model, vae, block_size, n_images, image_path, image_size, device):
     model.eval()
 
     # we only want to sample x0 images
@@ -141,10 +142,13 @@ def sample_images_gen(model, block_size, n_images, image_path, image_size, devic
         img = torch.randn((n_images, channels, image_size//2, image_size//2), device=device)
         for i in range(len(images)):
             images[i] = img
+        img = model.encode(img)
         prev_block = torch.rand_like(img[:, :, :block_size, :block_size]).to(device)
-        prev_block = model.encode(prev_block)
-        # low_res_cond = sample_from_vae(n_images, vae, device)
-        # low_res_cond = model.encode(low_res_cond)
+        # prev_block = model.encode(prev_block)
+        low_res_cond = sample_from_vae(n_images, vae, device)
+        low_res_cond = model.encode(low_res_cond)
+        low_res_cond = F.resize(low_res_cond, [block_size], antialias = True)
+
         position = 0
         for i in range(0, img.shape[-1], block_size):
             for j in range(0, img.shape[-1], block_size):
@@ -152,8 +156,10 @@ def sample_images_gen(model, block_size, n_images, image_path, image_size, devic
                 #     prev_block = img[:,:,i-block_size:i, j:j+block_size]
                 #     prev_block = model.encode(prev_block)
                 block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
-                curr_block = model.sample(16, prev_block, block_pos, batch_size=n_images, channels=latent_dim)
+                curr_block = model.sample(block_size, prev_block, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim)
+                curr_block[0] = curr_block[0] - low_res_cond 
                 prev_block = curr_block[0]
+                position += 1
                 for k in range(len(curr_block)):
                     images[k][:, :, i:i+block_size, j:j+block_size] = curr_block[k]
         for k in range(len(images)):
@@ -169,7 +175,40 @@ def sample_images_gen(model, block_size, n_images, image_path, image_size, devic
 
         n_images -= sample_size
         step_count += 1
+'''
+def validate(model, data_loader, block_size, vae, device):
+    model.eval()
+    x, _ = next(iter(data_loader))
+    x = x.to(device)
+    x = model.encode(x)
+    n_images = 8
+    _, c, w, h = x.size()
+    images_decoded = images = [0]*model.n_steps
+    img = torch.ones((n_images, c, w, h), device=device)
+    for i in range(len(images)):
+        images[i] = img
+    prev_block = torch.rand_like(img[:, :, :block_size, :block_size]).to(device)
+    low_res_cond = sample_from_vae(n_images, vae, device)
+    low_res_cond = model.encode(low_res_cond)
+    low_res_cond = F.resize(low_res_cond, [block_size], antialias = True)
+    position = 0
+    for i in range(0, img.shape[-1], block_size):
+        for j in range(0, img.shape[-1], block_size):
+            block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
+            curr_block = model.sample(block_size, prev_block, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim)
+            curr_block[0] = curr_block[0] - low_res_cond 
+            # curr_block[0] = curr_block[0] - prev_block
+            prev_block = curr_block[0]
+            position += 1
+            for k in range(len(curr_block)):
+                images[k][:, :, i:i+block_size, j:j+block_size] = curr_block[k]
+    for k in range(len(images)):
+        images_decoded[k] = model.decode(images[k])
+    logger.tensorboard.add_figure('Val: DDPM',
+                                  get_sample_images_for_ddpm(images, n_ims=n_images),
+                                  global_step=logger.global_train_step)
 
+'''
 
 if __name__ == "__main__":
     try:

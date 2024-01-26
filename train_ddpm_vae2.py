@@ -259,7 +259,7 @@ def validate(model, data_loader, block_size, vae, device):
     for k in range(len(images)):
         images_decoded[k] = model.decode(images[k])
     logger.tensorboard.add_figure('Val: DDPM',
-                                  get_sample_images_for_ddpm(images, n_ims=n_images),
+                                  get_sample_images_for_ddpm(images_decoded, n_ims=n_images),
                                   global_step=logger.global_train_step)
 
 
