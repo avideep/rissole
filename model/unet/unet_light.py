@@ -12,7 +12,7 @@ class UNetLight(nn.Module):
     def __init__(self,
                  in_channels: int, time_emb_dim: int, pos_emb_dim: int, cond_emb_dim: int,
                  channels: List[int] = None, n_groups: int = 8, 
-                 dim_keys: int = 64, n_heads: int = 4, use_spatial_transformer: bool = True):
+                 dim_keys: int = 64, n_heads: int = 4, use_spatial_transformer: bool = False):
         """
         U-Net model, first proposed in (https://arxiv.org/abs/1505.04597) and equipped for
         our DDPM with (linear) attention and time conditioning.
