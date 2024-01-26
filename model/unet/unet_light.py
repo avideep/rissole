@@ -31,7 +31,7 @@ class UNetLight(nn.Module):
         #in_channels = in_channels*2 
         self.channels = channels if channels is not None else [16, 32, 64]
         self.n_blocks = len(self.channels)
-
+        self.use_spatial_transformer = use_spatial_transformer
         # time embedding
         self.time_embedding = TimeEmbedding(time_emb_dim, pos_emb_dim)
         # self.cond_embedding = ConditionalEmbedding(cond_emb_dim, self.channels[0])
@@ -109,7 +109,7 @@ class UNetLight(nn.Module):
 
         # bottleneck
         x = self.mid_block1(x, c, t, p, l)
-        if self.mid_attn is not None:
+        if self.use_spatial_transformer:
             x = self.mid_attn(x,c)
         else:
             x = self.mid_attn(x)
