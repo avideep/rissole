@@ -309,6 +309,8 @@ def validate(model, data_loader, block_size, vae, device, args):
             position += 1
             for k in range(len(curr_block)):
                 images[k][:, :, i:i+block_size, j:j+block_size] = curr_block[k]
+            j -= block_size//2
+        i -=  block_size//2
     for k in range(len(images)):
         images_decoded[k] = model.decode(images[k])
     logger.tensorboard.add_figure('Val: DDPM',
