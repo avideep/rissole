@@ -3,7 +3,7 @@ import os
 import pathlib
 import time
 from datetime import datetime
-
+import numpy as np
 import torch
 import yaml
 
@@ -70,8 +70,12 @@ parser.add_argument('--vae-path', default='checkpoints/vae/introVAE/24-01-18_162
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 parser.add_argument('--vae-config', default='configs/vae.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vaeyaml)')
-parser.add_argument('--use_low_res', action='store_true',
+parser.add_argument('--use-low-res', action='store_true',
                     help='Whether to condition the model with a low resolution whole image sampled from a VAE')
+parser.add_argument('--guidance-probability', default=0.8, type=float,
+                    help='probability of unconditional generation (default: 0.8)')
+parser.add_argument('--guidance-weight', default=5, type=int,
+                    help='weight on unconditional generaton. (default: 5)')
 
 
 logger = Logger(LOG_DIR)
@@ -195,10 +199,11 @@ def train(model, train_loader, optimizer, block_size, vae, device, args):
     model.train()
 
     ema_loss = None
+    p = args.guidance_probability
     for x, _ in tqdm(train_loader, desc="Training"):
         x = x.to(device)
         x = model.encode(x)
-        if args.use_low_res:
+        if args.use_low_res  and  np.random.choice([1, 0], p=[1-p, p]): # setting the condition to None as per the guidance probability, should the condition be used
             x_hat = sample_from_vae(x.shape[0],vae, device)
             x_resized = model.encode(x_hat)
             low_res_cond = F.resize(x_resized, [block_size], antialias = True)
@@ -248,19 +253,25 @@ def validate(model, data_loader, block_size, vae, device, args):
     for i in range(len(images)):
         images[i] = img
     prev_block = torch.rand_like(img[:, :, :block_size, :block_size]).to(device)
-    if args.use_low_res:
+    if args.use_low_res: 
         low_res_cond = sample_from_vae(n_images, vae, device)
         low_res_cond = model.encode(low_res_cond)
         low_res_cond = F.resize(low_res_cond, [block_size], antialias = True)
     else:
         low_res_cond = None
     position = 0
+    w = args.guidance_weight
     for i in range(0, img.shape[-1], block_size):
         for j in range(0, img.shape[-1], block_size):
             block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
-            curr_block = model.sample(block_size, prev_block, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim)
             if args.use_low_res:
+                curr_block_uncond = model.sample(block_size, prev_block, block_pos, low_res_cond = None, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance (CFG)
+                curr_block_cond = model.sample(block_size, prev_block, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance 
+                curr_block = (1 + w)*curr_block_cond - w*curr_block_uncond #sampling strategy for classifier-free guidance 
                 curr_block[0] = curr_block[0] - low_res_cond 
+            else:
+                curr_block = model.sample(block_size, prev_block, block_pos, low_res_cond = None, batch_size=n_images, channels=latent_dim) # if CFG is not used 
+
             # curr_block[0] = curr_block[0] - prev_block
             prev_block = curr_block[0]
             position += 1
