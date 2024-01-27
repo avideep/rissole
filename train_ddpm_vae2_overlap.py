@@ -213,6 +213,8 @@ def train(model, train_loader, optimizer, block_size, vae, device, args):
                 # if j==0 and i>0:
                 #         prev_block = x[:,:,i-block_size:i, j:j+block_size]
                 block_pos = torch.full((x.size(0),),position, dtype=torch.int64).to(device)
+                if i+block_size > x.shape[-2] or j+block_size > x.shape[-1]:
+                    continue
                 curr_block = x[:, :, i:i+block_size, j:j+block_size]
                 print(prev_block.shape, curr_block.shape, position, i, j)
                 loss = model.p_losses2(curr_block, prev_block, position = block_pos, low_res_cond = low_res_cond)
