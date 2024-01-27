@@ -213,7 +213,7 @@ def train(model, train_loader, optimizer, block_size, vae, device, args):
                 # if j==0 and i>0:
                 #         prev_block = x[:,:,i-block_size:i, j:j+block_size]
                 block_pos = torch.full((x.size(0),),position, dtype=torch.int64).to(device)
-                curr_block = x[:, :, i:i+(block_size*2), j:j+(block_size*2)]
+                curr_block = x[:, :, i:i+block_size, j:j+block_size]
                 loss = model.p_losses2(curr_block, prev_block, position = block_pos, low_res_cond = low_res_cond)
                 prev_block = curr_block
                 loss_agg += loss.item()
@@ -308,7 +308,7 @@ def validate(model, data_loader, block_size, vae, device, args):
             prev_block = curr_block[0]
             position += 1
             for k in range(len(curr_block)):
-                images[k][:, :, i:i+(2*block_size), j:j+(2*block_size)] = curr_block[k]
+                images[k][:, :, i:i+block_size, j:j+block_size] = curr_block[k]
         #     j -= block_size//2
         # i -=  block_size//2
     for k in range(len(images)):
