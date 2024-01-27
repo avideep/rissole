@@ -303,6 +303,8 @@ def validate(model, data_loader, block_size, vae, device, args):
     position = 0
     for i in range(0, img.shape[-1], block_size//2):
         for j in range(0, img.shape[-1], block_size//2):
+            if i+block_size > x.shape[-2] or j+block_size > x.shape[-1]:
+                continue
             block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
             curr_block = model.sample(block_size, prev_block, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim)
             if args.use_low_res:
