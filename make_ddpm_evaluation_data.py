@@ -139,10 +139,10 @@ def sample_images_gen(model, vae, block_size, n_images, image_path, image_size, 
             sample_size = n_images
         images_decoded = images = [0]*model.n_steps
         channels = 3
-        img = torch.randn((n_images, channels, image_size//2, image_size//2), device=device)
+        img = torch.randn((n_images, channels, image_size, image_size), device=device)
+        img = model.encode(img)
         for i in range(len(images)):
             images[i] = img
-        img = model.encode(img)
         prev_block = torch.rand_like(img[:, :, :block_size, :block_size]).to(device)
         # prev_block = model.encode(prev_block)
         low_res_cond = sample_from_vae(n_images, vae, device)
