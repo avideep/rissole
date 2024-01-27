@@ -70,7 +70,7 @@ parser.add_argument('--vae-path', default='checkpoints/vae/introVAE/24-01-18_162
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 parser.add_argument('--vae-config', default='configs/vae.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vaeyaml)')
-parser.add_argument('--use_low_res', action='store_true',
+parser.add_argument('--use-low-res', action='store_true',
                     help='Whether to condition the model with a low resolution whole image sampled from a VAE')
 
 
