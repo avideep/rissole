@@ -164,9 +164,9 @@ def main():
         logger.global_train_step = logger.running_epoch
         print(f"Epoch [{epoch + 1} / {args.epochs}]")
 
-        train(ddpm, data.train, optimizer, block_size, vae, device)
+        train(ddpm, data.train, optimizer, block_size, vae, device, args)
 
-        validate(ddpm, data.val, block_size, vae, device)
+        validate(ddpm, data.val, block_size, vae, device, args)
 
         # logging
         output = ' - '.join([f'{k}: {v.avg:.4f}' for k, v in logger.epoch.items()])
