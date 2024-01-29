@@ -283,9 +283,10 @@ def validate(model, data_loader, block_size, vae, device, args):
     #             prev_block = curr_block[0][:,:,i-block_size:i, j:j+block_size]
     # block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
     if args.use_low_res:
-        curr_block_uncond = model.sample(h, mat, low_res_cond = None, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance (CFG)
-        curr_block_cond = model.sample(h, mat, low_res_cond, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance 
-        curr_block = [(1 + w)*curr_block_cond[i] - w*curr_block_uncond[i] for i in range(model.n_steps)] #sampling strategy for classifier-free guidance 
+        # curr_block_uncond = model.sample(h, mat, low_res_cond = None, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance (CFG)
+        # curr_block_cond = model.sample(h, mat, low_res_cond, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance 
+        curr_block = model.sample(h, mat, low_res_cond, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance 
+        # curr_block = [(1 + w)*curr_block_cond[i] - w*curr_block_uncond[i] for i in range(model.n_steps)] #sampling strategy for classifier-free guidance 
         # curr_block[0] = curr_block[0] - low_res_cond 
     else:
         curr_block = model.sample(h, mat, low_res_cond = None, batch_size=n_images, channels=latent_dim) # if CFG is not used 
