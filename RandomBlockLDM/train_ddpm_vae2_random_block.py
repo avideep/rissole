@@ -72,9 +72,9 @@ parser.add_argument('--vae-config', default='configs/vae.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vaeyaml)')
 parser.add_argument('--use-low-res', action='store_true',
                     help='Whether to condition the model with a low resolution whole image sampled from a VAE')
-parser.add_argument('--guidance-probability', default=0.7, type=float,
+parser.add_argument('--guidance-probability', default=1, type=float,
                     help='probability of unconditional generation (default: 0.8)')
-parser.add_argument('--guidance-weight', default=10, type=int,
+parser.add_argument('--guidance-weight', default=0, type=int,
                     help='weight on unconditional generaton. (default: 5)')
 
 
