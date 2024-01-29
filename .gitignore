@@ -1,19 +1,19 @@
 # venv and ide's
-venv
+*venv
 .idea
 *__pycache__*
 
-sandbox
-test_data
+*sandbox
+*test_data
 .ipynb_checkpoints
 .vscode
 # logs and checkpoints of models
-logs
-checkpoints
-samples
+*logs
+*checkpoints
+*samples
 
 # data folders
-dataloader/datasamples
+*dataloader/datasamples
 *data
 
 todo.txt
