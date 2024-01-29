@@ -149,13 +149,15 @@ def validate(model, val_loader, beta, device):
     is_first = True
     logs_keys = None
     for x, _ in tqdm(val_loader, desc="Validation"):
+        logs = {}
         x = x.to(device)
 
         mu, logvar, _, recon_x = model(x)
 
         # compute loss
-        _, logs = loss_fn(x, recon_x, mu, logvar, beta)
-
+        # _, logs = loss_fn(x, recon_x, mu, logvar, beta)
+        loss_rec =  model.reconstruction_loss(recon_x, x, True)
+        logs['rec_loss'] = loss_rec
         # logging
         logs = {'val_' + k: v for k, v in logs.items()}
         if logs_keys is None:
@@ -240,7 +242,7 @@ def main():
         # logging
         output = ' - '.join([f'{k}: {v.avg:.4f}' for k, v in logger.epoch.items()])
         print(output)   
-        loss = logger.epoch['val_loss'].avg
+        loss = logger.epoch['loss_rec'].avg
         if loss < prev_loss:
         # save logs and checkpoint
         # if (epoch + 1) % args.save_interval == 0 or (epoch + 1) == args.epochs:
