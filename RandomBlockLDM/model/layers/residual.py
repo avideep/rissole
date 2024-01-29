@@ -82,7 +82,7 @@ class ResidualBlockUNet(nn.Module):
             self.shortcut = nn.Identity()
 
         self.time_emb = nn.Linear(time_emb_dim, out_channels) if time_emb_dim is not None else None
-        self.pos_emb = nn.Linear(time_emb_dim, out_channels) if time_emb_dim is not None else None
+        # self.pos_emb = nn.Linear(time_emb_dim, out_channels) if time_emb_dim is not None else None
 
         
         self.cond_emb = nn.Sequential(
@@ -99,7 +99,7 @@ class ResidualBlockUNet(nn.Module):
             nn.SiLU()
         )
 
-    def forward(self, x: torch.Tensor, x_cond: torch.Tensor = None, t: torch.Tensor = None, p:torch.Tensor = None, l: torch.Tensor = None):
+    def forward(self, x: torch.Tensor, t: torch.Tensor = None, p:torch.Tensor = None, l: torch.Tensor = None):
         identity = self.shortcut(x)
 
         x = self.block1(x)
@@ -108,13 +108,13 @@ class ResidualBlockUNet(nn.Module):
         if self.time_emb is not None:
             t = self.time_emb(t)        # [bs, out_channels]
             x += t[:, :, None, None]
-        if self.pos_emb is not None:
-            p = self.pos_emb(p)
-            x += p[:, :, None, None]
+        # if self.pos_emb is not None:
+        #     p = self.pos_emb(p)
+        #     x += p[:, :, None, None]
         if self.cond_emb is not None:
-            c = self.cond_emb(x_cond)
-            if x.shape[2] == c.shape[2]:
-                x += c
+            p = self.cond_emb(p)
+            if x.shape[2] == p.shape[2]:
+                x += p
         if l is not None:
             l = self.low_cond_emb(l)
             if x.shape[2] == l.shape[2]:

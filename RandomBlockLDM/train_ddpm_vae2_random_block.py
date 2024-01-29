@@ -6,7 +6,7 @@ from datetime import datetime
 import numpy as np
 import torch
 import yaml
-
+import random
 from tqdm import tqdm
 import torchvision.transforms.functional as F
 from dataloader import PlantNet, CIFAR10, CelebA, CelebAHQ
@@ -194,12 +194,22 @@ def debug(model,data_loader,device):
     x = x.to(device)
     print(model.encode(x).shape)
 
+def get_position_grid(x):
+    _, _, h, w = x.size()
+    matrix = torch.randn(h,w)
+    value = 0
+    for i in range(h):
+        for j in range(w):
+            matrix[i][j] = value
+            value += 1
+    return matrix
 
 def train(model, train_loader, optimizer, block_size, vae, device, args):
     model.train()
 
     ema_loss = None
     p = args.guidance_probability
+    mat = get_position_grid(next(iter(train_loader))).to(device)
     for x, _ in tqdm(train_loader, desc="Training"):
         x = x.to(device)
         x = model.encode(x)
@@ -209,21 +219,24 @@ def train(model, train_loader, optimizer, block_size, vae, device, args):
             low_res_cond = F.resize(x_resized, [block_size], antialias = True)
         else:
             low_res_cond = None
-        prev_block = torch.rand_like(x[:, :, :block_size, :block_size]).to(device)
+        # prev_block = torch.rand_like(x[:, :, :block_size, :block_size]).to(device)
         optimizer.zero_grad()
-        position = 0
+        # position = 0
         loss_agg = 0
         # for i in range(0, x.shape[-1], block_size):
         #     for j in range(0, x.shape[-1], block_size):
         #         if j==0 and i>0:
         #                 prev_block = x[:,:,i-block_size:i, j:j+block_size]
-        block_pos = torch.full((x.size(0),),position, dtype=torch.int64).to(device)
+        # block_pos = torch.full((x.size(0),),position, dtype=torch.int64).to(device)
+        b, c, h, w = x.size()
+        i, j = random.randint(0, h - block_size), random.randint(0, w - block_size)
         curr_block = x[:, :, i:i+block_size, j:j+block_size]
-        loss = model.p_losses2(curr_block, prev_block, position = block_pos, low_res_cond = low_res_cond)
-        prev_block = curr_block
-        loss_agg += loss.item()
+        block_pos = mat[i:i+block_size, j:j+block_size].unsqueeze(0).unsqueeze(0).repeat(b, c, 1, 1)
+        loss = model.p_losses2(curr_block, position = block_pos, low_res_cond = low_res_cond)
+        # prev_block = curr_block
+        # loss_agg += loss.item()
         loss.backward()
-        position += 1
+        # position += 1
         optimizer.step()
 
         if ema_loss is None:
@@ -261,23 +274,23 @@ def validate(model, data_loader, block_size, vae, device, args):
         low_res_cond = None
     position = 0
     w = args.guidance_weight
-    for i in range(0, img.shape[-1], block_size):
-        for j in range(0, img.shape[-1], block_size):
-            if j==0 and i>0:
-                prev_block = curr_block[0][:,:,i-block_size:i, j:j+block_size]
-            block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
-            if args.use_low_res:
-                curr_block_uncond = model.sample(block_size, prev_block, block_pos, low_res_cond = None, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance (CFG)
-                curr_block_cond = model.sample(block_size, prev_block, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance 
-                curr_block = [(1 + w)*curr_block_cond[i] - w*curr_block_uncond[i] for i in range(model.n_steps)] #sampling strategy for classifier-free guidance 
-                # curr_block[0] = curr_block[0] - low_res_cond 
-            else:
-                curr_block = model.sample(block_size, prev_block, block_pos, low_res_cond = None, batch_size=n_images, channels=latent_dim) # if CFG is not used 
+    # for i in range(0, img.shape[-1], block_size):
+    #     for j in range(0, img.shape[-1], block_size):
+    #         if j==0 and i>0:
+    #             prev_block = curr_block[0][:,:,i-block_size:i, j:j+block_size]
+    block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
+    if args.use_low_res:
+        curr_block_uncond = model.sample(block_size, block_pos, low_res_cond = None, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance (CFG)
+        curr_block_cond = model.sample(block_size, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance 
+        curr_block = [(1 + w)*curr_block_cond[i] - w*curr_block_uncond[i] for i in range(model.n_steps)] #sampling strategy for classifier-free guidance 
+        # curr_block[0] = curr_block[0] - low_res_cond 
+    else:
+        curr_block = model.sample(block_size, prev_block, block_pos, low_res_cond = None, batch_size=n_images, channels=latent_dim) # if CFG is not used 
 
-            prev_block = curr_block[0]
-            position += 1
-            for k in range(len(curr_block)):
-                images[k][:, :, i:i+block_size, j:j+block_size] = curr_block[k]
+    prev_block = curr_block[0]
+    position += 1
+    for k in range(len(curr_block)):
+        images[k][:, :, i:i+block_size, j:j+block_size] = curr_block[k]
     for k in range(len(images)):
         images_decoded[k] = model.decode(images[k])
     logger.tensorboard.add_figure('Val: DDPM',
