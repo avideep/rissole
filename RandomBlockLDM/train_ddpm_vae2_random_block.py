@@ -260,9 +260,10 @@ def validate(model, data_loader, block_size, vae, device, args):
     x, _ = next(iter(data_loader))
     x = x.to(device)
     x = model.encode(x)
-    mat = get_position_grid(x).to(device)
+    
     n_images = 8
-    _, c, w, h = x.size()
+    mat = get_position_grid(x[:n_images]).to(device)
+    _, _, _, h = x.size()
     images_decoded = [0]*model.n_steps
     # img = torch.ones((n_images, c, w, h), device=device)
     # for i in range(len(images)):
