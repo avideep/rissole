@@ -72,9 +72,9 @@ parser.add_argument('--vae-config', default='configs/vae.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vaeyaml)')
 parser.add_argument('--use-low-res', action='store_true',
                     help='Whether to condition the model with a low resolution whole image sampled from a VAE')
-parser.add_argument('--guidance-probability', default=0.8, type=float,
+parser.add_argument('--guidance-probability', default=0.7, type=float,
                     help='probability of unconditional generation (default: 0.8)')
-parser.add_argument('--guidance-weight', default=5, type=int,
+parser.add_argument('--guidance-weight', default=10, type=int,
                     help='weight on unconditional generaton. (default: 5)')
 
 
@@ -215,8 +215,8 @@ def train(model, train_loader, optimizer, block_size, vae, device, args):
         loss_agg = 0
         for i in range(0, x.shape[-1], block_size):
             for j in range(0, x.shape[-1], block_size):
-                # if j==0 and i>0:
-                #         prev_block = x[:,:,i-block_size:i, j:j+block_size]
+                if j==0 and i>0:
+                        prev_block = x[:,:,i-block_size:i, j:j+block_size]
                 block_pos = torch.full((x.size(0),),position, dtype=torch.int64).to(device)
                 curr_block = x[:, :, i:i+block_size, j:j+block_size]
                 loss = model.p_losses2(curr_block, prev_block, position = block_pos, low_res_cond = low_res_cond)
@@ -263,16 +263,17 @@ def validate(model, data_loader, block_size, vae, device, args):
     w = args.guidance_weight
     for i in range(0, img.shape[-1], block_size):
         for j in range(0, img.shape[-1], block_size):
+            if j==0 and i>0:
+                prev_block = x[:,:,i-block_size:i, j:j+block_size]
             block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
             if args.use_low_res:
                 curr_block_uncond = model.sample(block_size, prev_block, block_pos, low_res_cond = None, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance (CFG)
                 curr_block_cond = model.sample(block_size, prev_block, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance 
                 curr_block = [(1 + w)*curr_block_cond[i] - w*curr_block_uncond[i] for i in range(model.n_steps)] #sampling strategy for classifier-free guidance 
-                curr_block[0] = curr_block[0] - low_res_cond 
+                # curr_block[0] = curr_block[0] - low_res_cond 
             else:
                 curr_block = model.sample(block_size, prev_block, block_pos, low_res_cond = None, batch_size=n_images, channels=latent_dim) # if CFG is not used 
 
-            # curr_block[0] = curr_block[0] - prev_block
             prev_block = curr_block[0]
             position += 1
             for k in range(len(curr_block)):
