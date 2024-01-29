@@ -260,40 +260,43 @@ def validate(model, data_loader, block_size, vae, device, args):
     x, _ = next(iter(data_loader))
     x = x.to(device)
     x = model.encode(x)
+    mat = get_position_grid(x).to(device)
     n_images = 8
     _, c, w, h = x.size()
-    images_decoded = images = [0]*model.n_steps
-    img = torch.ones((n_images, c, w, h), device=device)
-    for i in range(len(images)):
-        images[i] = img
-    prev_block = torch.rand_like(img[:, :, :block_size, :block_size]).to(device)
+    images_decoded = [0]*model.n_steps
+    # img = torch.ones((n_images, c, w, h), device=device)
+    # for i in range(len(images)):
+    #     images[i] = img
+    # prev_block = torch.rand_like(img[:, :, :block_size, :block_size]).to(device)
     if args.use_low_res: 
         low_res_cond = sample_from_vae(n_images, vae, device)
         low_res_cond = model.encode(low_res_cond)
-        low_res_cond = F.resize(low_res_cond, [block_size], antialias = True)
+        # low_res_cond = F.resize(low_res_cond, [block_size], antialias = True)
     else:
         low_res_cond = None
-    position = 0
+    # position = 0
     w = args.guidance_weight
     # for i in range(0, img.shape[-1], block_size):
     #     for j in range(0, img.shape[-1], block_size):
     #         if j==0 and i>0:
     #             prev_block = curr_block[0][:,:,i-block_size:i, j:j+block_size]
-    block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
+    # block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
     if args.use_low_res:
-        curr_block_uncond = model.sample(block_size, block_pos, low_res_cond = None, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance (CFG)
-        curr_block_cond = model.sample(block_size, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance 
+        curr_block_uncond = model.sample(block_size, mat, low_res_cond = None, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance (CFG)
+        curr_block_cond = model.sample(block_size, mat, low_res_cond, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance 
         curr_block = [(1 + w)*curr_block_cond[i] - w*curr_block_uncond[i] for i in range(model.n_steps)] #sampling strategy for classifier-free guidance 
         # curr_block[0] = curr_block[0] - low_res_cond 
     else:
-        curr_block = model.sample(block_size, prev_block, block_pos, low_res_cond = None, batch_size=n_images, channels=latent_dim) # if CFG is not used 
+        curr_block = model.sample(block_size, mat, low_res_cond = None, batch_size=n_images, channels=latent_dim) # if CFG is not used 
 
-    prev_block = curr_block[0]
-    position += 1
-    for k in range(len(curr_block)):
-        images[k][:, :, i:i+block_size, j:j+block_size] = curr_block[k]
-    for k in range(len(images)):
-        images_decoded[k] = model.decode(images[k])
+    # prev_block = curr_block[0]
+    # position += 1
+    # for k in range(len(curr_block)):
+    #     images[k] = curr_block[k]
+        # images[k][:, :, i:i+block_size, j:j+block_size] = curr_block[k]
+
+    for k in range(model.n_steps):
+        images_decoded[k] = model.decode(curr_block[k])
     logger.tensorboard.add_figure('Val: DDPM',
                                   get_sample_images_for_ddpm(images_decoded, n_ims=n_images),
                                   global_step=logger.global_train_step)
