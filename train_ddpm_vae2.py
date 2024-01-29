@@ -264,7 +264,7 @@ def validate(model, data_loader, block_size, vae, device, args):
     for i in range(0, img.shape[-1], block_size):
         for j in range(0, img.shape[-1], block_size):
             if j==0 and i>0:
-                prev_block = x[:,:,i-block_size:i, j:j+block_size]
+                prev_block = curr_block[0][:,:,i-block_size:i, j:j+block_size]
             block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
             if args.use_low_res:
                 curr_block_uncond = model.sample(block_size, prev_block, block_pos, low_res_cond = None, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance (CFG)
