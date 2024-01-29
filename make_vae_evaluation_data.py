@@ -8,18 +8,18 @@ from tqdm import tqdm
 
 from utils.visualization import tensor_to_image
 from dataloader import CelebA
-from model import VQGANLight, VAE
+from model import VQGANLight, VAE, IntroVAE
 from utils.helpers import load_model_checkpoint
 
 # from: https://stackoverflow.com/questions/20554074/sklearn-omp-error-15-initializing-libiomp5md-dll-but-found-mk2iomp5md-dll-a
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 parser = argparse.ArgumentParser(description="PyTorch Second Stage Training")
-parser.add_argument('--image-size', default=32, metavar='N',
+parser.add_argument('--image-size', default=256, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
 parser.add_argument('--image-count', default=50,
                     type=int, help='number of images that should be generated for comparison')
-parser.add_argument('--vae-path', default='checkpoints/vae/23-08-01_105355/best_model.pt',
+parser.add_argument('--vae-path', default='checkpoints/vae/introVAE/24-01-18_162139/best_model.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 parser.add_argument('--vae-config', default='configs/vae.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
@@ -63,7 +63,7 @@ def main():
         # read config file for model
         cfg_vae = yaml.load(open(args.vae_config, 'r'), Loader=yaml.Loader)
 
-        vae_model = VAE(**cfg_vae['model'])
+        vae_model = IntroVAE(**cfg_vae['model'])
         vae_model, _, _ = load_model_checkpoint(vae_model, args.vae_path, device)
         vae_model.to(device)
 
