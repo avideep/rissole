@@ -223,7 +223,7 @@ class DDPM(nn.Module):
         return img
     
     @torch.no_grad()
-    def p_sample(self, x, x_prev, position, t, t_index, low_res_cond = None):
+    def p_sample(self, x, position, t, t_index, low_res_cond = None):
         """
         samples an image from the latent space
 
