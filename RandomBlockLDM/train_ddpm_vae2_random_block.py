@@ -210,7 +210,7 @@ def train(model, train_loader, optimizer, block_size, vae, device, args):
     ema_loss = None
     p = args.guidance_probability
 
-    mat = get_position_grid(next(iter(train_loader))[0]).to(device)
+    mat = get_position_grid(model.encode(next(iter(train_loader))[0].to(device))).to(device)
     for x, _ in tqdm(train_loader, desc="Training"):
         x = x.to(device)
         x = model.encode(x)
