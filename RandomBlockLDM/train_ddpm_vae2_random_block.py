@@ -195,21 +195,22 @@ def debug(model,data_loader,device):
     print(model.encode(x).shape)
 
 def get_position_grid(x):
-    _, _, h, w = x.size()
+    b, c, h, w = x.size()
     matrix = torch.randn(h,w)
     value = 0
     for i in range(h):
         for j in range(w):
             matrix[i][j] = value
             value += 1
-    return matrix
+    return matrix.unsqueeze(0).unsqueeze(0).repeat(b, c, 1, 1)
 
 def train(model, train_loader, optimizer, block_size, vae, device, args):
     model.train()
 
     ema_loss = None
     p = args.guidance_probability
-    mat = get_position_grid(next(iter(train_loader))).to(device)
+
+    mat = get_position_grid(next(iter(train_loader))[0]).to(device)
     for x, _ in tqdm(train_loader, desc="Training"):
         x = x.to(device)
         x = model.encode(x)
@@ -231,7 +232,7 @@ def train(model, train_loader, optimizer, block_size, vae, device, args):
         b, c, h, w = x.size()
         i, j = random.randint(0, h - block_size), random.randint(0, w - block_size)
         curr_block = x[:, :, i:i+block_size, j:j+block_size]
-        block_pos = mat[i:i+block_size, j:j+block_size].unsqueeze(0).unsqueeze(0).repeat(b, c, 1, 1)
+        block_pos = mat[:, :, i:i+block_size, j:j+block_size]
         loss = model.p_losses2(curr_block, position = block_pos, low_res_cond = low_res_cond)
         # prev_block = curr_block
         # loss_agg += loss.item()
