@@ -223,7 +223,7 @@ def train(model, train_loader, optimizer, block_size, vae, device, args):
         # prev_block = torch.rand_like(x[:, :, :block_size, :block_size]).to(device)
         optimizer.zero_grad()
         # position = 0
-        loss_agg = 0
+        # loss_agg = 0
         # for i in range(0, x.shape[-1], block_size):
         #     for j in range(0, x.shape[-1], block_size):
         #         if j==0 and i>0:
@@ -241,11 +241,11 @@ def train(model, train_loader, optimizer, block_size, vae, device, args):
         optimizer.step()
 
         if ema_loss is None:
-            ema_loss = loss_agg
+            ema_loss = loss.item() 
         else:
-            ema_loss = 0.9 * ema_loss + 0.1 * loss_agg
+            ema_loss = 0.9 * ema_loss + 0.1 * loss
 
-        metrics = {'ema_loss': ema_loss, 'loss': loss_agg}
+        metrics = {'ema_loss': ema_loss, 'loss': loss}
         logger.log_metrics(metrics, phase='Train', aggregate=True, n=curr_block.shape[0])
 
 @torch.no_grad()
