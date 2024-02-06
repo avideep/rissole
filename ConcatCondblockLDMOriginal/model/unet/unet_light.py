@@ -35,8 +35,8 @@ class UNetLight(nn.Module):
         # time embedding
         self.time_embedding = TimeEmbedding(time_emb_dim, pos_emb_dim)
         # self.cond_embedding = ConditionalEmbedding(cond_emb_dim, self.channels[0])
-        self.cond_embedding = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=3)
-        self.low_cond_embedding = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=3)
+        self.cond_embedding = nn.Conv2d(2 * in_channels, self.channels[0], kernel_size=7, padding=3)
+        # self.low_cond_embedding = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=3)
         self.pos_embedding = TimeEmbedding(time_emb_dim, pos_emb_dim)
         # initial convolutional layer
         self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=3)
@@ -86,21 +86,59 @@ class UNetLight(nn.Module):
 
     def forward(self, x: torch.Tensor, x_cond: torch.Tensor, t: torch.Tensor, p: torch.Tensor, l: torch.Tensor = None):
         t = self.time_embedding(t)
-        c = self.cond_embedding(x_cond)
         x = self.init_conv(x)
         p = self.pos_embedding(p)
         if l is not None:
-            l = self.low_cond_embedding(l)
+            c = torch.cat([x_cond, l], dim=1)
+            c = self.cond_embedding(c)
+        else:
+            c = self.cond_embedding(x_cond)
+
 
         skips = []
 
-        # down sample
+        # # down sample
+        # for block1, attn1, block2, attn2, norm, downsample in self.down_blocks:
+        # # for block1, block2, norm, downsample in self.down_blocks:
+        #     x = block1(x, c, t, p, l)
+        #     if attn1 is not None:
+        #         x = attn1(x, c)
+        #     x = block2(x, c, t, p, l)
+        #     if attn2 is not None:
+        #         x = attn2(x, c)
+        #     x = norm(x)
+        #     skips.append(x)
+        #     x = downsample(x)
+
+        # # bottleneck
+        # x = self.mid_block1(x, c, t, p, l)
+        # if self.use_spatial_transformer:
+        #     x = self.mid_attn(x,c)
+        # else:
+        #     x = self.mid_attn(x)
+        # x = self.mid_block2(x, c, t, p, l)
+
+        # # up sample
+        # for upsample, block1, attn1, block2, attn2, norm in self.up_blocks:
+        # # for upsample, block1, block2, norm in self.up_blocks:
+        #     x = upsample(x)
+        #     x = torch.cat((x, skips.pop()), dim=1)
+        #     x = block1(x, c, t, p, l)
+        #     if attn1 is not None:
+        #         x = attn1(x, c)
+        #     x = block2(x, c, t, p , l)
+        #     if attn2 is not None:
+        #         x = attn2(x, c)
+        #     x = norm(x)
+        # # output convolution
+        # x = self.final_conv(x)  
+ # down sample
         for block1, attn1, block2, attn2, norm, downsample in self.down_blocks:
         # for block1, block2, norm, downsample in self.down_blocks:
-            x = block1(x, c, t, p, l)
+            x = block1(x, c, t, p)
             if attn1 is not None:
                 x = attn1(x, c)
-            x = block2(x, c, t, p, l)
+            x = block2(x, c, t, p)
             if attn2 is not None:
                 x = attn2(x, c)
             x = norm(x)
@@ -108,22 +146,22 @@ class UNetLight(nn.Module):
             x = downsample(x)
 
         # bottleneck
-        x = self.mid_block1(x, c, t, p, l)
+        x = self.mid_block1(x, c, t, p)
         if self.use_spatial_transformer:
             x = self.mid_attn(x,c)
         else:
             x = self.mid_attn(x)
-        x = self.mid_block2(x, c, t, p, l)
+        x = self.mid_block2(x, c, t, p)
 
         # up sample
         for upsample, block1, attn1, block2, attn2, norm in self.up_blocks:
         # for upsample, block1, block2, norm in self.up_blocks:
             x = upsample(x)
             x = torch.cat((x, skips.pop()), dim=1)
-            x = block1(x, c, t, p, l)
+            x = block1(x, c, t, p)
             if attn1 is not None:
                 x = attn1(x, c)
-            x = block2(x, c, t, p , l)
+            x = block2(x, c, t, p)
             if attn2 is not None:
                 x = attn2(x, c)
             x = norm(x)

@@ -72,6 +72,8 @@ parser.add_argument('--vae-config', default='configs/vae.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vaeyaml)')
 parser.add_argument('--use-low-res', action='store_true',
                     help='Whether to condition the model with a low resolution whole image sampled from a VAE')
+parser.add_argument('--use-cfg', action='store_true',
+                    help='Whether to use classifier-free guidance')
 parser.add_argument('--guidance-probability', default=0.7, type=float,
                     help='probability of unconditional generation (default: 0.8)')
 parser.add_argument('--guidance-weight', default=10, type=int,
@@ -124,7 +126,15 @@ def main():
     cfg_unet = yaml.load(open(args.unet_config, 'r'), Loader=yaml.Loader)
     cfg_vqgan = yaml.load(open(args.vqgan_config, 'r'), Loader=yaml.Loader)
     cfg_vae = yaml.load(open(args.vae_config,'r'),Loader=yaml.Loader)
-
+    vae = None
+    if args.use_low_res:
+        # vae = VAE(**cfg_vae['model'])
+        vae = IntroVAE(**cfg_vae['model'])
+        vae, _, _ = load_model_checkpoint(vae, args.vae_path, device)
+        vae.to(device)
+        global vae_latent_dim
+        vae_latent_dim = cfg_vae['model']['latent_dim']
+        cfg_unet['cond_emb_dim'] = 2 * cfg_unet['cond_emb_dim']
     vqgan_model = VQGANLight(**cfg_vqgan['model'])
     vqgan_model, _, _ = load_model_checkpoint(vqgan_model, args.vqgan_path, device)
     vqgan_model.to(device)
@@ -135,16 +145,8 @@ def main():
     unet.to(device)
 
     ddpm = DDPM(eps_model=unet, vae_model=vqgan_model, **cfg)
-    print("{:<16}: {}".format('DDPM model params', count_parameters(ddpm)))
     ddpm.to(device)
-    vae = None
-    if args.use_low_res:
-        # vae = VAE(**cfg_vae['model'])
-        vae = IntroVAE(**cfg_vae['model'])
-        vae, _, _ = load_model_checkpoint(vae, args.vae_path, device)
-        vae.to(device)
-        global vae_latent_dim
-        vae_latent_dim = cfg_vae['model']['latent_dim']
+    print("{:<16}: {}".format('DDPM model params', count_parameters(ddpm)))
 
     block_size = args.block_size
     optimizer = torch.optim.Adam(unet.parameters(), args.lr)
@@ -266,13 +268,15 @@ def validate(model, data_loader, block_size, vae, device, args):
             if j==0 and i>0:
                 prev_block = curr_block[0][:,:,i-block_size:i, j:j+block_size]
             block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
-            if args.use_low_res:
+            if args.use_low_res and args.use_cfg:
                 curr_block_uncond = model.sample(block_size, prev_block, block_pos, low_res_cond = None, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance (CFG)
                 curr_block_cond = model.sample(block_size, prev_block, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance 
                 curr_block = [(1 + w)*curr_block_cond[i] - w*curr_block_uncond[i] for i in range(model.n_steps)] #sampling strategy for classifier-free guidance 
-                # curr_block[0] = curr_block[0] - low_res_cond 
+                #curr_block[0] = curr_block[0] - low_res_cond 
+            elif args.use_low_res:
+                curr_block = model.sample(block_size, prev_block, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim) # if CFG is not used 
             else:
-                curr_block = model.sample(block_size, prev_block, block_pos, low_res_cond = None, batch_size=n_images, channels=latent_dim) # if CFG is not used 
+                curr_block = model.sample(block_size, prev_block, block_pos, low_res_cond = None, batch_size=n_images, channels=latent_dim) # if CFG is not used and low-res-conditioning is also not used
 
             prev_block = curr_block[0]
             position += 1
