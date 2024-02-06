@@ -45,7 +45,7 @@ class UNetLight(nn.Module):
         # contracting path
         self.down_blocks = nn.ModuleList([])
         prev_channel = self.channels[0]
-        # cond_emb_dim = self.channels[0]
+        cond_emb_dim = self.channels[0]
         for c in self.channels:
             self.down_blocks.append(
                 nn.ModuleList([
