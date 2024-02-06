@@ -205,7 +205,14 @@ def train(model, train_loader, optimizer, block_size, vae, device, args):
     for x, _ in tqdm(train_loader, desc="Training"):
         x = x.to(device)
         x = model.encode(x)
-        if args.use_low_res  and  np.random.choice([1, 0], p=[1-p, p]): # setting the condition to None as per the guidance probability, should the condition be used
+        if args.use_cfg:
+            if args.use_low_res  and  np.random.choice([1, 0], p=[1-p, p]): # setting the condition to None as per the guidance probability, should the condition be used
+                x_hat = sample_from_vae(x.shape[0],vae, device)
+                x_resized = model.encode(x_hat)
+                low_res_cond = F.resize(x_resized, [block_size], antialias = True)
+            else:
+                low_res_cond = None
+        elif args.use_low_res:
             x_hat = sample_from_vae(x.shape[0],vae, device)
             x_resized = model.encode(x_hat)
             low_res_cond = F.resize(x_resized, [block_size], antialias = True)
