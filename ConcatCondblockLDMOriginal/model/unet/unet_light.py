@@ -39,6 +39,7 @@ class UNetLight(nn.Module):
         # self.low_cond_embedding = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=3)
         self.pos_embedding = TimeEmbedding(time_emb_dim, pos_emb_dim)
         # initial convolutional layer
+        in_channels = 3 * in_channels
         self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=3)
         # self.cond_attn = CrossAttention(in_channels, in_channels, dim_keys, n_heads)
 
@@ -88,12 +89,14 @@ class UNetLight(nn.Module):
         t = self.time_embedding(t)
         x = self.init_conv(x)
         p = self.pos_embedding(p)
-        if l is not None:
-            c = torch.cat([x_cond, l], dim=1)
-            c = self.cond_embedding(c)
+        if self.use_spatial_transformer:
+            if l is not None:
+                c = torch.cat([x_cond, l], dim=1)
+                c = self.cond_embedding(c)
+            else:
+                c = self.cond_embedding(x_cond)
         else:
-            c = self.cond_embedding(x_cond)
-
+            c = None
 
         skips = []
 
@@ -135,10 +138,10 @@ class UNetLight(nn.Module):
  # down sample
         for block1, attn1, block2, attn2, norm, downsample in self.down_blocks:
         # for block1, block2, norm, downsample in self.down_blocks:
-            x = block1(x, c, t, p)
+            x = block1(x, t, p)
             if attn1 is not None:
                 x = attn1(x, c)
-            x = block2(x, c, t, p)
+            x = block2(x, t, p)
             if attn2 is not None:
                 x = attn2(x, c)
             x = norm(x)
@@ -146,22 +149,22 @@ class UNetLight(nn.Module):
             x = downsample(x)
 
         # bottleneck
-        x = self.mid_block1(x, c, t, p)
+        x = self.mid_block1(x, t, p)
         if self.use_spatial_transformer:
             x = self.mid_attn(x,c)
         else:
             x = self.mid_attn(x)
-        x = self.mid_block2(x, c, t, p)
+        x = self.mid_block2(x, t, p)
 
         # up sample
         for upsample, block1, attn1, block2, attn2, norm in self.up_blocks:
         # for upsample, block1, block2, norm in self.up_blocks:
             x = upsample(x)
             x = torch.cat((x, skips.pop()), dim=1)
-            x = block1(x, c, t, p)
+            x = block1(x, t, p)
             if attn1 is not None:
                 x = attn1(x, c)
-            x = block2(x, c, t, p)
+            x = block2(x, t, p)
             if attn2 is not None:
                 x = attn2(x, c)
             x = norm(x)

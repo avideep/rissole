@@ -212,11 +212,11 @@ def train(model, train_loader, optimizer, block_size, vae, device, args):
                 low_res_cond = F.resize(x_resized, [block_size], antialias = True)
             else:
                 low_res_cond = None
-        elif args.use_low_res:
+        elif args.use_low_res: # if cfg is not used but low res cond is going to be used
             x_hat = sample_from_vae(x.shape[0],vae, device)
             x_resized = model.encode(x_hat)
             low_res_cond = F.resize(x_resized, [block_size], antialias = True)
-        else:
+        else: # if nothing is used
             low_res_cond = None
         prev_block = torch.rand_like(x[:, :, :block_size, :block_size]).to(device)
         optimizer.zero_grad()
@@ -234,7 +234,7 @@ def train(model, train_loader, optimizer, block_size, vae, device, args):
                 loss.backward()
                 position += 1
         optimizer.step()
-
+        loss_agg = loss_agg/position #average loss over all the blocks
         if ema_loss is None:
             ema_loss = loss_agg
         else:

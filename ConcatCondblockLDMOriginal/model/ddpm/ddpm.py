@@ -178,6 +178,8 @@ class DDPM(nn.Module):
             Returns:
                 loss between the noise and the predicted noise of the epsilon model
             """
+            c = x_start.size(1)
+            x_start = torch.cat([x_start, x_cond, low_res_cond], dim = 1)
             if noise is None:
                 noise = torch.randn_like(x_start)
 
@@ -187,7 +189,7 @@ class DDPM(nn.Module):
             x_noisy = self.q_sample(x_start, t, noise)
             predicted_noise = self.eps_model(x_noisy, x_cond, t, position, low_res_cond)
 
-            return self.calculate_loss(noise, predicted_noise)
+            return self.calculate_loss(noise[:, :c, :, :], predicted_noise)
 
     def calculate_loss(self, noise, predicted_noise, x_start = None, x_recon = None):
         """
@@ -203,6 +205,7 @@ class DDPM(nn.Module):
             loss = F.l1_loss(noise, predicted_noise)
         elif self.loss_function == "l2":
             loss = F.mse_loss(noise, predicted_noise, reduction = 'sum')/noise.size(0)
+            # loss = F.mse_loss(noise, predicted_noise)
         elif self.loss_function == "huber":
             loss = F.smooth_l1_loss(noise, predicted_noise)
         else:
