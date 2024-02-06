@@ -99,7 +99,9 @@ class ResidualBlockUNet(nn.Module):
         #     nn.SiLU()
         # )
 
-    def forward(self, x: torch.Tensor, x_cond: torch.Tensor = None, t: torch.Tensor = None, p:torch.Tensor = None):
+    # def forward(self, x: torch.Tensor, x_cond: torch.Tensor = None, t: torch.Tensor = None, p:torch.Tensor = None):
+    def forward(self, x: torch.Tensor, t: torch.Tensor = None, p:torch.Tensor = None):
+
         identity = self.shortcut(x)
 
         x = self.block1(x)
@@ -111,10 +113,10 @@ class ResidualBlockUNet(nn.Module):
         if self.pos_emb is not None:
             p = self.pos_emb(p)
             x += p[:, :, None, None]
-        if self.cond_emb is not None:
-            c = self.cond_emb(x_cond)
-            if x.shape[2] == c.shape[2]:
-                x += c
+        # if self.cond_emb is not None:
+        #     c = self.cond_emb(x_cond)
+        #     if x.shape[2] == c.shape[2]:
+        #         x += c
         # if l is not None:
         #     l = self.low_cond_emb(l)
         #     if x.shape[2] == l.shape[2]:
