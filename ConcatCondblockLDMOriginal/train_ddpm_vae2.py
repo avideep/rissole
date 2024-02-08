@@ -230,11 +230,11 @@ def train(model, train_loader, optimizer, block_size, vae, device, args):
                 curr_block = x[:, :, i:i+block_size, j:j+block_size]
                 loss = model.p_losses2(curr_block, prev_block, position = block_pos, low_res_cond = low_res_cond)
                 prev_block = curr_block
-                loss_agg += loss.item()
-                loss.backward()
+                loss_agg += loss
                 position += 1
+        loss_agg.backward()
         optimizer.step()
-        loss_agg = loss_agg/position #average loss over all the blocks
+        loss_agg = loss_agg.item()/position #average loss over all the blocks
         if ema_loss is None:
             ema_loss = loss_agg
         else:
