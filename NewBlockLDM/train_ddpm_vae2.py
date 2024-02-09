@@ -68,12 +68,14 @@ parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-01-17_130119/b
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
-parser.add_argument('--vae-path', default='checkpoints/vae/introVAE/24-01-18_162139/best_model.pt',
+parser.add_argument('--vae-path', default='checkpoints/vae/introVAE/24-01-29_194841/best_model.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 parser.add_argument('--vae-config', default='configs/vae.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vaeyaml)')
 parser.add_argument('--use-low-res', action='store_true',
                     help='Whether to condition the model with a low resolution whole image sampled from a VAE')
+parser.add_argument('--use-cfg', action='store_true',
+                    help='Whether to use classifier-free guidance')
 parser.add_argument('--guidance-probability', default=0.7, type=float,
                     help='probability of unconditional generation (default: 0.8)')
 parser.add_argument('--guidance-weight', default=10, type=int,
@@ -217,21 +219,35 @@ def train(model, train_loader, optimizer, block_size, vae, device, args):
         else:
             low_res_cond = None
         prev_block = torch.rand_like(x[:, :, :block_size, :block_size]).to(device)
+        if args.use_cfg:
+            if args.use_low_res  and  np.random.choice([1, 0], p=[1-p, p]): # setting the condition to None as per the guidance probability, should the condition be used
+                x_hat = sample_from_vae(x.shape[0],vae, device)
+                x_resized = model.encode(x_hat)
+                low_res_cond = F.resize(x_resized, [block_size], antialias = True)
+            else:
+                low_res_cond = None
+        elif args.use_low_res: # if cfg is not used but low res cond is going to be used
+            x_hat = sample_from_vae(x.shape[0],vae, device)
+            x_resized = model.encode(x_hat)
+            low_res_cond = F.resize(x_resized, [block_size], antialias = True)
+        else: # if nothing is used
+            low_res_cond = None
+        prev_block = torch.rand_like(x[:, :, :block_size, :block_size]).to(device)
         optimizer.zero_grad()
         position = 0
         loss_agg = 0
         for i in range(0, x.shape[-1], block_size):
             for j in range(0, x.shape[-1], block_size):
-                if j==0 and i>0:
-                        prev_block = x[:,:,i-block_size:i, j:j+block_size]
+                # if j==0 and i>0:
+                #         prev_block = x[:,:,i-block_size:i, j:j+block_size]
                 block_pos = torch.full((x.size(0),),position, dtype=torch.int64).to(device)
                 curr_block = x[:, :, i:i+block_size, j:j+block_size]
                 condition = torch.cat([prev_block, low_res_cond], dim =1) if low_res_cond is not None else prev_block
                 loss = model.p_losses2(curr_block, condition, position = block_pos)
                 prev_block = curr_block
-                loss_agg += loss.item()
-                loss.backward()
+                loss_agg += loss
                 position += 1
+        loss_agg.backward()
         optimizer.step()
 
         if ema_loss is None:
