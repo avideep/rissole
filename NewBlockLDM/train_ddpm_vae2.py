@@ -60,8 +60,8 @@ parser.add_argument('--ckpt-save', default=True, action='store_true',
                     dest='save_checkpoint', help='Save checkpoints to folder')
 parser.add_argument('--load-ckpt_ddpm', default=None, metavar='PATH',
                     dest='load_checkpoint_ddpm', help='Load model checkpoint and continue training')
-parser.add_argument('--load-ckpt_unet', default=None, metavar='PATH',
-                    dest='load_checkpoint_unet', help='Load model checkpoint and continue training')
+parser.add_argument('--load-ckpt_nextnet', default=None, metavar='PATH',
+                    dest='load_checkpoint_nextnet', help='Load model checkpoint and continue training')
 parser.add_argument('--log-save-interval', default=5, type=int, metavar='N',
                     dest='save_interval', help="Interval in which logs are saved to disk (default: 5)")
 parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-01-17_130119/best_model.pt',
@@ -93,16 +93,16 @@ def main():
     args.name = 'second_stage/' + os.path.splitext(os.path.basename(args.config))[0]
     running_log_dir = os.path.join(LOG_DIR, args.name, f'{TIMESTAMP}')
     running_ckpt_dir_ddpm = os.path.join(CHECKPOINT_DIR, args.name, f'{TIMESTAMP}', "ddpm")
-    running_ckpt_dir_unet = os.path.join(CHECKPOINT_DIR, args.name, f'{TIMESTAMP}', "unet")
+    running_ckpt_dir_nextnet = os.path.join(CHECKPOINT_DIR, args.name, f'{TIMESTAMP}', "nextnet")
     print("{:<16}: {}".format('logdir', running_log_dir))
     print("{:<16}: {}".format('ckpt_dir_ddpm', running_ckpt_dir_ddpm))
-    print("{:<16}: {}".format('ckpt_dir_unet', running_ckpt_dir_unet))
+    print("{:<16}: {}".format('ckpt_dir_nextnet', running_ckpt_dir_nextnet))
 
     if args.save_checkpoint and not os.path.exists(running_ckpt_dir_ddpm):
         os.makedirs(running_ckpt_dir_ddpm)
 
-    if args.save_checkpoint and not os.path.exists(running_ckpt_dir_unet):
-        os.makedirs(running_ckpt_dir_unet)
+    if args.save_checkpoint and not os.path.exists(running_ckpt_dir_nextnet):
+        os.makedirs(running_ckpt_dir_nextnet)
 
     global logger
     logger = Logger(running_log_dir, tensorboard=True)
@@ -154,11 +154,11 @@ def main():
         vae_latent_dim = cfg_vae['model']['latent_dim']
 
     block_size = args.block_size
-    optimizer = torch.optim.Adam(unet.parameters(), args.lr)
+    optimizer = torch.optim.Adam(nextnet.parameters(), args.lr)
 
     # resume training
     if args.load_checkpoint_ddpm:
-        unet, start_epoch, global_train_step = load_model_checkpoint(unet, args.load_checkpoint_unet, device)
+        nextnet, start_epoch, global_train_step = load_model_checkpoint(nextnet, args.load_checkpoint_nextnet, device)
         ddpm, start_epoch, global_train_step = load_model_checkpoint(ddpm, args.load_checkpoint_ddpm, device)
         logger.global_train_step = global_train_step
         args.epochs += start_epoch
@@ -187,7 +187,7 @@ def main():
         # save logs and checkpoint
             logger.save()
             if args.save_checkpoint:
-                save_model_checkpoint(unet, f"{running_ckpt_dir_unet}", logger)
+                save_model_checkpoint(nextnet, f"{running_ckpt_dir_nextnet}", logger)
                 save_model_checkpoint(ddpm, f"{running_ckpt_dir_ddpm}", logger)
             prev_loss = loss
 
