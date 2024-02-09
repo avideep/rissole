@@ -19,7 +19,7 @@ parser.add_argument('--image-size', default=256, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
 parser.add_argument('--image-count', default=50,
                     type=int, help='number of images that should be generated for comparison')
-parser.add_argument('--vae-path', default='checkpoints/vae/introVAE/24-01-18_162139/best_model.pt',
+parser.add_argument('--vae-path', default='checkpoints/vae/introVAE/24-01-29_194841/best_model.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 parser.add_argument('--vae-config', default='configs/vae.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
