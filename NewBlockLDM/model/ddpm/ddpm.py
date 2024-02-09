@@ -19,6 +19,7 @@ class DDPM(nn.Module):
             beta_schedule: str,
             n_steps: int,
             loss_function: str,
+            loss_against: str,
     ):
         """
         Implementation of a simple Denoising Diffusion Probabilistic Model (DDPM) like presented in
@@ -72,7 +73,7 @@ class DDPM(nn.Module):
         # calculations for posterior q(x_{t-1} | x_t, x_0)
         self.posterior_variance = self.betas * (1.0 - self.alphas_cumprod_prev) / (1.0 - self.alphas_cumprod)
         self.count = 0
-
+        self.loss_against = loss_against
 
     def extract(self, a, t, x_shape):
         """
@@ -187,7 +188,8 @@ class DDPM(nn.Module):
             x_noisy = self.q_sample(x_start, t, noise)
             x_noisy = torch.cat([x_cond, x_noisy], dim = 1)
             predicted_noise = self.eps_model(x_noisy, t, position)
-
+            if self.loss_against == 'x0':
+                return self.calculate_loss(x_start, predicted_noise)
             return self.calculate_loss(noise, predicted_noise)
 
     def calculate_loss(self, noise, predicted_noise, x_start = None, x_recon = None):
