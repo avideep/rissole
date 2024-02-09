@@ -13,7 +13,7 @@ from dataloader import PlantNet, CIFAR10, CelebA, CelebAHQ
 from model import VQGANLight, VAE, IntroVAE
 from model.ddpm.ddpm import DDPM
 from model.unet import UNet
-from model.unet.unet_light import UNetLight
+from model.unet.unet_light import UNetLight, NextNet
 from utils.helpers import timer, save_model_checkpoint, load_model_checkpoint, log2tensorboard_ddpm
 from utils.logger import Logger
 from utils.helpers import count_parameters
@@ -46,8 +46,10 @@ parser.add_argument('--lr', default=0.00002,
                     type=float, metavar='LR', help='Initial learning rate (default: 0.0002)')
 parser.add_argument('--config', default='configs/ddpm_linear.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/ddpm_linear.yaml)')
-parser.add_argument('--unet-config', default='configs/unet.yaml',
-                    metavar='PATH', help='Path to unet model config file (default: configs/unet.yaml)')
+# parser.add_argument('--unet-config', default='configs/unet.yaml',
+#                     metavar='PATH', help='Path to unet model config file (default: configs/unet.yaml)')
+parser.add_argument('--nextnet-config', default='configs/nextnet.yaml',
+                    metavar='PATH', help='Path to NextNet model config file (default: configs/nextnet.yaml)')
 parser.add_argument('--data-config', default='configs/data_se.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/data_se.yaml)')
 parser.add_argument('--debug', action='store_true',
@@ -121,7 +123,8 @@ def main():
 
     # read config file for model
     cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
-    cfg_unet = yaml.load(open(args.unet_config, 'r'), Loader=yaml.Loader)
+    # cfg_unet = yaml.load(open(args.unet_config, 'r'), Loader=yaml.Loader)
+    cfg_nextnet = yaml.load(open(args.nextnet_config, 'r'), Loader=yaml.Loader)
     cfg_vqgan = yaml.load(open(args.vqgan_config, 'r'), Loader=yaml.Loader)
     cfg_vae = yaml.load(open(args.vae_config,'r'),Loader=yaml.Loader)
 
@@ -131,10 +134,14 @@ def main():
     global latent_dim
     latent_dim = cfg_vqgan['model']['latent_dim']
 
-    unet = UNetLight(**cfg_unet)
-    unet.to(device)
+    # unet = UNetLight(**cfg_unet)
+    # unet.to(device)
+    nextnet = NextNet(**cfg_nextnet)
+    nextnet.to(device)
 
-    ddpm = DDPM(eps_model=unet, vae_model=vqgan_model, **cfg)
+
+    # ddpm = DDPM(eps_model=unet, vae_model=vqgan_model, **cfg)
+    ddpm = DDPM(eps_model=nextnet, vae_model=vqgan_model, **cfg)
     print("{:<16}: {}".format('DDPM model params', count_parameters(ddpm)))
     ddpm.to(device)
     vae = None
@@ -219,7 +226,8 @@ def train(model, train_loader, optimizer, block_size, vae, device, args):
                         prev_block = x[:,:,i-block_size:i, j:j+block_size]
                 block_pos = torch.full((x.size(0),),position, dtype=torch.int64).to(device)
                 curr_block = x[:, :, i:i+block_size, j:j+block_size]
-                loss = model.p_losses2(curr_block, prev_block, position = block_pos, low_res_cond = low_res_cond)
+                condition = torch.cat([prev_block, low_res_cond], dim =1)
+                loss = model.p_losses2(curr_block, condition, position = block_pos)
                 prev_block = curr_block
                 loss_agg += loss.item()
                 loss.backward()

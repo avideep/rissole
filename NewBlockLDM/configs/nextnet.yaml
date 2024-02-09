@@ -1,0 +1,5 @@
+in_channels: 10
+out_channels: 10
+depth: 16
+filters_per_layer: 64
+position_conditioned: True

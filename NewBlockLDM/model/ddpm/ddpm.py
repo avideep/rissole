@@ -168,7 +168,7 @@ class DDPM(nn.Module):
         #     self.count += 1
         #     return self.calculate_loss(noise, predicted_noise, x_start, x_recon)
         return self.calculate_loss(noise, predicted_noise)
-    def p_losses2(self, x_start, x_cond, position, low_res_cond = None, noise=None):
+    def p_losses2(self, x_start, x_cond, position, noise=None):
             """
             runs a forward step and calculates the loss
 
@@ -185,7 +185,8 @@ class DDPM(nn.Module):
             t = torch.full((x_start.shape[0],), random_time, dtype=torch.int64).to(x_start.device)
 
             x_noisy = self.q_sample(x_start, t, noise)
-            predicted_noise = self.eps_model(x_noisy, x_cond, t, position, low_res_cond)
+            x_noisy = torch.cat([x_cond, x_noisy], dim = 1)
+            predicted_noise = self.eps_model(x_noisy, t, position)
 
             return self.calculate_loss(noise, predicted_noise)
 
