@@ -9,4 +9,4 @@ n_steps: 1000
 
 # loss function for ddpm training - one of ['l1', 'l2', 'huber']
 loss_function: 'l2'
-loss_against: 'x0'
+loss_against: 'noise'
