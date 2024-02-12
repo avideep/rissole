@@ -205,7 +205,7 @@ class DDPM(nn.Module):
         if self.loss_function == "l1":
             loss = F.l1_loss(noise, predicted_noise)
         elif self.loss_function == "l2":
-            loss = F.mse_loss(noise, predicted_noise) #, reduction = 'sum')/noise.size(0)
+            loss = F.mse_loss(noise, predicted_noise, reduction = 'sum')/noise.size(0)
         elif self.loss_function == "huber":
             loss = F.smooth_l1_loss(noise, predicted_noise)
         else:
