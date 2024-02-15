@@ -74,8 +74,8 @@ def train(model, train_loader, optimizer, beta, device):
         x = x.to(device)
 
         recon_x, mu, logvar = model(x)
-        print(recon_x.shape)
-        print(x.shape)
+        # print(recon_x.shape)
+        # print(x.shape)
 
         # compute loss
         loss, logs = loss_fn(x, recon_x, mu, logvar, beta)
