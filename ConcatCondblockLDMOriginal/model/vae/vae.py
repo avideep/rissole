@@ -20,7 +20,6 @@ class VAE(nn.Module):
         mu, logvar = self.encode(x)
         z = self.sample(mu, logvar)
         rx = self.decode(z)
-        print(rx.shape)
         return rx, mu, logvar
 
     def encode(self, x: torch.Tensor):
