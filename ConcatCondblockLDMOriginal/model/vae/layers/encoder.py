@@ -12,8 +12,8 @@ class Encoder(nn.Module):
             self._conv(32, 64), # 6 x 6
             self._conv(64, 64), # 2 x 2 
         )
-        self.fc_mu = nn.Linear(256, latent_dim)
-        self.fc_var = nn.Linear(256, latent_dim)
+        self.fc_mu = nn.Linear(4096, latent_dim)
+        self.fc_var = nn.Linear(4096, latent_dim)
 
     def _conv(self, in_channels, out_channels):
         return nn.Sequential(
@@ -27,7 +27,7 @@ class Encoder(nn.Module):
     
     def forward(self, x):
         x = self.encoder(x)
-        x = x.view(-1, 256)
+        x = x.view(-1, 4096)
         return self.fc_mu(x), self.fc_var(x)
 
 # class Encoder(nn.Module):
