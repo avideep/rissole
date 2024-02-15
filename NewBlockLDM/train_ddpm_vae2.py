@@ -118,8 +118,8 @@ def main():
 
     # load data
     if args.debug:
-        #data = CIFAR10(args.batch_size)
-        data = CelebA(args.batch_size)
+        data = CIFAR10(args.batch_size)
+        # data = CelebA(args.batch_size)
     else:
         data = CelebAHQ(args.batch_size)
 

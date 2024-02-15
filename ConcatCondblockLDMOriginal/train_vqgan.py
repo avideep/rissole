@@ -87,8 +87,8 @@ def main():
 
     # load data
     if args.debug:
-        # data = CIFAR10(args.batch_size)
-        data = CelebA(args.batch_size)
+        data = CIFAR10(args.batch_size)
+        # data = CelebA(args.batch_size)
     else:
         # data_cfg = yaml.load(open(args.data_config, 'r'), Loader=yaml.Loader)
         data = CelebAHQ(args.batch_size)
