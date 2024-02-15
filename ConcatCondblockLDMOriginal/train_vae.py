@@ -16,7 +16,7 @@ from utils.helpers import load_model_checkpoint, save_model_checkpoint
 from utils.helpers import log2tensorboard_vqvae
 from utils.helpers import count_parameters
 from utils.visualization import get_original_reconstruction_image
-from dataloader import PlantNet, CelebA, CelebAHQ
+from dataloader import PlantNet, CelebA, CelebAHQ, CIFAR10
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
