@@ -30,11 +30,11 @@ TIMESTAMP = datetime.now().strftime('%y-%m-%d_%H%M%S')
 parser = argparse.ArgumentParser(description="PyTorch Second Stage Training")
 parser.add_argument('--name', '-n', default='',
                     type=str, metavar='NAME', help='Model name and folder where logs are stored')
-parser.add_argument('--epochs', default=100,
+parser.add_argument('--epochs', default=200,
                     type=int, metavar='N', help='Number of epochs to run (default: 100)')
 parser.add_argument('--batch-size', default=16, metavar='N',
                     type=int, help='Mini-batch size (default: 64)')
-parser.add_argument('--image-size', default=256, metavar='N',
+parser.add_argument('--image-size', default=128, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
 parser.add_argument('--block-size', default=32, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
@@ -62,11 +62,11 @@ parser.add_argument('--load-ckpt_unet', default=None, metavar='PATH',
                     dest='load_checkpoint_unet', help='Load model checkpoint and continue training')
 parser.add_argument('--log-save-interval', default=5, type=int, metavar='N',
                     dest='save_interval', help="Interval in which logs are saved to disk (default: 5)")
-parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-01-17_130119/best_model.pt',
+parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-02-15_130652/best_model.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
-parser.add_argument('--vae-path', default='checkpoints/vae/introVAE/24-01-29_194841/best_model.pt',
+parser.add_argument('--vae-path', default='checkpoints/vae/24-02-15_130409/best_model.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 parser.add_argument('--vae-config', default='configs/vae.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vaeyaml)')
@@ -113,11 +113,10 @@ def main():
         device = torch.device(f'cuda:{args.gpus[0]}' if torch.cuda.is_available() else 'cpu')
     else:
         raise ValueError('Currently multi-gpu training is not possible')
-
     # load data
     if args.debug:
-        #data = CIFAR10(args.batch_size)
-        data = CelebA(args.batch_size)
+        data = CIFAR10(args.batch_size)
+        # data = CelebA(args.batch_size)
     else:
         data = CelebAHQ(args.batch_size)
 
@@ -128,8 +127,8 @@ def main():
     cfg_vae = yaml.load(open(args.vae_config,'r'),Loader=yaml.Loader)
     vae = None
     if args.use_low_res:
-        # vae = VAE(**cfg_vae['model'])
-        vae = IntroVAE(**cfg_vae['model'])
+        vae = VAE(**cfg_vae['model'])
+        # vae = IntroVAE(**cfg_vae['model'])
         vae, _, _ = load_model_checkpoint(vae, args.vae_path, device)
         vae.to(device)
         global vae_latent_dim
@@ -205,6 +204,7 @@ def train(model, train_loader, optimizer, block_size, vae, device, args):
     for x, _ in tqdm(train_loader, desc="Training"):
         x = x.to(device)
         x = model.encode(x)
+        print(x.shape)
         if args.use_cfg:
             if args.use_low_res  and  np.random.choice([1, 0], p=[1-p, p]): # setting the condition to None as per the guidance probability, should the condition be used
                 x_hat = sample_from_vae(x.shape[0],vae, device)
