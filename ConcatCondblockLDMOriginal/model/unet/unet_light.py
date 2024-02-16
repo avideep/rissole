@@ -90,6 +90,7 @@ class UNetLight(nn.Module):
     def forward(self, x: torch.Tensor, x_cond: torch.Tensor, t: torch.Tensor, p: torch.Tensor, l: torch.Tensor = None):
         t = self.time_embedding(t)
         x = torch.cat([x, x_cond, l], dim = 1)
+        print(x.shape, l.shape, x_cond.shape)
         x = self.init_conv(x)
         p = self.pos_embedding(p)
         if self.use_spatial_transformer:
@@ -164,7 +165,6 @@ class UNetLight(nn.Module):
         for upsample, block1, attn1, block2, attn2, norm in self.up_blocks:
         # for upsample, block1, block2, norm in self.up_blocks:
             x = upsample(x)
-            print(x.shape, skips.pop().shape)
             x = torch.cat((x, skips.pop()), dim=1)
             x = block1(x, t, p)
             if attn1 is not None:
