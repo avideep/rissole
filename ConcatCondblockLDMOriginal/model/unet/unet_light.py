@@ -62,7 +62,7 @@ class UNetLight(nn.Module):
 
         # bottleneck
         self.mid_block1 = ResidualBlockUNet(self.channels[-1], self.channels[-1], time_emb_dim, cond_emb_dim, n_groups)
-        # self.mid_attn = SpatialTransformer(self.channels[-1], n_heads, dim_keys, depth=1, context_dim= cond_emb_dim) if use_spatial_transformer else Attention(self.channels[-1], n_heads, dim_keys)
+        self.mid_attn = SpatialTransformer(self.channels[-1], n_heads, dim_keys, depth=1, context_dim= cond_emb_dim) if use_spatial_transformer else Attention(self.channels[-1], n_heads, dim_keys)
         # self.mid_attn = Attention(self.channels[-1], n_heads, dim_keys)
 
  
@@ -154,11 +154,11 @@ class UNetLight(nn.Module):
 
         # bottleneck
         x = self.mid_block1(x, t, p)
-        # if self.use_spatial_transformer:
-        #     x = self.mid_attn(x,c)
-        # else:
-        #     x = self.mid_attn(x)
-        # x = self.mid_attn(x)
+        if self.use_spatial_transformer:
+            x = self.mid_attn(x,c)
+        else:
+            x = self.mid_attn(x)
+        x = self.mid_attn(x)
         x = self.mid_block2(x, t, p)
 
         # up sample
