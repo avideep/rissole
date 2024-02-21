@@ -157,7 +157,7 @@ class UNetLight(nn.Module):
             x = self.mid_attn(x,c)
         else:
             x = self.mid_attn(x)
-        x = self.mid_attn(x)
+        # x = self.mid_attn(x)
         x = self.mid_block2(x, t, p)
 
         # up sample
