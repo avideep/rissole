@@ -145,6 +145,7 @@ class CelebA:
             all_patches = []
             for x, _ in self.full_dataloader:
                 for patch in self.select_random_patches(x):
+                    print(patch.shape)
                     all_patches.append(self.encoder.encode(self.tensor2img(patch)))
             torch.save(all_patches, self.DSET_PATH)
         return all_patches
