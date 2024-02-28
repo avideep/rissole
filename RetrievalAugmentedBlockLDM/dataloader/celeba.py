@@ -25,7 +25,7 @@ class CelebA:
 
         self.mean = [0.5, 0.5, 0.5]
         self.std = [0.5, 0.5, 0.5]
-        self.patch_size = img_size // 4
+        self.patch_size = img_size // 2
         self.patches = 5
         self.train_transform = transforms.Compose([
             transforms.ToTensor(),
@@ -134,7 +134,7 @@ class CelebA:
             top_left_x = torch.randint(0, width - self.patch_size + 1, (1,))
 
             patch = image[:, :, top_left_y:(top_left_y + self.patch_size), top_left_x:(top_left_x + self.patch_size)]
-            patches.append(patch)
+            patches.append(torch.squeeze(patch, dim=0))
 
         return patches
     def dsetbuilder(self):
