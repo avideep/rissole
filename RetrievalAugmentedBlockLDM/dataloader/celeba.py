@@ -9,6 +9,7 @@ from torch.utils.data import SubsetRandomSampler
 import numpy as np
 from PIL import Image
 from sentence_transformers import SentenceTransformer, util
+from tqdm import tqdm
 
 
 class CelebA:
@@ -143,7 +144,7 @@ class CelebA:
             all_patches = torch.load(self.DSET_PATH)
         else:
             all_patches = []
-            for x, _ in self.full_dataloader:
+            for x, _ in tqdm(self.full_dataloader, desc='Building DSET'):
                 for patch in self.select_random_patches(x):
                     all_patches.append(self.encoder.encode(self.tensor2img(patch)))
             torch.save(all_patches, self.DSET_PATH)
