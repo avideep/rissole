@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data import SubsetRandomSampler
 import numpy as np
 from PIL import Image
+from sentence_transformers import SentenceTransformer, util
 
 
 class CelebA:
@@ -24,7 +25,7 @@ class CelebA:
 
         self.mean = [0.5, 0.5, 0.5]
         self.std = [0.5, 0.5, 0.5]
-
+        self.patch_size = img_size // 4
         self.train_transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Resize(img_size),
@@ -32,7 +33,7 @@ class CelebA:
             transforms.RandomHorizontalFlip(p=0.5),
             transforms.Normalize(self.mean, self.std)
         ])
-
+        self.encoder = SentenceTransformer('clip-ViT-B-32')
         self.val_transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Resize(64),
@@ -46,6 +47,7 @@ class CelebA:
 
         self.train_set_full = ImageFolder(IMAGE_PATH, self.train_transform)
         self.train_loader, self.val_loader = self.train_val_test_split(self.train_set_full, self.batch_size)
+        self.full_dataloader = DataLoader(self.train_set_full, batch_size=1, num_workers=12, pin_memory=True)
         # invert normalization for tensor to image transform
         self.inv_normalize = transforms.Compose([
             transforms.Normalize(mean=0, std=[1./s for s in self.std]),
@@ -67,9 +69,9 @@ class CelebA:
         all_indices = list(data_indices)
         val_indices = random.sample(all_indices, val_size)
         
-        all_indices = np.setdiff1d(list(all_indices), val_indices)
+        train_indices = np.setdiff1d(list(all_indices), val_indices)
         
-        train_indices = list(all_indices)
+        train_indices = list(train_indices)
 
         train_loader = DataLoader(dataset, batch_size=batch_size, sampler=SubsetRandomSampler(train_indices), num_workers=12, pin_memory=True)
 
@@ -113,6 +115,11 @@ class CelebA:
             return Image.fromarray(img.permute(1, 2, 0).numpy().astype('uint8')).convert("RGB")
         else:
             return Image.fromarray(img[0].numpy()).convert("L")
+    def dsetbuilder(self):
+        """ Creates the D Set for this particular Dataset"""
+        for x, _ in self.full_dataloader:
+            
+        pass
 
 class CelebAHQ:
     def __init__(self, batch_size: int = 16, img_size = 256):
