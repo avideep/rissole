@@ -173,6 +173,7 @@ class CelebAHQ:
             transforms.RandomHorizontalFlip(p=0.5),
             transforms.Normalize(self.mean, self.std)
         ])
+        self.encoder = SentenceTransformer('clip-ViT-B-32')
 
         self.val_transform = transforms.Compose([
             transforms.ToTensor(),
