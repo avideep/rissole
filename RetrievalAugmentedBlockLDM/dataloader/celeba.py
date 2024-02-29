@@ -281,7 +281,8 @@ class CelebAHQ:
             for x, _ in tqdm(self.full_dataloader, desc='Building DSET'):
                 for patch in self.select_random_patches(x):
                     all_patches.append(self.encoder.encode(self.tensor2img(patch)))
-            torch.save(torch.tensor(np.array(all_patches)), self.DSET_PATH)
+            all_patches = torch.tensor(np.array(all_patches))
+            torch.save(all_patches, self.DSET_PATH)
         return all_patches
 
 
