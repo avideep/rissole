@@ -196,6 +196,7 @@ class CelebAHQ:
             transforms.Normalize(mean=[-m for m in self.mean], std=1.),
             lambda x: x*255
         ])
+        self.dset = self.dsetbuilder()
     def train_val_test_split(self, dataset, batch_size=16, test_ratio=0.2, val_ratio=0.2):
 
         np.random.seed(42)
