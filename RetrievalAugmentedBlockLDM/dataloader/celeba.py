@@ -181,8 +181,8 @@ class CelebAHQ:
             transforms.Normalize(self.mean, self.std)
         ])
         self.ROOT_PATH = '/hdd/avideep/blockLDM/data/celeba/'
-        self.IMAGE_PATH = '/hdd/avideep/blockLDM/data/celeba/processed/'
-        self.DSET_PATH = '/hdd/avideep/blockLDM/data/celeba/dset.pth'
+        self.IMAGE_PATH = '/hdd/avideep/blockLDM/data/celeba/celeba_hq/images'
+        self.DSET_PATH = '/hdd/avideep/blockLDM/data/celeba/celeba_hq/dset.pth'
         train_size = int(50000 * 0.9)
         # val size is 10000 in cifar10
         test_size = 50000 - train_size
