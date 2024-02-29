@@ -147,7 +147,7 @@ class CelebA:
             for x, _ in tqdm(self.full_dataloader, desc='Building DSET'):
                 for patch in self.select_random_patches(x):
                     all_patches.append(self.encoder.encode(self.tensor2img(patch)))
-            torch.save(all_patches, self.DSET_PATH)
+            torch.save(torch.tensor(np.array(all_patches)), self.DSET_PATH)
         return all_patches
 
 class CelebAHQ:
@@ -164,7 +164,8 @@ class CelebAHQ:
 
         self.mean = [0.5, 0.5, 0.5]
         self.std = [0.5, 0.5, 0.5]
-
+        self.patch_size = img_size // 2
+        self.patches = 5
         self.train_transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Resize(img_size),
@@ -179,13 +180,16 @@ class CelebAHQ:
             transforms.CenterCrop(256),
             transforms.Normalize(self.mean, self.std)
         ])
-        IMAGE_PATH = '/hdd/avideep/blockLDM/data/celeba/celeba_hq_256/'
-        train_size = int(30000 * 0.9)
+        self.ROOT_PATH = '/hdd/avideep/blockLDM/data/celeba/'
+        self.IMAGE_PATH = '/hdd/avideep/blockLDM/data/celeba/processed/'
+        self.DSET_PATH = '/hdd/avideep/blockLDM/data/celeba/dset.pth'
+        train_size = int(50000 * 0.9)
         # val size is 10000 in cifar10
-        test_size = 30000 - train_size
+        test_size = 50000 - train_size
 
-        self.train_set_full = ImageFolder(IMAGE_PATH, self.train_transform)
+        self.train_set_full = ImageFolder(self.IMAGE_PATH, self.train_transform)
         self.train_loader, self.val_loader = self.train_val_test_split(self.train_set_full, self.batch_size)
+        self.full_dataloader = DataLoader(self.train_set_full, batch_size=1, num_workers=12, pin_memory=True)
         # invert normalization for tensor to image transform
         self.inv_normalize = transforms.Compose([
             transforms.Normalize(mean=0, std=[1./s for s in self.std]),
@@ -207,9 +211,9 @@ class CelebAHQ:
         all_indices = list(data_indices)
         val_indices = random.sample(all_indices, val_size)
         
-        all_indices = np.setdiff1d(list(all_indices), val_indices)
+        train_indices = np.setdiff1d(list(all_indices), val_indices)
         
-        train_indices = list(all_indices)
+        train_indices = list(train_indices)
 
         train_loader = DataLoader(dataset, batch_size=batch_size, sampler=SubsetRandomSampler(train_indices), num_workers=12, pin_memory=True)
 
@@ -253,6 +257,31 @@ class CelebAHQ:
             return Image.fromarray(img.permute(1, 2, 0).numpy().astype('uint8')).convert("RGB")
         else:
             return Image.fromarray(img[0].numpy()).convert("L")
+    def select_random_patches(self, image):
+        _, _, height, width = image.shape
+
+
+        patches = []
+
+        for _ in range(self.patches):
+            top_left_y = torch.randint(0, height - self.patch_size + 1, (1,))
+            top_left_x = torch.randint(0, width - self.patch_size + 1, (1,))
+
+            patch = image[:, :, top_left_y:(top_left_y + self.patch_size), top_left_x:(top_left_x + self.patch_size)]
+            patches.append(torch.squeeze(patch, dim=0))
+
+        return patches
+    def dsetbuilder(self):
+        """ Creates the D Set for this particular Dataset"""
+        if os.path.exists(self.DSET_PATH):
+            all_patches = torch.load(self.DSET_PATH)
+        else:
+            all_patches = []
+            for x, _ in tqdm(self.full_dataloader, desc='Building DSET'):
+                for patch in self.select_random_patches(x):
+                    all_patches.append(self.encoder.encode(self.tensor2img(patch)))
+            torch.save(torch.tensor(np.array(all_patches)), self.DSET_PATH)
+        return all_patches
 
 
 
