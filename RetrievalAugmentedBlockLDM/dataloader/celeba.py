@@ -259,6 +259,11 @@ class CelebAHQ:
             return Image.fromarray(img.permute(1, 2, 0).numpy().astype('uint8')).convert("RGB")
         else:
             return Image.fromarray(img[0].numpy()).convert("L")
+    def get_encodings(self, x):
+        encodings = []
+        for x_i in x:
+            encodings.append(self.encoder.encode(self.tensor2img(x_i)))
+        return torch.tensor(np.array(encodings))
     def select_random_patches(self, image):
         _, _, height, width = image.shape
 
