@@ -14,7 +14,7 @@ import scann
 
 
 class CelebA:
-    def __init__(self, batch_size: int = 16, img_size = 64):
+    def __init__(self, batch_size: int = 16, img_size = 64, searcher_dir = None):
         """
         Wrapper to load, preprocess and deprocess CIFAR-10 dataset.
         Args:
@@ -60,7 +60,7 @@ class CelebA:
             lambda x: x*255
         ])
         self.dset = self.dsetbuilder()
-        if searcher_dir is not None:
+        if searcher_dir is None:
             searcher_dir = '/hdd/avideep/blockLDM/data/celeba/searcher/'
             self.searcher = scann.scann_ops_pybind.builder(self.dset / np.linalg.norm(self.dset, axis=1)[:, np.newaxis], 10, "dot_product").tree(num_leaves=2000, num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
             print(f'Save trained searcher under "{searcher_dir}"')
@@ -140,8 +140,9 @@ class CelebA:
         for x_i in x:
             encodings.append(self.encoder.encode(self.tensor2img(x_i)))
         return torch.tensor(np.array(encodings))
-    def get_neighbors(self, x, block_size):
+    def get_neighbors(self, x):
         x_clip = self.get_encodings(x)
+        b, _, block_size, _ = x.size()
         neighbors, _ = self.searcher.search_batched(x_clip, leaves_to_search=150, pre_reorder_num_neighbors=250)
         mat = []
         for neighbor in neighbors:
@@ -221,7 +222,7 @@ class CelebAHQ:
             lambda x: x*255
         ])
         self.dset = self.dsetbuilder()
-        if searcher_dir is not None:
+        if searcher_dir is None:
             searcher_dir = '/hdd/avideep/blockLDM/data/celeba/celeba_hq/searcher/'
             self.searcher = scann.scann_ops_pybind.builder(self.dset / np.linalg.norm(self.dset, axis=1)[:, np.newaxis], 10, "dot_product").tree(num_leaves=2000, num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
             print(f'Save trained searcher under "{searcher_dir}"')
@@ -298,8 +299,9 @@ class CelebAHQ:
         for x_i in x:
             encodings.append(self.encoder.encode(self.tensor2img(x_i)))
         return torch.tensor(np.array(encodings))
-    def get_neighbors(self, x, block_size):
+    def get_neighbors(self, x):
         x_clip = self.get_encodings(x)
+        b, _, block_size, _ = x.size()
         neighbors, _ = self.searcher.search_batched(x_clip, leaves_to_search=150, pre_reorder_num_neighbors=250)
         mat = []
         for neighbor in neighbors:

@@ -169,9 +169,9 @@ def main():
         logger.global_train_step = logger.running_epoch
         print(f"Epoch [{epoch + 1} / {args.epochs}]")
 
-        train(ddpm, data.train, optimizer, block_size, vae, device, args)
+        train(ddpm, data, optimizer, block_size, vae, device, args)
 
-        validate(ddpm, data.val, block_size, vae, device, args)
+        validate(ddpm, data, block_size, vae, device, args)
 
         # logging
         output = ' - '.join([f'{k}: {v.avg:.4f}' for k, v in logger.epoch.items()])
@@ -196,12 +196,12 @@ def debug(model,data_loader,device):
     print(model.encode(x).shape)
 
 
-def train(model, train_loader, optimizer, block_size, vae, device, args):
+def train(model, data, optimizer, block_size, vae, device, args):
     model.train()
 
     ema_loss = None
     p = args.guidance_probability
-    for x, _ in tqdm(train_loader, desc="Training"):
+    for x, _ in tqdm(data.train, desc="Training"):
         x = x.to(device)
         x = model.encode(x)
         if args.use_cfg:
@@ -227,7 +227,8 @@ def train(model, train_loader, optimizer, block_size, vae, device, args):
                         prev_block = x[:,:,i-block_size:i, j:j+block_size]
                 block_pos = torch.full((x.size(0),),position, dtype=torch.int64).to(device)
                 curr_block = x[:, :, i:i+block_size, j:j+block_size]
-                loss = model.p_losses2(curr_block, prev_block, position = block_pos, low_res_cond = low_res_cond)
+                neighbors = data.get_neighbors(prev_block)
+                loss = model.p_losses2(curr_block, neighbors, position = block_pos, low_res_cond = low_res_cond)
                 prev_block = curr_block
                 loss_agg += loss
                 position += 1
@@ -249,9 +250,9 @@ def sample_from_vae(n_images, model, device):
     return images
 
 @torch.no_grad()
-def validate(model, data_loader, block_size, vae, device, args):
+def validate(model, data, block_size, vae, device, args):
     model.eval()
-    x, _ = next(iter(data_loader))
+    x, _ = next(iter(data.val))
     x = x.to(device)
     x = model.encode(x)
     n_images = 8

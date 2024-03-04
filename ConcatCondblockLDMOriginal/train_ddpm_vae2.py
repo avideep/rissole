@@ -169,9 +169,9 @@ def main():
         logger.global_train_step = logger.running_epoch
         print(f"Epoch [{epoch + 1} / {args.epochs}]")
 
-        train(ddpm, data, optimizer, block_size, vae, device, args)
+        train(ddpm, data.train, optimizer, block_size, vae, device, args)
 
-        validate(ddpm, data, block_size, vae, device, args)
+        validate(ddpm, data.val, block_size, vae, device, args)
 
         # logging
         output = ' - '.join([f'{k}: {v.avg:.4f}' for k, v in logger.epoch.items()])
@@ -196,14 +196,13 @@ def debug(model,data_loader,device):
     print(model.encode(x).shape)
 
 
-def train(model, data, optimizer, block_size, vae, device, args):
+def train(model, train_loader, optimizer, block_size, vae, device, args):
     model.train()
 
     ema_loss = None
     p = args.guidance_probability
-    for x, _ in tqdm(data.train, desc="Training"):
+    for x, _ in tqdm(train_loader, desc="Training"):
         x = x.to(device)
-        neighbors = data.get_neighbors(x, block_size)
         x = model.encode(x)
         if args.use_cfg:
             if args.use_low_res  and  np.random.choice([1, 0], p=[1-p, p]): # setting the condition to None as per the guidance probability, should the condition be used
@@ -250,9 +249,9 @@ def sample_from_vae(n_images, model, device):
     return images
 
 @torch.no_grad()
-def validate(model, data, block_size, vae, device, args):
+def validate(model, data_loader, block_size, vae, device, args):
     model.eval()
-    x, _ = next(iter(data.val))
+    x, _ = next(iter(data_loader))
     x = x.to(device)
     x = model.encode(x)
     n_images = 8
