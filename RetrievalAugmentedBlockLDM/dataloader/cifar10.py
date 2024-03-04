@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader
 from sentence_transformers import SentenceTransformer, util
 from tqdm import tqdm
 import numpy as np
+import scann
 
 class CIFAR10:
     def __init__(self, batch_size: int = 16, img_size = 128):
@@ -64,6 +65,16 @@ class CIFAR10:
             lambda x: x*255
         ])
         self.dset = self.dsetbuilder()
+        if searcher_dir is not None:
+            searcher_dir = '/hdd/avideep/blockLDM/data/cifar10/searcher/'
+            self.searcher = scann.scann_ops_pybind.builder(self.dset / np.linalg.norm(self.dset, axis=1)[:, np.newaxis], 10, "dot_product").tree(num_leaves=2000, num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
+            print(f'Save trained searcher under "{searcher_dir}"')
+            os.makedirs(searcher_dir, exist_ok=True)
+            self.searcher.serialize(searcher_dir)
+        else:
+            print(f'Loading pre-trained searcher from {searcher_dir}')
+            self.searcher = scann.scann_ops_pybind.load_searcher(searcher_dir)
+            print('Finished loading searcher.')
 
     @property
     def train(self):
@@ -99,6 +110,18 @@ class CIFAR10:
             return Image.fromarray(img.permute(1, 2, 0).numpy().astype('uint8')).convert("RGB")
         else:
             return Image.fromarray(img[0].numpy()).convert("L")
+    def get_encodings(self, x):
+        encodings = []
+        for x_i in x:
+            encodings.append(self.encoder.encode(self.tensor2img(x_i)))
+        return torch.tensor(np.array(encodings))
+    def get_neighbors(self, x, block_size):
+        x_clip = self.get_encodings(x)
+        neighbors, _ = self.searcher.search_batched(x_clip, leaves_to_search=150, pre_reorder_num_neighbors=250)
+        mat = []
+        for neighbor in neighbors:
+            mat.append(self.dset[np.int64(neighbor)])
+        return torch.stack(mat).view(x.size(0), -1, block_size, block_size)
     def select_random_patches(self, image):
         _, _, height, width = image.shape
 
