@@ -299,9 +299,9 @@ class CelebAHQ:
         for x_i in x:
             encodings.append(self.encoder.encode(self.tensor2img(x_i)))
         return torch.tensor(np.array(encodings))
-    def get_neighbors(self, x):
+    def get_neighbors(self, x, block_size):
         x_clip = self.get_encodings(x)
-        b, _, block_size, _ = x.size()
+        b = x.size(0)
         neighbors, _ = self.searcher.search_batched(x_clip, leaves_to_search=150, pre_reorder_num_neighbors=250)
         mat = []
         for neighbor in neighbors:
