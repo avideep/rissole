@@ -60,8 +60,8 @@ class CelebA:
             lambda x: x*255
         ])
         self.dset = self.dsetbuilder()
-        if searcher_dir is None:
-            searcher_dir = '/hdd/avideep/blockLDM/data/celeba/searcher/'
+        searcher_dir = '/hdd/avideep/blockLDM/data/celeba/searcher/'
+        if not os.path.exists(searcher_dir):
             self.searcher = scann.scann_ops_pybind.builder(self.dset / np.linalg.norm(self.dset, axis=1)[:, np.newaxis], 10, "dot_product").tree(num_leaves=2000, num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
             print(f'Save trained searcher under "{searcher_dir}"')
             os.makedirs(searcher_dir, exist_ok=True)
@@ -222,8 +222,8 @@ class CelebAHQ:
             lambda x: x*255
         ])
         self.dset = self.dsetbuilder()
-        if searcher_dir is None:
-            searcher_dir = '/hdd/avideep/blockLDM/data/celeba/celeba_hq/searcher/'
+        searcher_dir = '/hdd/avideep/blockLDM/data/celeba/celeba_hq/searcher/'
+        if not os.path.exists(searcher_dir):
             self.searcher = scann.scann_ops_pybind.builder(self.dset / np.linalg.norm(self.dset, axis=1)[:, np.newaxis], 10, "dot_product").tree(num_leaves=2000, num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
             print(f'Save trained searcher under "{searcher_dir}"')
             os.makedirs(searcher_dir, exist_ok=True)
