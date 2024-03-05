@@ -232,7 +232,7 @@ class CelebAHQ:
             self.searcher.serialize(searcher_dir)
         else:
             print(f'Loading pre-trained searcher from {searcher_dir}')
-            self.searcher = scann.scann_ops_pybind.load_searcher(searcher_dir)
+            self.searcher = scann.scann_ops_pybind.load_searcher(searcher_dir).gpu()
             print('Finished loading searcher.')
 
     def train_val_test_split(self, dataset, batch_size=16, test_ratio=0.2, val_ratio=0.2):
