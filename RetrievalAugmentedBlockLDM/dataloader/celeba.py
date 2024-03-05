@@ -175,7 +175,7 @@ class CelebA:
         return all_patches
 
 class CelebAHQ:
-    def __init__(self, batch_size: int = 16, img_size = 256, searcher_dir = None):
+    def __init__(self, batch_size: int = 16, img_size = 256, device = None):
         """
         Wrapper to load, preprocess and deprocess CIFAR-10 dataset.
         Args:
@@ -185,7 +185,7 @@ class CelebAHQ:
         # self.n_classes = 10
 
         self.batch_size = batch_size
-
+        self.device = device
         self.mean = [0.5, 0.5, 0.5]
         self.std = [0.5, 0.5, 0.5]
         self.patch_size = img_size // 2
@@ -230,7 +230,7 @@ class CelebAHQ:
             self.searcher.serialize(searcher_dir)
         else:
             print(f'Loading pre-trained searcher from {searcher_dir}')
-            self.searcher = scann.scann_ops_pybind.load_searcher(searcher_dir)
+            self.searcher = scann.scann_ops_pybind.load_searcher(searcher_dir).to(device)
             print('Finished loading searcher.')
 
     def train_val_test_split(self, dataset, batch_size=16, test_ratio=0.2, val_ratio=0.2):
