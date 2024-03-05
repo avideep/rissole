@@ -230,7 +230,7 @@ def train(model, data, optimizer, block_size, vae, device, args):
                 prev_block = model.decode(prev_block)
                 # print(prev_block.shape)
                 neighbors = data.get_neighbors(prev_block, block_size).to(device)
-                print(neighbors.shape)
+                del prev_block
                 loss = model.p_losses2(curr_block, neighbors, position = block_pos, low_res_cond = low_res_cond)
                 prev_block = curr_block
                 loss_agg += loss
