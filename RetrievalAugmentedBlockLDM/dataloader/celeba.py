@@ -13,8 +13,8 @@ from tqdm import tqdm
 import scann
 import tensorflow as tf
 
-gpus = tf.config.list_physical_devices('GPU')
-tf.config.set_visible_devices(gpus[0], 'GPU')
+# gpus = tf.config.list_physical_devices('GPU')
+# tf.config.set_visible_devices(gpus[0], 'GPU')
 class CelebA:
     def __init__(self, batch_size: int = 16, img_size = 64, searcher_dir = None):
         """
@@ -70,7 +70,7 @@ class CelebA:
             self.searcher.serialize(searcher_dir)
         else:
             print(f'Loading pre-trained searcher from {searcher_dir}')
-            self.searcher = scann.scann_ops_pybind.load_searcher(searcher_dir)
+            self.searcher = scann.scann_ops_pybind.load_searcher(searcher_dir).gpu()
             print('Finished loading searcher.')
     def train_val_test_split(self, dataset, batch_size=16, test_ratio=0.2, val_ratio=0.2):
 
