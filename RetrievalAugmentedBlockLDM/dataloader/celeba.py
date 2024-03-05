@@ -302,7 +302,7 @@ class CelebAHQ:
     def get_neighbors(self, x, block_size):
         x_clip = self.get_encodings(x)
         b = x.size(0)
-        neighbors, _ = self.searcher.search_batched(x_clip, leaves_to_search=150, pre_reorder_num_neighbors=250)
+        neighbors, _ = self.searcher.search_batched(x_clip.to(self.device), leaves_to_search=150, pre_reorder_num_neighbors=250)
         mat = []
         for neighbor in neighbors:
             mat.append(self.dset[np.int64(neighbor)])
