@@ -227,7 +227,9 @@ def train(model, data, optimizer, block_size, vae, device, args):
                         prev_block = x[:,:,i-block_size:i, j:j+block_size]
                 block_pos = torch.full((x.size(0),),position, dtype=torch.int64).to(device)
                 curr_block = x[:, :, i:i+block_size, j:j+block_size]
-                neighbors = data.get_neighbors(model.decode(prev_block))
+                prev_block = model.decode(prev_block)
+                print(prev_block.shape)
+                neighbors = data.get_neighbors(prev_block)
                 loss = model.p_losses2(curr_block, neighbors, position = block_pos, low_res_cond = low_res_cond)
                 prev_block = curr_block
                 loss_agg += loss
