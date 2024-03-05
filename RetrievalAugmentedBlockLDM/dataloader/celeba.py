@@ -11,8 +11,10 @@ from PIL import Image
 from sentence_transformers import SentenceTransformer, util
 from tqdm import tqdm
 import scann
+import tensorflow as tf
 
-
+gpus = tf.config.list_physical_devices('GPU')
+tf.config.set_visible_devices(gpus[0], 'GPU')
 class CelebA:
     def __init__(self, batch_size: int = 16, img_size = 64, searcher_dir = None):
         """
