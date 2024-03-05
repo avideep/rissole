@@ -3,7 +3,7 @@ in_channels: 10
 # time embedding
 pos_emb_dim: 64     # embedding dimension for the fixed sinusoidal positional embedding
 time_emb_dim: 128
-cond_emb_dim: 10
+cond_emb_dim: 20
 #max_len: 5000       # maximum number of time steps for the positional embedding
 
 # residual network
