@@ -10,7 +10,7 @@ from typing import List
 
 class UNetLight(nn.Module):
     def __init__(self,
-                 in_channels: int, time_emb_dim: int, pos_emb_dim: int, cond_emb_dim: int,
+                 in_channels: int, out_channels: int, time_emb_dim: int, pos_emb_dim: int, cond_emb_dim: int,
                  channels: List[int] = None, n_groups: int = 8, 
                  dim_keys: int = 64, n_heads: int = 4, use_spatial_transformer: bool = False):
         """
@@ -40,7 +40,7 @@ class UNetLight(nn.Module):
         self.pos_embedding = TimeEmbedding(time_emb_dim, pos_emb_dim)
         # initial convolutional layer
         # in_channels = 3 * in_channels
-        self.init_conv = nn.Conv2d(3 * in_channels, self.channels[0], kernel_size=7, padding=3)
+        self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=3)
         # self.cond_attn = CrossAttention(in_channels, in_channels, dim_keys, n_heads)
 
         # contracting path
@@ -85,7 +85,7 @@ class UNetLight(nn.Module):
             prev_channel = c
 
         # final output 1x1 convolution
-        self.final_conv = nn.Conv2d(self.channels[0], in_channels, 1)
+        self.final_conv = nn.Conv2d(self.channels[0], out_channelst, 1)
 
     def forward(self, x: torch.Tensor, x_cond: torch.Tensor, t: torch.Tensor, p: torch.Tensor, l: torch.Tensor = None):
         t = self.time_embedding(t)
