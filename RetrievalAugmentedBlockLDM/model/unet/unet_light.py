@@ -85,7 +85,7 @@ class UNetLight(nn.Module):
             prev_channel = c
 
         # final output 1x1 convolution
-        self.final_conv = nn.Conv2d(self.channels[0], out_channelst, 1)
+        self.final_conv = nn.Conv2d(self.channels[0], out_channels, 1)
 
     def forward(self, x: torch.Tensor, x_cond: torch.Tensor, t: torch.Tensor, p: torch.Tensor, l: torch.Tensor = None):
         t = self.time_embedding(t)
