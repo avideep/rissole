@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data import SubsetRandomSampler
 import numpy as np
 from PIL import Image
+import torch.nn.functional as F
 from sentence_transformers import SentenceTransformer, util
 from tqdm import tqdm
 import scann
@@ -16,7 +17,7 @@ import tensorflow as tf
 # gpus = tf.config.list_physical_devices('GPU')
 # tf.config.set_visible_devices(gpus[0], 'GPU')
 class CelebA:
-    def __init__(self, batch_size: int = 16, img_size = 64, searcher_dir = None):
+    def __init__(self, batch_size: int = 16, img_size = 64, block_size = 16, searcher_dir = None):
         """
         Wrapper to load, preprocess and deprocess CIFAR-10 dataset.
         Args:
@@ -30,7 +31,7 @@ class CelebA:
         self.mean = [0.5, 0.5, 0.5]
         self.std = [0.5, 0.5, 0.5]
         self.patch_size = img_size // 2
-        self.patches = 5
+        self.block_size = block_size
         self.train_transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Resize(img_size),
@@ -177,7 +178,7 @@ class CelebA:
         return all_patches
 
 class CelebAHQ:
-    def __init__(self, batch_size: int = 16, img_size = 256, device = None):
+    def __init__(self, batch_size: int = 16, img_size = 256, block_size = 32, device = None):
         """
         Wrapper to load, preprocess and deprocess CIFAR-10 dataset.
         Args:
@@ -190,8 +191,7 @@ class CelebAHQ:
         self.device = device
         self.mean = [0.5, 0.5, 0.5]
         self.std = [0.5, 0.5, 0.5]
-        self.patch_size = img_size // 2
-        self.patches = 5
+        self.block_size = block_size
         self.train_transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Resize(img_size),
@@ -303,24 +303,25 @@ class CelebAHQ:
         return torch.tensor(np.array(encodings))
     def get_neighbors(self, x, block_size):
         x_clip = self.get_encodings(x)
-        b = x.size(0)
+        b, c, h, w = x.size(0)
         neighbors, _ = self.searcher.search_batched(x_clip)
         mat = []
         for neighbor in neighbors:
             mat.append(self.dset[np.int64(neighbor)])
-        return torch.stack(mat).view(x.size(0), -1, block_size, block_size)
-    def select_random_patches(self, image):
+        output = torch.stack(mat).view(b, c, block_size, -1)
+        pad = (block_size - output.shape[-1])//2
+        padding = (pad, pad)
+        output = F.pad(output, padding, "constant", 0)
+    def get_blocks(self, image):
         _, _, height, width = image.shape
-
-
-        patches = []
-
-        for _ in range(self.patches):
+        blocks = []
+        for i in range(0, x.shape[-1], block_size):
+            for i in range
             top_left_y = torch.randint(0, height - self.patch_size + 1, (1,))
             top_left_x = torch.randint(0, width - self.patch_size + 1, (1,))
 
-            patch = image[:, :, top_left_y:(top_left_y + self.patch_size), top_left_x:(top_left_x + self.patch_size)]
-            patches.append(torch.squeeze(patch, dim=0))
+            block = image[:, :, top_left_y:(top_left_y + self.patch_size), top_left_x:(top_left_x + self.patch_size)]
+            blocks.append(torch.squeeze(block, dim=0))
 
         return patches
     def dsetbuilder(self):
@@ -330,7 +331,7 @@ class CelebAHQ:
         else:
             all_patches = []
             for x, _ in tqdm(self.full_dataloader, desc='Building DSET'):
-                for patch in self.select_random_patches(x):
+                for patch in self.get_blocks(x):
                     all_patches.append(self.encoder.encode(self.tensor2img(patch)))
             all_patches = torch.tensor(np.array(all_patches))
             torch.save(all_patches, self.DSET_PATH)
