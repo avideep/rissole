@@ -47,7 +47,10 @@ class DSetBuilder:
             self.patch_size = img_size // 2
             self.DSET_PATH = '/hdd/avideep/blockLDM/data/' + data + '/dset.pth'
             self.encoder = SentenceTransformer('clip-ViT-B-32')
-
+            self.inv_normalize = transforms.Compose([
+                                    transforms.Normalize(mean=0, std=[1./s for s in self.std]),
+                                    transforms.Normalize(mean=[-m for m in self.mean], std=1.),
+                                    lambda x: x*255])
             self.dset = self.dsetbuilder()
             searcher_dir = '/hdd/avideep/blockLDM/data/' + data + '/searcher/'
             if not os.path.exists(searcher_dir):
