@@ -9,15 +9,13 @@ from torch.utils.data import SubsetRandomSampler
 import numpy as np
 from PIL import Image
 import torch.nn.functional as F
-from sentence_transformers import SentenceTransformer, util
 from tqdm import tqdm
-import scann
 import tensorflow as tf
 
 # gpus = tf.config.list_physical_devices('GPU')
 # tf.config.set_visible_devices(gpus[0], 'GPU')
 class CelebA:
-    def __init__(self, batch_size: int = 16, img_size = 64, block_size = 16, searcher_dir = None):
+    def __init__(self, batch_size: int = 16, img_size = 64, block_size = 16):
         """
         Wrapper to load, preprocess and deprocess CIFAR-10 dataset.
         Args:
@@ -30,8 +28,6 @@ class CelebA:
 
         self.mean = [0.5, 0.5, 0.5]
         self.std = [0.5, 0.5, 0.5]
-        self.patch_size = img_size // 2
-        self.block_size = block_size
         self.train_transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Resize(img_size),
@@ -39,7 +35,6 @@ class CelebA:
             transforms.RandomHorizontalFlip(p=0.5),
             transforms.Normalize(self.mean, self.std)
         ])
-        self.encoder = SentenceTransformer('clip-ViT-B-32')
         self.val_transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Resize(64),
@@ -48,7 +43,6 @@ class CelebA:
         ])
         self.ROOT_PATH = '/hdd/avideep/blockLDM/data/celeba/'
         self.IMAGE_PATH = '/hdd/avideep/blockLDM/data/celeba/processed/'
-        self.DSET_PATH = '/hdd/avideep/blockLDM/data/celeba/dset.pth'
         train_size = int(50000 * 0.9)
         # val size is 10000 in cifar10
         test_size = 50000 - train_size
@@ -62,17 +56,7 @@ class CelebA:
             transforms.Normalize(mean=[-m for m in self.mean], std=1.),
             lambda x: x*255
         ])
-        self.dset = self.dsetbuilder()
-        searcher_dir = '/hdd/avideep/blockLDM/data/celeba/searcher/'
-        if not os.path.exists(searcher_dir):
-            self.searcher = scann.scann_ops_pybind.builder(self.dset / np.linalg.norm(self.dset, axis=1)[:, np.newaxis], 10, "dot_product").tree(num_leaves=2000, num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
-            print(f'Save trained searcher under "{searcher_dir}"')
-            os.makedirs(searcher_dir, exist_ok=True)
-            self.searcher.serialize(searcher_dir)
-        else:
-            print(f'Loading pre-trained searcher from {searcher_dir}')
-            self.searcher = scann.scann_ops_pybind.load_searcher(searcher_dir).gpu()
-            print('Finished loading searcher.')
+        
     def train_val_test_split(self, dataset, batch_size=16, test_ratio=0.2, val_ratio=0.2):
 
         np.random.seed(42)
@@ -138,45 +122,7 @@ class CelebA:
             return Image.fromarray(img.permute(1, 2, 0).numpy().astype('uint8')).convert("RGB")
         else:
             return Image.fromarray(img[0].numpy()).convert("L")
-    def get_encodings(self, x):
-        encodings = []
-        for x_i in x:
-            encodings.append(self.encoder.encode(self.tensor2img(x_i)))
-        return torch.tensor(np.array(encodings))
-    def get_neighbors(self, x):
-        x_clip = self.get_encodings(x)
-        b, _, block_size, _ = x.size()
-        neighbors, _ = self.searcher.search_batched(x_clip, leaves_to_search=150, pre_reorder_num_neighbors=250)
-        mat = []
-        for neighbor in neighbors:
-            mat.append(self.dset[np.int64(neighbor)])
-        return torch.stack(mat).view(x.size(0), -1, block_size, block_size)
-    def select_random_patches(self, image):
-        _, _, height, width = image.shape
-
-
-        patches = []
-
-        for _ in range(self.patches):
-            top_left_y = torch.randint(0, height - self.patch_size + 1, (1,))
-            top_left_x = torch.randint(0, width - self.patch_size + 1, (1,))
-
-            patch = image[:, :, top_left_y:(top_left_y + self.patch_size), top_left_x:(top_left_x + self.patch_size)]
-            patches.append(torch.squeeze(patch, dim=0))
-
-        return patches
-    def dsetbuilder(self):
-        """ Creates the D Set for this particular Dataset"""
-        if os.path.exists(self.DSET_PATH):
-            all_patches = torch.load(self.DSET_PATH)
-        else:
-            all_patches = []
-            for x, _ in tqdm(self.full_dataloader, desc='Building DSET'):
-                for patch in self.select_random_patches(x):
-                    all_patches.append(self.encoder.encode(self.tensor2img(patch)))
-            torch.save(torch.tensor(np.array(all_patches)), self.DSET_PATH)
-        return all_patches
-
+    
 class CelebAHQ:
     def __init__(self, batch_size: int = 16, img_size = 256, block_size = 32, device = None):
         """
@@ -191,7 +137,6 @@ class CelebAHQ:
         self.device = device
         self.mean = [0.5, 0.5, 0.5]
         self.std = [0.5, 0.5, 0.5]
-        self.block_size = block_size
         self.train_transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Resize(img_size),
@@ -199,7 +144,6 @@ class CelebAHQ:
             transforms.RandomHorizontalFlip(p=0.5),
             transforms.Normalize(self.mean, self.std)
         ])
-        self.encoder = SentenceTransformer('clip-ViT-B-32')
 
         self.val_transform = transforms.Compose([
             transforms.ToTensor(),
@@ -209,7 +153,6 @@ class CelebAHQ:
         ])
         self.ROOT_PATH = '/hdd/avideep/blockLDM/data/celeba/'
         self.IMAGE_PATH = '/hdd/avideep/blockLDM/data/celeba/celeba_hq/images'
-        self.DSET_PATH = '/hdd/avideep/blockLDM/data/celeba/celeba_hq/dset.pth'
         train_size = int(50000 * 0.9)
         # val size is 10000 in cifar10
         test_size = 50000 - train_size
@@ -223,18 +166,6 @@ class CelebAHQ:
             transforms.Normalize(mean=[-m for m in self.mean], std=1.),
             lambda x: x*255
         ])
-        self.dset = self.dsetbuilder()
-        searcher_dir = '/hdd/avideep/blockLDM/data/celeba/celeba_hq/searcher/'
-        if not os.path.exists(searcher_dir):
-            self.searcher = scann.scann_ops_pybind.builder(self.dset / np.linalg.norm(self.dset, axis=1)[:, np.newaxis], 10, "dot_product").tree(num_leaves=2000, num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
-            print(f'Save trained searcher under "{searcher_dir}"')
-            os.makedirs(searcher_dir, exist_ok=True)
-            self.searcher.serialize(searcher_dir)
-        else:
-            print(f'Loading pre-trained searcher from {searcher_dir}')
-            self.searcher = scann.scann_ops_pybind.load_searcher(searcher_dir)
-            print('Finished loading searcher.')
-
     def train_val_test_split(self, dataset, batch_size=16, test_ratio=0.2, val_ratio=0.2):
 
         np.random.seed(42)
@@ -296,47 +227,6 @@ class CelebAHQ:
             return Image.fromarray(img.permute(1, 2, 0).numpy().astype('uint8')).convert("RGB")
         else:
             return Image.fromarray(img[0].numpy()).convert("L")
-    def get_encodings(self, x):
-        encodings = []
-        for x_i in x:
-            encodings.append(self.encoder.encode(self.tensor2img(x_i)))
-        return torch.tensor(np.array(encodings))
-    def get_neighbors(self, x, block_size):
-        x_clip = self.get_encodings(x)
-        b, c, h, w = x.size(0)
-        neighbors, _ = self.searcher.search_batched(x_clip)
-        mat = []
-        for neighbor in neighbors:
-            mat.append(self.dset[np.int64(neighbor)])
-        output = torch.stack(mat).view(b, c, block_size, -1)
-        pad = (block_size - output.shape[-1])//2
-        padding = (pad, pad)
-        output = F.pad(output, padding, "constant", 0)
-    def get_blocks(self, image):
-        _, _, height, width = image.shape
-        blocks = []
-        for i in range(0, x.shape[-1], block_size):
-            for i in range
-            top_left_y = torch.randint(0, height - self.patch_size + 1, (1,))
-            top_left_x = torch.randint(0, width - self.patch_size + 1, (1,))
-
-            block = image[:, :, top_left_y:(top_left_y + self.patch_size), top_left_x:(top_left_x + self.patch_size)]
-            blocks.append(torch.squeeze(block, dim=0))
-
-        return patches
-    def dsetbuilder(self):
-        """ Creates the D Set for this particular Dataset"""
-        if os.path.exists(self.DSET_PATH):
-            all_patches = torch.load(self.DSET_PATH)
-        else:
-            all_patches = []
-            for x, _ in tqdm(self.full_dataloader, desc='Building DSET'):
-                for patch in self.get_blocks(x):
-                    all_patches.append(self.encoder.encode(self.tensor2img(patch)))
-            all_patches = torch.tensor(np.array(all_patches))
-            torch.save(all_patches, self.DSET_PATH)
-        return all_patches
-
 
 
 if __name__ == "__main__":

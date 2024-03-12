@@ -1,6 +1,7 @@
 import os
 import random
 import torch
+import argparse
 import torchvision
 from torchvision.datasets import ImageFolder
 import torchvision.transforms as transforms
@@ -27,3 +28,93 @@ from pytorch_lightning import seed_everything
 from torch.utils.data import DataLoader, Sampler
 from torch.utils.data.dataloader import default_collate
 from tqdm import tqdm
+from celeba import CelebA, CelebAHQ
+from cifar10 import CIFAR10
+from sentence_transformers import SentenceTransformer, util
+
+class DSetBuilder:
+    def __init__(self, data: str = 'CelebAHQ',
+                 img_size = 256):
+        try:
+            if data not in ['CelebA', 'CelebAHQ', 'CIFAR10']:
+                raise ValueError("Invalid input. Please enter CelebA, CelebAHQ, or CIFAR10.")
+            if data == 'CelebAHQ':
+                self.data = CelebAHQ()
+            elif data == 'CelebA':
+                self.data = CelebA()
+            else:
+                self.data = CIFAR10()
+            self.patch_size = img_size // 2
+            self.DSET_PATH = '/hdd/avideep/blockLDM/data/' + data + '/dset.pth'
+            self.encoder = SentenceTransformer('clip-ViT-B-32')
+
+            self.dset = self.dsetbuilder()
+            searcher_dir = '/hdd/avideep/blockLDM/data/' + data + '/searcher/'
+            if not os.path.exists(searcher_dir):
+                self.searcher = scann.scann_ops_pybind.builder(self.dset / np.linalg.norm(self.dset, axis=1)[:, np.newaxis], 10, "dot_product").tree(num_leaves=2000, num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
+                print(f'Save trained searcher under "{searcher_dir}"')
+                os.makedirs(searcher_dir, exist_ok=True)
+                self.searcher.serialize(searcher_dir)
+            else:
+                print(f'Loading pre-trained searcher from {searcher_dir}')
+                self.searcher = scann.scann_ops_pybind.load_searcher(searcher_dir).gpu()
+                print('Finished loading searcher.')
+        except ValueError as e:
+            print(f"Error: {e}")
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+    def tensor2img(self, tensor):
+        """ Convert torch.Tensor to PIL image. """
+        n_channels = tensor.shape[0]
+
+        img = tensor.detach().cpu()
+        img = self.inv_normalize(img)
+
+        if n_channels > 1:
+            return Image.fromarray(img.permute(1, 2, 0).numpy().astype('uint8')).convert("RGB")
+        else:
+            return Image.fromarray(img[0].numpy()).convert("L")
+    def get_encodings(self, x):
+        encodings = []
+        for x_i in x:
+            encodings.append(self.encoder.encode(self.tensor2img(x_i)))
+        return torch.tensor(np.array(encodings))
+    def get_neighbors(self, x, block_size):
+        x_clip = self.get_encodings(x)
+        b, c, h, w = x.size(0)
+        neighbors, _ = self.searcher.search_batched(x_clip)
+        mat = []
+        for neighbor in neighbors:
+            mat.append(self.dset[np.int64(neighbor)])
+        output = torch.stack(mat).view(b, c, block_size, -1)
+        pad = (block_size - output.shape[-1])//2
+        padding = (pad, pad)
+        output = F.pad(output, padding, "constant", 0)
+    def get_blocks(self, image):
+        _, _, height, width = image.shape
+        blocks = []
+        for i in range(0, height, self.patch_size):
+            for j in range (0, width, self.patch_size):
+                block = image[:, :, i:i+self.patch_size, j:j+self.patch_size]
+                blocks.append(torch.squeeze(block, dim=0))
+        return blocks
+    def dsetbuilder(self):
+        """ Creates the D Set for this particular Dataset"""
+        if os.path.exists(self.DSET_PATH):
+            all_patches = torch.load(self.DSET_PATH)
+        else:
+            all_patches = []
+            for i, (x, _) in enumerate(tqdm(self.data.full_dataloader, desc='Building DSET')):
+                patches = []
+                for patch in self.get_blocks(x):
+                    patches.append(self.encoder.encode(self.tensor2img(patch)))
+                all_patches.append({'img_id': i, 'patches': torch.tensor(np.array(patches))})
+            torch.save(all_patches, self.DSET_PATH)
+        return all_patches
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="DSET Building")
+    parser.add_argument('--data', '-d', default='CelebA',
+                        type=str, metavar='data', help='Dataset Name. Please enter CelebA, CelebAHQ, or CIFAR10. Default: CelebA')
+    args = parser.parse_args()
+
+    dset = DSetBuilder(data=args.data)
