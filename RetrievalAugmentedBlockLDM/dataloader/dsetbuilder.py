@@ -46,7 +46,7 @@ class DSetBuilder:
             self.mean = [0.5, 0.5, 0.5]
             self.std = [0.5, 0.5, 0.5]
             self.patch_size = img_size // 2
-            self.DSET_PATH = '/hdd/avideep/blockLDM/data/' + data + '/dset.pth'
+            self.DSET_PATH = '/hdd/avideep/blockLDM/data/dset/' + data + '/dset.pth'
             self.encoder = SentenceTransformer('clip-ViT-B-32')
             self.inv_normalize = transforms.Compose([
                                     transforms.Normalize(mean=0, std=[1./s for s in self.std]),
