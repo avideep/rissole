@@ -116,5 +116,4 @@ if __name__ == "__main__":
     parser.add_argument('--data', '-d', default='CelebA',
                         type=str, metavar='data', help='Dataset Name. Please enter CelebA, CelebAHQ, or CIFAR10. Default: CelebA')
     args = parser.parse_args()
-
     dset = DSetBuilder(data=args.data)
