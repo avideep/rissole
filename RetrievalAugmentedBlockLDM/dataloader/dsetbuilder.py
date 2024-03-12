@@ -44,6 +44,8 @@ class DSetBuilder:
                 self.data = CelebA()
             else:
                 self.data = CIFAR10()
+            self.mean = [0.5, 0.5, 0.5]
+            self.std = [0.5, 0.5, 0.5]
             self.patch_size = img_size // 2
             self.DSET_PATH = '/hdd/avideep/blockLDM/data/' + data + '/dset.pth'
             self.encoder = SentenceTransformer('clip-ViT-B-32')
