@@ -74,6 +74,7 @@ class DSetBuilder:
         pad = (block_size - output.shape[-1])//2
         padding = (pad, pad)
         output = F.pad(output, padding, "constant", 0)
+        return output
 
     def dsetbuilder(self):
         """ Creates the D Set for this particular Dataset"""
