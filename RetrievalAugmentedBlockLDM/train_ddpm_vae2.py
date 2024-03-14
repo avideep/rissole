@@ -121,7 +121,7 @@ def main():
         # data = CelebA(args.batch_size)
     else:
         data = CelebAHQ(args.batch_size, device=device)
-    dset = DSetBuilder(data)
+    dset = DSetBuilder(data, 10)
     # read config file for model
     cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
     cfg_unet = yaml.load(open(args.unet_config, 'r'), Loader=yaml.Loader)
