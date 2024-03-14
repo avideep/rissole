@@ -25,7 +25,7 @@ class CelebA:
         # self.n_classes = 10
 
         self.batch_size = batch_size
-
+        self.img_size = img_size
         self.mean = [0.5, 0.5, 0.5]
         self.std = [0.5, 0.5, 0.5]
         self.train_transform = transforms.Compose([
@@ -132,7 +132,7 @@ class CelebAHQ:
         """
         # self.classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
         # self.n_classes = 10
-
+        self.img_size = img_size
         self.batch_size = batch_size
         self.device = device
         self.mean = [0.5, 0.5, 0.5]
