@@ -68,6 +68,7 @@ class DSetBuilder:
         b = x.size(0)
         neighbors, _ = self.searcher.search_batched(x_clip)
         mat = []
+        print(position)
         for neighbor in neighbors:
             mat.append(self.dset[position][np.int64(neighbor)])
         output = torch.stack(mat).view(b, self.k, block_size, -1)
