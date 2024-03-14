@@ -273,14 +273,14 @@ def validate(model, data, dset, block_size, vae, device, args):
     else:
         low_res_cond = None
     position = 0
+    neighbor_ids = dset.get_neighbor_ids(model.decode(prev_block))
     w = args.guidance_weight
     for i in range(0, img.shape[-1], block_size):
         for j in range(0, img.shape[-1], block_size):
             if j==0 and i>0:
                 prev_block = curr_block[0][:,:,i-block_size:i, j:j+block_size]
             block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
-            prev_block = model.decode(prev_block)
-            neighbors = dset.get_neighbors(prev_block, position, block_size).to(device)
+            neighbors = dset.get_neighbors(neighbor_ids, position, block_size).to(device)
             if args.use_low_res and args.use_cfg:
                 curr_block_uncond = model.sample(block_size, prev_block, block_pos, low_res_cond = None, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance (CFG)
                 curr_block_cond = model.sample(block_size, prev_block, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance 
