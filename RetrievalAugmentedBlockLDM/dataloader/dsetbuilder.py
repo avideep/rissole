@@ -54,7 +54,7 @@ class DSetBuilder:
             self.dset = self.dsetbuilder()
             searcher_dir = '/hdd/avideep/blockLDM/data/' + data + '/searcher/'
             if not os.path.exists(searcher_dir):
-                self.searcher = scann.scann_ops_pybind.builder(self.dset / np.linalg.norm(self.dset, axis=1)[:, np.newaxis], 10, "dot_product").tree(num_leaves=2000, num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
+                self.searcher = scann.scann_ops_pybind.builder(self.dset / np.linalg.norm(self.dset[0], axis=1)[:, np.newaxis], 10, "dot_product").tree(num_leaves=2000, num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
                 print(f'Save trained searcher under "{searcher_dir}"')
                 os.makedirs(searcher_dir, exist_ok=True)
                 self.searcher.serialize(searcher_dir)
@@ -82,13 +82,13 @@ class DSetBuilder:
         for x_i in x:
             encodings.append(self.encoder.encode(self.tensor2img(x_i)))
         return torch.tensor(np.array(encodings))
-    def get_neighbors(self, x, block_size):
+    def get_neighbors(self, x, position, block_size):
         x_clip = self.get_encodings(x)
         b, c, h, w = x.size(0)
         neighbors, _ = self.searcher.search_batched(x_clip)
         mat = []
         for neighbor in neighbors:
-            mat.append(self.dset[np.int64(neighbor)])
+            mat.append(self.dset[position][np.int64(neighbor)])
         output = torch.stack(mat).view(b, c, block_size, -1)
         pad = (block_size - output.shape[-1])//2
         padding = (pad, pad)
