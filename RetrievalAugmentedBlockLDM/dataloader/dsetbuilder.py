@@ -74,7 +74,7 @@ class DSetBuilder:
 
     def get_neighbors(self, x, position, block_size):
         x_clip = torch.tensor(np.array([self.encoder.encode(self.tensor2img(x_i)) for x_i in x]))
-        b, c, _, _ = x.size(0)
+        b, c, _, _ = x.size()
         neighbors, _ = self.searcher.search_batched(x_clip)
         mat = []
         for neighbor in neighbors:
