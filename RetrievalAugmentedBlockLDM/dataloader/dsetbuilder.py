@@ -48,7 +48,7 @@ class DSetBuilder:
             self.searcher.serialize(searcher_dir)
         else:
             print(f'Loading pre-trained searcher from {searcher_dir}')
-            self.searcher = scann.scann_ops_pybind.load_searcher(searcher_dir).gpu()
+            self.searcher = scann.scann_ops_pybind.load_searcher(searcher_dir)
             print('Finished loading searcher.')
 
     def tensor2img(self, tensor):
