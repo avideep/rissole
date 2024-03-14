@@ -63,13 +63,16 @@ class DSetBuilder:
         else:
             return Image.fromarray(img[0].numpy()).convert("L")
 
-    def get_neighbors(self, x, position, block_size):
+    def get_neighbor_ids(self, x):
         x_clip = torch.tensor(np.array([self.encoder.encode(self.tensor2img(x_i)) for x_i in x]))
-        b = x.size(0)
         neighbors, _ = self.searcher.search_batched(x_clip)
+        return neighbors
+
+    def get_neighbors(self, neighbor_ids, position, block_size):
         mat = []
+        b = self.data.batch_size
         print(position)
-        for neighbor in neighbors:
+        for neighbor in neighbor_ids:
             mat.append(self.dset[position][np.int64(neighbor)])
         output = torch.stack(mat).view(b, self.k, block_size, -1)
         pad = (block_size - output.shape[-1])//2

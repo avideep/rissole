@@ -36,7 +36,7 @@ parser.add_argument('--batch-size', default=16, metavar='N',
                     type=int, help='Mini-batch size (default: 64)')
 parser.add_argument('--image-size', default=128, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
-parser.add_argument('--block-size', default=16, metavar='N',
+parser.add_argument('--block-size', default=32, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
 parser.add_argument('--k', default=10, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
@@ -223,16 +223,15 @@ def train(model, data, dset, optimizer, block_size, vae, device, args):
         optimizer.zero_grad()
         position = 0
         loss_agg = 0
+        neighbor_ids = dset.get_neighbor_ids(model.decode(prev_block))
         for i in range(0, x.shape[-1], block_size):
             for j in range(0, x.shape[-1], block_size):
                 if j==0 and i>0:
                         prev_block = x[:,:,i-block_size:i, j:j+block_size]
                 block_pos = torch.full((x.size(0),),position, dtype=torch.int64).to(device)
                 curr_block = x[:, :, i:i+block_size, j:j+block_size]
-                prev_block = model.decode(prev_block)
                 # print(prev_block.shape)
-                neighbors = dset.get_neighbors(prev_block, position, block_size).to(device)
-                del prev_block
+                neighbors = dset.get_neighbors(neighbor_ids, position, block_size)
                 loss = model.p_losses2(curr_block, neighbors, position = block_pos, low_res_cond = low_res_cond)
                 prev_block = curr_block
                 loss_agg += loss
