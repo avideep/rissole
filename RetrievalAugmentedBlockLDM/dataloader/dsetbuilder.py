@@ -31,35 +31,32 @@ from sentence_transformers import SentenceTransformer, util
 
 class DSetBuilder:
     def __init__(self, data):
-        try:
-            data_name = data.__class__.__name__
-            if data_name not in ['CelebA', 'CelebAHQ', 'CIFAR10']:
-                raise ValueError("Invalid input. Please enter CelebA, CelebAHQ, or CIFAR10.")
-            self.data = data
-            self.mean = [0.5, 0.5, 0.5]
-            self.std = [0.5, 0.5, 0.5]
-            self.patch_size = self.data.img_size // 2
-            self.DSET_PATH = '/hdd/avideep/blockLDM/data/dset/' + data_name + '/dset.pth'
-            self.encoder = SentenceTransformer('clip-ViT-B-32')
-            self.inv_normalize = transforms.Compose([
-                                    transforms.Normalize(mean=0, std=[1./s for s in self.std]),
-                                    transforms.Normalize(mean=[-m for m in self.mean], std=1.),
-                                    lambda x: x*255])
-            self.dset = self.dsetbuilder()
-            searcher_dir = '/hdd/avideep/blockLDM/data/' + data_name + '/searcher/'
-            if not os.path.exists(searcher_dir):
-                self.searcher = scann.scann_ops_pybind.builder(self.dset / np.linalg.norm(self.dset[0], axis=1)[:, np.newaxis], 10, "dot_product").tree(num_leaves=2000, num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
-                print(f'Save trained searcher under "{searcher_dir}"')
-                os.makedirs(searcher_dir, exist_ok=True)
-                self.searcher.serialize(searcher_dir)
-            else:
-                print(f'Loading pre-trained searcher from {searcher_dir}')
-                self.searcher = scann.scann_ops_pybind.load_searcher(searcher_dir).gpu()
-                print('Finished loading searcher.')
-        except ValueError as e:
-            print(f"Error: {e}")
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
+        data_name = data.__class__.__name__
+        if data_name not in ['CelebA', 'CelebAHQ', 'CIFAR10']:
+            raise ValueError("Invalid input. Please enter CelebA, CelebAHQ, or CIFAR10.")
+        self.data = data
+        self.mean = [0.5, 0.5, 0.5]
+        self.std = [0.5, 0.5, 0.5]
+        self.patch_size = self.data.img_size // 2
+        self.DSET_PATH = '/hdd/avideep/blockLDM/data/dset/' + data_name + '/dset.pth'
+        self.encoder = SentenceTransformer('clip-ViT-B-32')
+        self.inv_normalize = transforms.Compose([
+                                transforms.Normalize(mean=0, std=[1./s for s in self.std]),
+                                transforms.Normalize(mean=[-m for m in self.mean], std=1.),
+                                lambda x: x*255])
+        self.dset = self.dsetbuilder()
+        searcher_dir = '/hdd/avideep/blockLDM/data/' + data_name + '/searcher/'
+        if not os.path.exists(searcher_dir):
+            print(searcher_dir)
+            self.searcher = scann.scann_ops_pybind.builder(self.dset / np.linalg.norm(self.dset[0], axis=1)[:, np.newaxis], 10, "dot_product").tree(num_leaves=2000, num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
+            print(f'Save trained searcher under "{searcher_dir}"')
+            os.makedirs(searcher_dir, exist_ok=True)
+            self.searcher.serialize(searcher_dir)
+        else:
+            print(f'Loading pre-trained searcher from {searcher_dir}')
+            self.searcher = scann.scann_ops_pybind.load_searcher(searcher_dir).gpu()
+            print('Finished loading searcher.')
+
     def tensor2img(self, tensor):
         """ Convert torch.Tensor to PIL image. """
         n_channels = tensor.shape[0]
@@ -83,6 +80,7 @@ class DSetBuilder:
         pad = (block_size - output.shape[-1])//2
         padding = (pad, pad)
         output = F.pad(output, padding, "constant", 0)
+
     def dsetbuilder(self):
         """ Creates the D Set for this particular Dataset"""
         if os.path.exists(self.DSET_PATH):
@@ -99,6 +97,7 @@ class DSetBuilder:
             
             torch.save(torch.stack(all_patches), self.DSET_PATH)
         return all_patches
+    
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="DSET Building")
     parser.add_argument('--data', '-d', default='CelebA',
