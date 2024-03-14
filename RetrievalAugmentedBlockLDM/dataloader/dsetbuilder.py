@@ -27,32 +27,26 @@ from pytorch_lightning import seed_everything
 from torch.utils.data import DataLoader, Sampler
 from torch.utils.data.dataloader import default_collate
 from tqdm import tqdm
-from celeba import CelebA, CelebAHQ
-from cifar10 import CIFAR10
 from sentence_transformers import SentenceTransformer, util
 
 class DSetBuilder:
-    def __init__(self, data: str = 'CelebAHQ'):
+    def __init__(self, data):
         try:
-            if data not in ['CelebA', 'CelebAHQ', 'CIFAR10']:
+            data_name = data.__class__.__name__
+            if data_name not in ['CelebA', 'CelebAHQ', 'CIFAR10']:
                 raise ValueError("Invalid input. Please enter CelebA, CelebAHQ, or CIFAR10.")
-            if data == 'CelebAHQ':
-                self.data = CelebAHQ()
-            elif data == 'CelebA':
-                self.data = CelebA()
-            else:
-                self.data = CIFAR10()
+            self.data = data
             self.mean = [0.5, 0.5, 0.5]
             self.std = [0.5, 0.5, 0.5]
             self.patch_size = self.data.img_size // 2
-            self.DSET_PATH = '/hdd/avideep/blockLDM/data/dset/' + data + '/dset.pth'
+            self.DSET_PATH = '/hdd/avideep/blockLDM/data/dset/' + data_name + '/dset.pth'
             self.encoder = SentenceTransformer('clip-ViT-B-32')
             self.inv_normalize = transforms.Compose([
                                     transforms.Normalize(mean=0, std=[1./s for s in self.std]),
                                     transforms.Normalize(mean=[-m for m in self.mean], std=1.),
                                     lambda x: x*255])
             self.dset = self.dsetbuilder()
-            searcher_dir = '/hdd/avideep/blockLDM/data/' + data + '/searcher/'
+            searcher_dir = '/hdd/avideep/blockLDM/data/' + data_name + '/searcher/'
             if not os.path.exists(searcher_dir):
                 self.searcher = scann.scann_ops_pybind.builder(self.dset / np.linalg.norm(self.dset[0], axis=1)[:, np.newaxis], 10, "dot_product").tree(num_leaves=2000, num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
                 print(f'Save trained searcher under "{searcher_dir}"')

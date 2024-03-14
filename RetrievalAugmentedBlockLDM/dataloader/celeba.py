@@ -10,7 +10,6 @@ import numpy as np
 from PIL import Image
 import torch.nn.functional as F
 from tqdm import tqdm
-import tensorflow as tf
 
 # gpus = tf.config.list_physical_devices('GPU')
 # tf.config.set_visible_devices(gpus[0], 'GPU')
