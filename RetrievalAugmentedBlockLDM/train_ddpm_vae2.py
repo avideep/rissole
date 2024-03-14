@@ -281,7 +281,7 @@ def validate(model, data, block_size, vae, device, args):
                 prev_block = curr_block[0][:,:,i-block_size:i, j:j+block_size]
             block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
             prev_block = model.decode(prev_block)
-            neighbors = data.get_neighbors(prev_block, block_size).to(device)
+            neighbors = data.get_neighbors(prev_block, position, block_size).to(device)
             if args.use_low_res and args.use_cfg:
                 curr_block_uncond = model.sample(block_size, prev_block, block_pos, low_res_cond = None, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance (CFG)
                 curr_block_cond = model.sample(block_size, prev_block, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance 
