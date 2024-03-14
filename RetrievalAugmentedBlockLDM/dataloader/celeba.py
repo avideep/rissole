@@ -93,10 +93,6 @@ class CelebA:
     def val(self):
         """ Return validation dataloader. """
         return self.val_loader
-    
-    @property
-    def dset(self):
-        return self.dset
 
     # @property
     # def test(self):
