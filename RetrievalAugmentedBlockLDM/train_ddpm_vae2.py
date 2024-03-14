@@ -9,7 +9,7 @@ import yaml
 
 from tqdm import tqdm
 import torchvision.transforms.functional as F
-from dataloader import PlantNet, CIFAR10, CelebA, CelebAHQ
+from dataloader import PlantNet, CIFAR10, CelebA, CelebAHQ, DSetBuilder
 from model import VQGANLight, VAE, IntroVAE
 from model.ddpm.ddpm import DDPM
 from model.unet import UNet
@@ -121,7 +121,7 @@ def main():
         # data = CelebA(args.batch_size)
     else:
         data = CelebAHQ(args.batch_size, device=device)
-
+        dset = DSetBuilder('CelebAHQ')
     # read config file for model
     cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
     cfg_unet = yaml.load(open(args.unet_config, 'r'), Loader=yaml.Loader)
@@ -171,9 +171,9 @@ def main():
         logger.global_train_step = logger.running_epoch
         print(f"Epoch [{epoch + 1} / {args.epochs}]")
 
-        train(ddpm, data, optimizer, block_size, vae, device, args)
+        train(ddpm, data, dset, optimizer, block_size, vae, device, args)
 
-        validate(ddpm, data, block_size, vae, device, args)
+        validate(ddpm, data, dset, block_size, vae, device, args)
 
         # logging
         output = ' - '.join([f'{k}: {v.avg:.4f}' for k, v in logger.epoch.items()])
@@ -198,7 +198,7 @@ def debug(model,data_loader,device):
     print(model.encode(x).shape)
 
 
-def train(model, data, optimizer, block_size, vae, device, args):
+def train(model, data, dset, optimizer, block_size, vae, device, args):
     model.train()
 
     ema_loss = None
@@ -231,7 +231,7 @@ def train(model, data, optimizer, block_size, vae, device, args):
                 curr_block = x[:, :, i:i+block_size, j:j+block_size]
                 prev_block = model.decode(prev_block)
                 # print(prev_block.shape)
-                neighbors = data.get_neighbors(prev_block, position, block_size).to(device)
+                neighbors = dset.get_neighbors(prev_block, position, block_size).to(device)
                 del prev_block
                 loss = model.p_losses2(curr_block, neighbors, position = block_pos, low_res_cond = low_res_cond)
                 prev_block = curr_block
@@ -255,7 +255,7 @@ def sample_from_vae(n_images, model, device):
     return images
 
 @torch.no_grad()
-def validate(model, data, block_size, vae, device, args):
+def validate(model, data, dset, block_size, vae, device, args):
     model.eval()
     x, _ = next(iter(data.val))
     x = x.to(device)
@@ -281,7 +281,7 @@ def validate(model, data, block_size, vae, device, args):
                 prev_block = curr_block[0][:,:,i-block_size:i, j:j+block_size]
             block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
             prev_block = model.decode(prev_block)
-            neighbors = data.get_neighbors(prev_block, position, block_size).to(device)
+            neighbors = dset.get_neighbors(prev_block, position, block_size).to(device)
             if args.use_low_res and args.use_cfg:
                 curr_block_uncond = model.sample(block_size, prev_block, block_pos, low_res_cond = None, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance (CFG)
                 curr_block_cond = model.sample(block_size, prev_block, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance 
