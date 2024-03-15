@@ -92,7 +92,6 @@ class UNetLight(nn.Module):
         if l is not None:
             x = torch.cat([x, x_cond, l], dim = 1)
         else:
-            print(x.shape, x_cond.shape)
             x = torch.cat([x, x_cond], dim = 1)
         x = self.init_conv(x)
         p = self.pos_embedding(p)
