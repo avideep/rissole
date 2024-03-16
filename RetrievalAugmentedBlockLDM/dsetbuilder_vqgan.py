@@ -123,7 +123,12 @@ if __name__ == "__main__":
                     type=int, help='Mini-batch size (default: 32)')
     args = parser.parse_args()
     cfg_vqgan = yaml.load(open(args.vqgan_config, 'r'), Loader=yaml.Loader)
-    device = torch.device(f'cuda:{args.gpus[0]}' if torch.cuda.is_available() else 'cpu')
+    # setup GPU
+    args.gpus = args.gpus if isinstance(args.gpus, list) else [args.gpus]
+    if len(args.gpus) == 1:
+        device = torch.device(f'cuda:{args.gpus[0]}' if torch.cuda.is_available() else 'cpu')
+    else:
+        raise ValueError('Currently multi-gpu training is not possible')
     vqgan_model = VQGANLight(**cfg_vqgan['model'])
     vqgan_model, _, _ = load_model_checkpoint(vqgan_model, args.vqgan_path, device)
     vqgan_model.to(device)
