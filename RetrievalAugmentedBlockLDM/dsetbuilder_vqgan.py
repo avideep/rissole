@@ -106,7 +106,7 @@ class DSetBuilder:
                     all_patches.append(torch.cat(patches, dim=0).view(len(self.data.full_dataloader.dataset), -1))
             all_patches = torch.stack(all_patches)
             print('DSET with shape: {} is ready'.format(all_patches.shape))
-            torch.save(torch.stack(all_patches), self.DSET_PATH)
+            torch.save(all_patches, self.DSET_PATH)
         return all_patches
     
 if __name__ == "__main__":
@@ -121,7 +121,7 @@ if __name__ == "__main__":
                     nargs='+', metavar='GPUS', help='If GPU(s) available, which GPU(s) to use for training.')
     parser.add_argument('--batch-size', default=16, metavar='N',
                     type=int, help='Mini-batch size (default: 16)')
-    parser.add_argument('--dset-batch-size', default=32, metavar='N',
+    parser.add_argument('--dset-batch-size', default=64, metavar='N',
                     type=int, help='Mini-batch size (default: 32)')
     args = parser.parse_args()
     cfg_vqgan = yaml.load(open(args.vqgan_config, 'r'), Loader=yaml.Loader)
