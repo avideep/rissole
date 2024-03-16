@@ -14,7 +14,7 @@ from tqdm import tqdm
 # gpus = tf.config.list_physical_devices('GPU')
 # tf.config.set_visible_devices(gpus[0], 'GPU')
 class CelebA:
-    def __init__(self, batch_size: int = 16, img_size = 64, block_size = 16):
+    def __init__(self, batch_size: int = 16, dset_batch_size: int = 32, img_size = 64, block_size = 16):
         """
         Wrapper to load, preprocess and deprocess CIFAR-10 dataset.
         Args:
@@ -48,7 +48,7 @@ class CelebA:
 
         self.train_set_full = ImageFolder(self.IMAGE_PATH, self.train_transform)
         self.train_loader, self.val_loader = self.train_val_test_split(self.train_set_full, self.batch_size)
-        self.full_dataloader = DataLoader(self.train_set_full, batch_size=1, num_workers=12, pin_memory=True)
+        self.full_dataloader = DataLoader(self.train_set_full, batch_size=dset_batch_size, num_workers=12, pin_memory=True)
         # invert normalization for tensor to image transform
         self.inv_normalize = transforms.Compose([
             transforms.Normalize(mean=0, std=[1./s for s in self.std]),
@@ -119,7 +119,7 @@ class CelebA:
             return Image.fromarray(img[0].numpy()).convert("L")
     
 class CelebAHQ:
-    def __init__(self, batch_size: int = 16, img_size = 256, block_size = 32, device = None):
+    def __init__(self, batch_size: int = 16, dset_batch_size: int = 32, img_size = 256, block_size = 32, device = None):
         """
         Wrapper to load, preprocess and deprocess CIFAR-10 dataset.
         Args:
@@ -154,7 +154,7 @@ class CelebAHQ:
 
         self.train_set_full = ImageFolder(self.IMAGE_PATH, self.train_transform)
         self.train_loader, self.val_loader = self.train_val_test_split(self.train_set_full, self.batch_size)
-        self.full_dataloader = DataLoader(self.train_set_full, batch_size=1, num_workers=12, pin_memory=True)
+        self.full_dataloader = DataLoader(self.train_set_full, batch_size=dset_batch_size, num_workers=12, pin_memory=True)
         # invert normalization for tensor to image transform
         self.inv_normalize = transforms.Compose([
             transforms.Normalize(mean=0, std=[1./s for s in self.std]),

@@ -121,7 +121,6 @@ def main():
         # data = CelebA(args.batch_size)
     else:
         data = CelebAHQ(args.batch_size, device=device)
-    dset = DSetBuilder(data, 10)
     # read config file for model
     cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
     cfg_unet = yaml.load(open(args.unet_config, 'r'), Loader=yaml.Loader)
@@ -147,6 +146,9 @@ def main():
 
     ddpm = DDPM(eps_model=unet, vae_model=vqgan_model, **cfg)
     ddpm.to(device)
+    
+    dset = DSetBuilder(data, 10, vqgan_model)
+
     print("{:<16}: {}".format('DDPM model params', count_parameters(ddpm)))
 
     block_size = args.block_size

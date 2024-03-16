@@ -8,7 +8,7 @@ from tqdm import tqdm
 import numpy as np
 
 class CIFAR10:
-    def __init__(self, batch_size: int = 16, img_size = 64):
+    def __init__(self, batch_size: int = 16, dset_batch_size: int = 32, img_size = 64):
         """
         Wrapper to load, preprocess and deprocess CIFAR-10 dataset.
         Args:
@@ -50,7 +50,7 @@ class CIFAR10:
         self.val_loader = torch.utils.data.DataLoader(self.val_set, batch_size=self.batch_size, shuffle=False)
 
         self.test_loader = torch.utils.data.DataLoader(self.test_set, batch_size=self.batch_size, shuffle=False)
-        self.full_dataloader = DataLoader(self.train_set_full, batch_size=1, num_workers=12, pin_memory=True)
+        self.full_dataloader = DataLoader(self.train_set_full, batch_size=dset_batch_size, num_workers=12, pin_memory=True)
 
         # invert normalization for tensor to image transform
         self.inv_normalize = transforms.Compose([
