@@ -24,7 +24,7 @@ from tqdm import tqdm
 import yaml
 from model import VQGANLight
 from utils.helpers import load_model_checkpoint
-
+from dataloader import CelebA, CelebAHQ, CIFAR10
 class DSetBuilder:
     def __init__(self, data, k, model):
         data_name = data.__class__.__name__
@@ -114,13 +114,23 @@ if __name__ == "__main__":
     parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-02-15_130652/best_model.pt',
                         metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
     parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
-                        metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
+                        metavar='PATH', help='Path to model config file (default: configs/vqgan_cifar10.yaml)')
     parser.add_argument('--gpus', default=0, type=int,
                     nargs='+', metavar='GPUS', help='If GPU(s) available, which GPU(s) to use for training.')
+    parser.add_argument('--batch-size', default=16, metavar='N',
+                    type=int, help='Mini-batch size (default: 16)')
+    parser.add_argument('--dset-batch-size', default=32, metavar='N',
+                    type=int, help='Mini-batch size (default: 32)')
     args = parser.parse_args()
     cfg_vqgan = yaml.load(open(args.vqgan_config, 'r'), Loader=yaml.Loader)
     device = torch.device(f'cuda:{args.gpus[0]}' if torch.cuda.is_available() else 'cpu')
     vqgan_model = VQGANLight(**cfg_vqgan['model'])
     vqgan_model, _, _ = load_model_checkpoint(vqgan_model, args.vqgan_path, device)
     vqgan_model.to(device)
-    dset = DSetBuilder(data=args.data, k=10, model=vqgan_model)
+    if args.data == 'CelebA':
+        data = CelebA(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+    elif args.data == 'CelebAHQ':
+        data = CelebAHQ(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+    else:
+        data = CIFAR10(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+    dset = DSetBuilder(data, k=10, model=vqgan_model)
