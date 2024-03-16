@@ -75,18 +75,18 @@ class DSetBuilder:
         return x
     
     def get_neighbor_ids(self, x):
-        x_clip = torch.tensor(np.array([self.model.encode(self.tensor2img(x_i)) for x_i in x]))
-        neighbors, _ = self.searcher.search_batched(x_clip)
+        x_vqgan = self.model.encode(x)
+        neighbors, _ = self.searcher.search_batched(x_vqgan, leaves_to_search=150, pre_reorder_num_neighbors=250)
         return neighbors
 
     def get_neighbors(self, neighbor_ids, position, block_size, b):
         mat = []
         for neighbor in neighbor_ids:
             mat.append(self.dset[position][np.int64(neighbor)])
-        output = torch.stack(mat).view(b, self.k, block_size, -1)
-        pad = (block_size - output.shape[-1])//2
-        padding = (pad, pad)
-        output = F.pad(output, padding, "constant", 0)
+        output = torch.stack(mat).view(b, self.k*10, block_size, block_size)
+        # pad = (block_size - output.shape[-1])//2
+        # padding = (pad, pad)
+        # output = F.pad(output, padding, "constant", 0)
         return output
     
     @torch.no_grad()
