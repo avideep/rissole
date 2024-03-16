@@ -26,7 +26,7 @@ from model import VQGANLight
 from utils.helpers import load_model_checkpoint
 from dataloader import CelebA, CelebAHQ, CIFAR10
 class DSetBuilder:
-    def __init__(self, data, k, model):
+    def __init__(self, data, k, model, device):
         data_name = data.__class__.__name__
         if data_name not in ['CelebA', 'CelebAHQ', 'CIFAR10']:
             raise ValueError("Invalid input. Please enter CelebA, CelebAHQ, or CIFAR10.")
@@ -42,6 +42,7 @@ class DSetBuilder:
         self.dset = self.dsetbuilder()
         self.k = k
         self.model = model
+        self.device = device
         searcher_dir = '/hdd/avideep/blockLDM/data/' + data_name + '/vqgan/searcher/'
         if not os.path.exists(searcher_dir):
             self.searcher = scann.scann_ops_pybind.builder(self.dset[0] / np.linalg.norm(self.dset[0], axis=1)[:, np.newaxis], self.k, "dot_product").tree(num_leaves=2000, num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
@@ -138,4 +139,4 @@ if __name__ == "__main__":
         data = CelebAHQ(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
     else:
         data = CIFAR10(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
-    dset = DSetBuilder(data, k=10, model=vqgan_model)
+    dset = DSetBuilder(data, k=10, model=vqgan_model, device=device)
