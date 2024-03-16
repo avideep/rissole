@@ -22,8 +22,8 @@ from torch.utils.data import DataLoader, Sampler
 from torch.utils.data.dataloader import default_collate
 from tqdm import tqdm
 import yaml
-from ..model import VQGANLight
-from ..utils.helpers import load_model_checkpoint
+from model import VQGANLight
+from utils.helpers import load_model_checkpoint
 
 class DSetBuilder:
     def __init__(self, data, k, model):
