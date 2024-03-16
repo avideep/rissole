@@ -115,6 +115,8 @@ if __name__ == "__main__":
                         metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
     parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
                         metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
+    parser.add_argument('--gpus', default=0, type=int,
+                    nargs='+', metavar='GPUS', help='If GPU(s) available, which GPU(s) to use for training.')
     args = parser.parse_args()
     cfg_vqgan = yaml.load(open(args.vqgan_config, 'r'), Loader=yaml.Loader)
     device = torch.device(f'cuda:{args.gpus[0]}' if torch.cuda.is_available() else 'cpu')
