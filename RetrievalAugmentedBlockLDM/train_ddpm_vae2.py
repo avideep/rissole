@@ -34,6 +34,8 @@ parser.add_argument('--epochs', default=200,
                     type=int, metavar='N', help='Number of epochs to run (default: 100)')
 parser.add_argument('--batch-size', default=16, metavar='N',
                     type=int, help='Mini-batch size (default: 64)')
+parser.add_argument('--dset-batch-size', default=32, metavar='N',
+                    type=int, help='Mini-batch size (default: 32)')
 parser.add_argument('--image-size', default=128, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
 parser.add_argument('--block-size', default=32, metavar='N',
@@ -120,7 +122,7 @@ def main():
         data = CIFAR10(args.batch_size)
         # data = CelebA(args.batch_size)
     else:
-        data = CelebAHQ(args.batch_size, device=device)
+        data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
     # read config file for model
     cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
     cfg_unet = yaml.load(open(args.unet_config, 'r'), Loader=yaml.Loader)
@@ -146,8 +148,8 @@ def main():
 
     ddpm = DDPM(eps_model=unet, vae_model=vqgan_model, **cfg)
     ddpm.to(device)
-    
-    dset = DSetBuilder(data, 10, vqgan_model)
+
+    dset = DSetBuilder(data, 10, vqgan_model, device)
 
     print("{:<16}: {}".format('DDPM model params', count_parameters(ddpm)))
 
