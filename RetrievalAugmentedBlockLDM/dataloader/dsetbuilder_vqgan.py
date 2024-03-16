@@ -21,7 +21,9 @@ from pytorch_lightning import seed_everything
 from torch.utils.data import DataLoader, Sampler
 from torch.utils.data.dataloader import default_collate
 from tqdm import tqdm
-
+import yaml
+from model import VQGANLight
+from utils.helpers import load_model_checkpoint
 
 class DSetBuilder:
     def __init__(self, data, k, model):
@@ -109,5 +111,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="DSET Building")
     parser.add_argument('--data', '-d', default='CelebA',
                         type=str, metavar='data', help='Dataset Name. Please enter CelebA, CelebAHQ, or CIFAR10. Default: CelebA')
+    parser.add_argument('--vqgan-path', default='../checkpoints/vqgan/24-02-15_130652/best_model.pt',
+                        metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
+    parser.add_argument('--vqgan-config', default='../configs/vqgan_cifar10.yaml',
+                        metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
     args = parser.parse_args()
-    dset = DSetBuilder(data=args.data)
+    cfg_vqgan = yaml.load(open(args.vqgan_config, 'r'), Loader=yaml.Loader)
+    device = torch.device(f'cuda:{args.gpus[0]}' if torch.cuda.is_available() else 'cpu')
+    vqgan_model = VQGANLight(**cfg_vqgan['model'])
+    vqgan_model, _, _ = load_model_checkpoint(vqgan_model, args.vqgan_path, device)
+    vqgan_model.to(device)
+    dset = DSetBuilder(data=args.data, k=10, model=vqgan_model)
