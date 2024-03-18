@@ -45,8 +45,8 @@ parser.add_argument('--config', default='configs/vqgan_cifar10.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
 parser.add_argument('--data-config', default='configs/data_se.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/data_se.yaml)')
-parser.add_argument('--debug', action='store_true',
-                    help='If true, trains on CIFAR10')
+parser.add_argument('--data', '-d', default='CelebA',
+                        type=str, metavar='data', help='Dataset Name. Please enter CelebA, CelebAHQ, or CIFAR10. Default: CelebA')
 parser.add_argument('--gpus', default=0, type=int,
                     nargs='+', metavar='GPUS', help='If GPU(s) available, which GPU(s) to use for training.')
 parser.add_argument('--ckpt-save', default=True, action='store_true',
@@ -86,13 +86,12 @@ def main():
         raise ValueError('Currently multi-gpu training is not possible')
 
     # load data
-    if args.debug:
+    if args.data == 'CelebA':
+        data = CelebA(args.batch_size)
+    elif args.data == 'CIFAR10':
         data = CIFAR10(args.batch_size)
-        # data = CelebA(args.batch_size)
     else:
-        # data_cfg = yaml.load(open(args.data_config, 'r'), Loader=yaml.Loader)
-        data = CelebAHQ(args.batch_size)
-
+        data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
     # read config file for model
     cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
 
