@@ -30,7 +30,7 @@ class CIFAR10:
 
         self.val_transform = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Resize(128),
+            transforms.Resize(img_size),
             transforms.Normalize(self.mean, self.std)
         ])
         self.ROOT_PATH = '/hdd/avideep/blockLDM/data/cifar10/'
