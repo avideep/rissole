@@ -84,7 +84,7 @@ class DSetBuilder:
         mat = []
         for neighbor in neighbor_ids:
             mat.append(self.dset[position][np.int64(neighbor)])
-        output = torch.stack(mat).view(b, self.k*10, block_size, block_size)
+        output = torch.stack(mat).view(b, self.k*self.model.latent_dim, block_size, block_size)
         # pad = (block_size - output.shape[-1])//2
         # padding = (pad, pad)
         # output = F.pad(output, padding, "constant", 0)
@@ -108,9 +108,9 @@ class DSetBuilder:
                         patches.append(self.model.encode(patch))
                     all_patches.append(torch.cat(patches, dim=0).view(len(self.data.full_dataloader.dataset), -1))
             all_patches = torch.stack(all_patches)
-            print('DSET with shape: {} is ready!'.format(all_patches.shape))
             all_patches = all_patches.cpu().detach()
             torch.save(all_patches, self.DSET_PATH)
+        print('DSET with shape: {} is ready!'.format(all_patches.shape))
         return all_patches
     
 if __name__ == "__main__":
