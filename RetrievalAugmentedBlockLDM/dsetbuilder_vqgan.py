@@ -92,6 +92,8 @@ class DSetBuilder:
     
     @torch.no_grad()
     def dsetbuilder(self):
+        x = next(iter(self.data.full_dataloader))
+        print(self.model.encode(x).shape)
         """ Creates the D Set for this particular Dataset"""
         if os.path.exists(self.DSET_PATH):
             all_patches = torch.load(self.DSET_PATH)
@@ -107,7 +109,8 @@ class DSetBuilder:
                     all_patches.append(torch.cat(patches, dim=0).view(len(self.data.full_dataloader.dataset), -1))
             all_patches = torch.stack(all_patches)
             print('DSET with shape: {} is ready!'.format(all_patches.shape))
-            torch.save(all_patches.cpu().detach(), self.DSET_PATH)
+            all_patches = all_patches.cpu().detach().numpy().astype(np.float32)
+            torch.save(all_patches, self.DSET_PATH)
         return all_patches
     
 if __name__ == "__main__":
