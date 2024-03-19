@@ -92,8 +92,8 @@ class DSetBuilder:
     
     @torch.no_grad()
     def dsetbuilder(self):
-        x, _ = next(iter(self.data.full_dataloader))
-        print(self.model.encode(x.to(self.device)).shape)
+        # x, _ = next(iter(self.data.full_dataloader))
+        # print(self.model.encode(x.to(self.device)).shape)
         """ Creates the D Set for this particular Dataset"""
         if os.path.exists(self.DSET_PATH):
             all_patches = torch.load(self.DSET_PATH)
