@@ -105,7 +105,6 @@ class UNetLight(nn.Module):
             c = None
 
         skips = []
-        print(x.shape)
         # # down sample
         # for block1, attn1, block2, attn2, norm, downsample in self.down_blocks:
         # # for block1, block2, norm, downsample in self.down_blocks:
