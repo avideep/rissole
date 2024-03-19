@@ -109,7 +109,7 @@ class DSetBuilder:
                     all_patches.append(torch.cat(patches, dim=0).view(len(self.data.full_dataloader.dataset), -1))
             all_patches = torch.stack(all_patches)
             print('DSET with shape: {} is ready!'.format(all_patches.shape))
-            all_patches = all_patches.cpu().detach().numpy().astype(np.float32)
+            all_patches = all_patches.cpu().detach()
             torch.save(all_patches, self.DSET_PATH)
         return all_patches
     
