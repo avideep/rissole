@@ -272,7 +272,7 @@ def validate(model, data, dset, block_size, vae, device, args):
     for i in range(len(images)):
         images[i] = img
     # prev_block = torch.rand_like(img[:, :, :block_size, :block_size]).to(device)
-    prev_block = x[:, :, :block_size, :block_size]
+    prev_block = x[:n_images, :, :block_size, :block_size]
 
     if args.use_low_res: 
         low_res_cond = sample_from_vae(n_images, vae, device)
