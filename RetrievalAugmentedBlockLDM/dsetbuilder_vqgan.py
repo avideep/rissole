@@ -80,11 +80,11 @@ class DSetBuilder:
         neighbors, _ = self.searcher.search_batched(x_vqgan.cpu().numpy().astype(np.float32))
         return neighbors
 
-    def get_neighbors(self, neighbor_ids, position, block_size, b):
+    def get_neighbors(self, neighbor_ids, position, block_size, b, latent_dim):
         mat = []
         for neighbor in neighbor_ids:
             mat.append(self.dset[position][np.int64(neighbor)])
-        output = torch.stack(mat).view(b, self.k*self.model.latent_dim, block_size, block_size)
+        output = torch.stack(mat).view(b, self.k*latent_dim, block_size, block_size)
         # pad = (block_size - output.shape[-1])//2
         # padding = (pad, pad)
         # output = F.pad(output, padding, "constant", 0)

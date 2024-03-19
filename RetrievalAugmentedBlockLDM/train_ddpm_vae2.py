@@ -237,7 +237,7 @@ def train(model, data, dset, optimizer, block_size, vae, device, args):
                 block_pos = torch.full((x.size(0),),position, dtype=torch.int64).to(device)
                 curr_block = x[:, :, i:i+block_size, j:j+block_size]
                 # print(prev_block.shape)
-                neighbors = dset.get_neighbors(neighbor_ids, position, block_size, args.batch_size).to(device)
+                neighbors = dset.get_neighbors(neighbor_ids, position, block_size, args.batch_size, latent_dim).to(device)
                 loss = model.p_losses2(curr_block, neighbors, position = block_pos, low_res_cond = low_res_cond)
                 prev_block = curr_block
                 loss_agg += loss
@@ -286,7 +286,7 @@ def validate(model, data, dset, block_size, vae, device, args):
             if j==0 and i>0:
                 prev_block = curr_block[0][:,:,i-block_size:i, j:j+block_size]
             block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
-            neighbors = dset.get_neighbors(neighbor_ids, position, block_size, n_images).to(device)
+            neighbors = dset.get_neighbors(neighbor_ids, position, block_size, n_images, latent_dim).to(device)
             if args.use_low_res and args.use_cfg:
                 curr_block_uncond = model.sample(block_size, prev_block, block_pos, low_res_cond = None, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance (CFG)
                 curr_block_cond = model.sample(block_size, prev_block, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance 

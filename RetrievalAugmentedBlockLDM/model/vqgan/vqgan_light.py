@@ -19,6 +19,7 @@ class VQGANLight(nn.Module):
             n_embeddings: Number of embeddings for the codebook
         """
         super().__init__()
+        
         self.encoder = EncoderLight(latent_dim=latent_dim, **autoencoder_cfg)
         self.vq = VectorQuantizer(n_embeddings, latent_dim)
         self.decoder = DecoderLight(latent_dim=latent_dim, **autoencoder_cfg)
