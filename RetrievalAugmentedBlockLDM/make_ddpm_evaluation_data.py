@@ -35,11 +35,11 @@ parser.add_argument('--config', default='configs/ddpm_linear.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/ddpm_linear.yaml)')
 parser.add_argument('--unet-config', default='configs/unet.yaml',
                     metavar='PATH', help='Path to unet model config file (default: configs/unet.yaml)')
-parser.add_argument('--load-ckpt-ddpm', default='checkpoints/second_stage/ddpm_linear/24-01-26_155614/ddpm/best_model.pt', metavar='PATH',
+parser.add_argument('--load-ckpt-ddpm', default='checkpoints/second_stage/ddpm_linear/24-03-19_131207/ddpm/best_model.pt', metavar='PATH',
                     dest='load_checkpoint_ddpm', help='Load model checkpoint and continue training')
-parser.add_argument('--load-ckpt-unet', default='checkpoints/second_stage/ddpm_linear/24-01-26_155614/unet/best_model.pt', metavar='PATH',
+parser.add_argument('--load-ckpt-unet', default='checkpoints/second_stage/ddpm_linear/24-03-19_131207/unet/best_model.pt', metavar='PATH',
                     dest='load_checkpoint_unet', help='Load model checkpoint and continue training')
-parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-01-17_130119/best_model.pt',
+parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-18_151152/best_model.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
@@ -55,10 +55,10 @@ parser.add_argument('--sample_gen', action='store_true',
                     help='If true, samples images from the ddpm')
 parser.add_argument('--data-config', default='configs/data_se.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/data_se.yaml)')
-parser.add_argument('--vae-path', default='checkpoints/vae/introVAE/24-01-18_162139/best_model.pt',
-                    metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
-parser.add_argument('--vae-config', default='configs/vae.yaml',
-                    metavar='PATH', help='Path to model config file (default: configs/vaeyaml)')
+# parser.add_argument('--vae-path', default='checkpoints/vae/introVAE/24-01-18_162139/best_model.pt',
+#                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
+# parser.add_argument('--vae-config', default='configs/vae.yaml',
+#                     metavar='PATH', help='Path to model config file (default: configs/vaeyaml)')
 
 
 
@@ -135,10 +135,10 @@ def sample_images_real(data_loader, n_images, real_image_path):
         if count == n_images:
             break
 
-def sample_from_vae(n_images, model, device):
-    z = torch.randn(n_images, vae_latent_dim).to(device)
-    images = model.decode(z)
-    return images
+# def sample_from_vae(n_images, model, device):
+#     z = torch.randn(n_images, vae_latent_dim).to(device)
+#     images = model.decode(z)
+#     return images
 
 @torch.no_grad()
 def sample_images_gen(model, dset, block_size, n_images, image_path, image_size, device):
