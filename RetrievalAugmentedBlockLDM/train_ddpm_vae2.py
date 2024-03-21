@@ -225,11 +225,11 @@ def train(model, data, dset, optimizer, block_size, vae, device, args):
             low_res_cond = F.resize(x_resized, [block_size], antialias = True)
         else: # if nothing is used
             low_res_cond = None
-        prev_block = torch.rand_like(x[:, :, :block_size, :block_size]).to(device)
+        first_block = x[:, :, :block_size, :block_size]
         optimizer.zero_grad()
         position = 0
         loss_agg = 0
-        neighbor_ids = dset.get_neighbor_ids(prev_block.view(x.size(0), -1))
+        neighbor_ids = dset.get_neighbor_ids(first_block.view(x.size(0), -1))
         for i in range(0, x.shape[-1], block_size):
             for j in range(0, x.shape[-1], block_size):
                 if j==0 and i>0:
@@ -281,8 +281,8 @@ def validate(model, data, dset, block_size, vae, device, args):
     else:
         low_res_cond = None
     position = 0
-    neighbor_ids = dset.get_neighbor_ids(model.decode(prev_block))
-    neighbor_ids = dset.get_neighbor_ids(prev_block.view(n_images, -1))
+    x_query = dset.get_rand_queries(n_images)
+    neighbor_ids = dset.get_neighbor_ids(x_query)
 
     w = args.guidance_weight
     for i in range(0, img.shape[-1], block_size):
