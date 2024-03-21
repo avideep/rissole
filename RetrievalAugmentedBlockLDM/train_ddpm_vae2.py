@@ -128,8 +128,6 @@ def main():
     # read config file for model
     cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
     cfg_unet = yaml.load(open(args.unet_config, 'r'), Loader=yaml.Loader)
-    if args.use_prev_block:
-        cfg_unet['in_channels'] = 
     cfg_vqgan = yaml.load(open(args.vqgan_config, 'r'), Loader=yaml.Loader)
     cfg_vae = yaml.load(open(args.vae_config,'r'),Loader=yaml.Loader)
     vae = None
