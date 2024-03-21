@@ -144,8 +144,7 @@ def sample_images_real(data_loader, n_images, real_image_path):
 
             count += 1
             if count == n_images:
-                break
-
+                return
 # def sample_from_vae(n_images, model, device):
 #     z = torch.randn(n_images, vae_latent_dim).to(device)
 #     images = model.decode(z)
