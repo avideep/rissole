@@ -42,7 +42,7 @@ parser.add_argument('--image-size', default=64, metavar='N',
 parser.add_argument('--block-size', default=8, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
 parser.add_argument('--k', default=10, metavar='N',
-                    type=int, help='Size of the block that the image will be divided by.')
+                    type=int, help='Number of nearest neighbors to search.')
 parser.add_argument('--image-channels', default=3, metavar='N',
                     type=int, help='Number of image channels (default: 3)')
 parser.add_argument('--num-workers', default=0, metavar='N',
@@ -151,7 +151,7 @@ def main():
     ddpm = DDPM(eps_model=unet, vae_model=vqgan_model, **cfg)
     ddpm.to(device)
 
-    dset = DSetBuilder(data, 10, vqgan_model, device)
+    dset = DSetBuilder(data, args.k, vqgan_model, device)
 
     print("{:<16}: {}".format('DDPM model params', count_parameters(ddpm)))
 

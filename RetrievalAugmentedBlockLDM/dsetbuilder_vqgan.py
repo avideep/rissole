@@ -34,7 +34,7 @@ class DSetBuilder:
         self.mean = [0.5, 0.5, 0.5]
         self.std = [0.5, 0.5, 0.5]
         self.patch_size = self.data.img_size // 2
-        self.DSET_PATH = '/hdd/avideep/blockLDM/data/dset/' + data_name + '/vqgan/dset.pth'
+        self.DSET_PATH = '/hdd/avideep/blockLDM/data/dset/' + data_name + '/vqgan/dset_' + str(k) + '.pth'
         self.inv_normalize = transforms.Compose([
                                 transforms.Normalize(mean=0, std=[1./s for s in self.std]),
                                 transforms.Normalize(mean=[-m for m in self.mean], std=1.),
@@ -44,7 +44,7 @@ class DSetBuilder:
         self.device = device
         self.dset = self.dsetbuilder()
 
-        searcher_dir = '/hdd/avideep/blockLDM/data/dset/' + data_name + '/vqgan/searcher/'
+        searcher_dir = '/hdd/avideep/blockLDM/data/dset/' + data_name + '/vqgan/searcher_ ' + str(k) + '/'
         if not os.path.exists(searcher_dir):
             self.searcher = scann.scann_ops_pybind.builder(self.dset[0] / np.linalg.norm(self.dset[0], axis=1)[:, np.newaxis].astype(np.float32), self.k, "dot_product").tree(num_leaves=2000, num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
             print(f'Save trained searcher under "{searcher_dir}"')
