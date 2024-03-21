@@ -138,12 +138,13 @@ def main():
 def sample_images_real(data_loader, n_images, real_image_path):
     count = 0
     for x, _ in tqdm(data_loader, desc="sample_real_images"):
-        img = tensor_to_image(torch.squeeze(x))
-        img.save(f"{real_image_path}/{count}.jpg")
+        for one_image in x:
+            img = tensor_to_image(x)
+            img.save(f"{real_image_path}/{count}.jpg")
 
-        count += 1
-        if count == n_images:
-            break
+            count += 1
+            if count == n_images:
+                break
 
 # def sample_from_vae(n_images, model, device):
 #     z = torch.randn(n_images, vae_latent_dim).to(device)
