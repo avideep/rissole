@@ -229,7 +229,7 @@ def train(model, data, dset, optimizer, block_size, vae, device, args):
         optimizer.zero_grad()
         position = 0
         loss_agg = 0
-        neighbor_ids = dset.get_neighbor_ids(model.decode(prev_block))
+        neighbor_ids = dset.get_neighbor_ids(prev_block.view(x.size(0), -1))
         for i in range(0, x.shape[-1], block_size):
             for j in range(0, x.shape[-1], block_size):
                 if j==0 and i>0:
@@ -282,6 +282,8 @@ def validate(model, data, dset, block_size, vae, device, args):
         low_res_cond = None
     position = 0
     neighbor_ids = dset.get_neighbor_ids(model.decode(prev_block))
+    neighbor_ids = dset.get_neighbor_ids(prev_block.view(n_images, -1))
+
     w = args.guidance_weight
     for i in range(0, img.shape[-1], block_size):
         for j in range(0, img.shape[-1], block_size):

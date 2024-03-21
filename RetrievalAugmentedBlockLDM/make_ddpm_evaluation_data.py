@@ -14,11 +14,17 @@ from model.unet.unet_light import UNetLight
 import torchvision.transforms.functional as F
 from utils.helpers import load_model_checkpoint
 from dsetbuilder_vqgan import DSetBuilder
-
+from dataloader import CelebA, CelebAHQ, CIFAR10
 # from: https://stackoverflow.com/questions/20554074/sklearn-omp-error-15-initializing-libiomp5md-dll-but-found-mk2iomp5md-dll-a
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 parser = argparse.ArgumentParser(description="PyTorch Second Stage Training")
+parser.add_argument('--data', '-d', default='CelebA',
+                        type=str, metavar='data', help='Dataset Name. Please enter CelebA, CelebAHQ, or CIFAR10. Default: CelebA')
+parser.add_argument('--batch-size', default=16, metavar='N',
+                    type=int, help='Mini-batch size (default: 64)')
+parser.add_argument('--dset-batch-size', default=32, metavar='N',
+                    type=int, help='Mini-batch size (default: 32)')
 parser.add_argument('--image-size', default=256, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
 parser.add_argument('--block-size', default=32, metavar='N',
@@ -81,12 +87,17 @@ def main():
         else:
             raise ValueError('Currently multi-gpu training is not possible')
         print("{:<16}: {}".format('device', device))
-
+        if args.data == 'CelebA':
+            data = CelebA(args.batch_size)
+        elif args.data == 'CIFAR10':
+            data = CIFAR10(args.batch_size)
+        else:
+            data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
         # read config file for model
         cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
         cfg_unet = yaml.load(open(args.unet_config, 'r'), Loader=yaml.Loader)
         cfg_vqgan = yaml.load(open(args.vqgan_config, 'r'), Loader=yaml.Loader)
-        cfg_vae = yaml.load(open(args.vae_config,'r'),Loader=yaml.Loader)
+        # cfg_vae = yaml.load(open(args.vae_config,'r'),Loader=yaml.Loader)
 
         vqgan_model = VQGANLight(**cfg_vqgan['model'])
         vqgan_model, _, _ = load_model_checkpoint(vqgan_model, args.vqgan_path, device)
@@ -99,16 +110,19 @@ def main():
         ddpm = DDPM(eps_model=unet, vae_model=vqgan_model, **cfg)
         ddpm, _, _ = load_model_checkpoint(ddpm, args.load_checkpoint_ddpm, device)
         ddpm.to(device)
-        vae = IntroVAE(**cfg_vae['model'])
-        vae, _, _ = load_model_checkpoint(vae, args.vae_path, device)
-        vae.to(device)
-        global vae_latent_dim
-        vae_latent_dim = cfg_vae['model']['latent_dim']
+
+        dset = DSetBuilder(data, 10, vqgan_model, device)
+
+        # vae = IntroVAE(**cfg_vae['model'])
+        # vae, _, _ = load_model_checkpoint(vae, args.vae_path, device)
+        # vae.to(device)
+        # global vae_latent_dim
+        # vae_latent_dim = cfg_vae['model']['latent_dim']
         global latent_dim
         latent_dim = cfg_vqgan['model']['latent_dim']
         block_size = args.block_size
 
-        sample_images_gen(ddpm, vae, block_size, args.image_count, args.gen_image_path, args.image_size, device)
+        sample_images_gen(ddpm, dset, block_size, args.image_count, args.gen_image_path, args.image_size, device)
 
 
 def sample_images_real(data_loader, n_images, real_image_path):
@@ -125,7 +139,9 @@ def sample_from_vae(n_images, model, device):
     z = torch.randn(n_images, vae_latent_dim).to(device)
     images = model.decode(z)
     return images
-def sample_images_gen(model, vae, block_size, n_images, image_path, image_size, device):
+
+@torch.no_grad()
+def sample_images_gen(model, dset, block_size, n_images, image_path, image_size, device):
     model.eval()
 
     # we only want to sample x0 images
@@ -145,12 +161,14 @@ def sample_images_gen(model, vae, block_size, n_images, image_path, image_size, 
         img = model.encode(img)
         for i in range(len(images)):
             images[i] = img
-        prev_block = torch.rand_like(img[:, :, :block_size, :block_size]).to(device)
+        # prev_block = torch.rand_like(img[:, :, :block_size, :block_size]).to(device)
         # prev_block = model.encode(prev_block)
-        low_res_cond = sample_from_vae(n_images, vae, device)
-        low_res_cond = model.encode(low_res_cond)
-        low_res_cond = F.resize(low_res_cond, [block_size], antialias = True)
-
+        # low_res_cond = sample_from_vae(n_images, vae, device)
+        # low_res_cond = model.encode(low_res_cond)
+        # low_res_cond = F.resize(low_res_cond, [block_size], antialias = True)
+        x_query = dset.get_rand_queries(n_images)
+        neigbor_ids = dset.get_neighbor_ids(x_query)
+        low_res_cond = None
         position = 0
         for i in range(0, img.shape[-1], block_size):
             for j in range(0, img.shape[-1], block_size):
@@ -158,9 +176,10 @@ def sample_images_gen(model, vae, block_size, n_images, image_path, image_size, 
                 #     prev_block = img[:,:,i-block_size:i, j:j+block_size]
                 #     prev_block = model.encode(prev_block)
                 block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
-                curr_block = model.sample(block_size, prev_block, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim)
+                neighbors = dset.get_neighbors(neigbor_ids, position, block_size, n_images, latent_dim)
+                curr_block = model.sample(block_size, neighbors, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim)
                 curr_block[0] = curr_block[0] - low_res_cond 
-                prev_block = curr_block[0]
+                # prev_block = curr_block[0]
                 position += 1
                 for k in range(len(curr_block)):
                     images[k][:, :, i:i+block_size, j:j+block_size] = curr_block[k]
