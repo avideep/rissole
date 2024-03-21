@@ -11,11 +11,10 @@ n_groups: 8         # group normalization
 
 # attention
 dim_keys: 64   # dimension of queries, keys, values
-n_heads: 4  # number of heads for self-attention
+n_heads: 8  # number of heads for self-attention
 use_spatial_transformer: True
 # UNet
 channels:
-  - 64
   - 128
   - 256
   - 512
