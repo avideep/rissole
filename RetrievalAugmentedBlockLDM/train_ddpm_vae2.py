@@ -75,7 +75,7 @@ parser.add_argument('--vae-path', default='checkpoints/vae/24-02-15_130409/best_
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 parser.add_argument('--vae-config', default='configs/vae.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vaeyaml)')
-parser.add_argument('--use-low-res', action='store_true',
+parser.add_argument('--use-prev-block', action='store_true',
                     help='Whether to condition the model with a low resolution whole image sampled from a VAE')
 parser.add_argument('--use-cfg', action='store_true',
                     help='Whether to use classifier-free guidance')
@@ -226,18 +226,19 @@ def train(model, data, dset, optimizer, block_size, vae, device, args):
         else: # if nothing is used
             low_res_cond = None
         first_block = x[:, :, :block_size, :block_size]
+        prev_block = torch.rand_like(first_block).to(device) if args.use_prev_block else None
         optimizer.zero_grad()
         position = 0
         loss_agg = 0
         neighbor_ids = dset.get_neighbor_ids(first_block.contiguous().view(x.size(0), -1))
         for i in range(0, x.shape[-1], block_size):
             for j in range(0, x.shape[-1], block_size):
-                if j==0 and i>0:
-                        prev_block = x[:,:,i-block_size:i, j:j+block_size]
+                # if j==0 and i>0:
+                #         prev_block = x[:,:,i-block_size:i, j:j+block_size]
                 block_pos = torch.full((x.size(0),),position, dtype=torch.int64).to(device)
                 curr_block = x[:, :, i:i+block_size, j:j+block_size]
                 # print(prev_block.shape)
-                neighbors = dset.get_neighbors(neighbor_ids, position, block_size, x.size(0), latent_dim).to(device)
+                neighbors = torch.cat([dset.get_neighbors(neighbor_ids, position, block_size, x.size(0), latent_dim).to(device), prev_block], dim = 1) if args.use_prev_block else dset.get_neighbors(neighbor_ids, position, block_size, x.size(0), latent_dim).to(device)
                 loss = model.p_losses2(curr_block, neighbors, position = block_pos, low_res_cond = low_res_cond)
                 prev_block = curr_block
                 loss_agg += loss
@@ -272,8 +273,8 @@ def validate(model, data, dset, block_size, vae, device, args):
     for i in range(len(images)):
         images[i] = img
     # prev_block = torch.rand_like(img[:, :, :block_size, :block_size]).to(device)
-    prev_block = x[:n_images, :, :block_size, :block_size]
-
+    first_block = x[:n_images, :, :block_size, :block_size]
+    prev_block = torch.randn_like(first_block).to(device)
     if args.use_low_res: 
         low_res_cond = sample_from_vae(n_images, vae, device)
         low_res_cond = model.encode(low_res_cond)
@@ -287,10 +288,10 @@ def validate(model, data, dset, block_size, vae, device, args):
     w = args.guidance_weight
     for i in range(0, img.shape[-1], block_size):
         for j in range(0, img.shape[-1], block_size):
-            if j==0 and i>0:
-                prev_block = curr_block[0][:,:,i-block_size:i, j:j+block_size]
+            # if j==0 and i>0:
+            #     prev_block = curr_block[0][:,:,i-block_size:i, j:j+block_size]
             block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
-            neighbors = dset.get_neighbors(neighbor_ids, position, block_size, n_images, latent_dim).to(device)
+            neighbors = torch.cat([dset.get_neighbors(neighbor_ids, position, block_size, n_images, latent_dim).to(device), prev_block], dim =1) if args.use_prev_block else dset.get_neighbors(neighbor_ids, position, block_size, n_images, latent_dim).to(device)
             if args.use_low_res and args.use_cfg:
                 curr_block_uncond = model.sample(block_size, prev_block, block_pos, low_res_cond = None, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance (CFG)
                 curr_block_cond = model.sample(block_size, prev_block, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance 
