@@ -128,6 +128,8 @@ def main():
     # read config file for model
     cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
     cfg_unet = yaml.load(open(args.unet_config, 'r'), Loader=yaml.Loader)
+    if args.use_prev_block:
+        cfg_unet['in_channels'] = 
     cfg_vqgan = yaml.load(open(args.vqgan_config, 'r'), Loader=yaml.Loader)
     cfg_vae = yaml.load(open(args.vae_config,'r'),Loader=yaml.Loader)
     vae = None
@@ -144,7 +146,8 @@ def main():
     vqgan_model.to(device)
     global latent_dim
     latent_dim = cfg_vqgan['model']['latent_dim']
-
+    if args.use_prev_block:
+        cfg_unet['in_channels'] = (args.k + 2) * latent_dim # 2 because one if for the input latent representation of the current block and another is that for the previous block
     unet = UNetLight(**cfg_unet)
     unet.to(device)
 
