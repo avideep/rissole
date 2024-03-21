@@ -176,7 +176,7 @@ def sample_images_gen(model, dset, block_size, n_images, image_path, image_size,
                 #     prev_block = img[:,:,i-block_size:i, j:j+block_size]
                 #     prev_block = model.encode(prev_block)
                 block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
-                neighbors = dset.get_neighbors(neigbor_ids, position, block_size, n_images, latent_dim)
+                neighbors = dset.get_neighbors(neigbor_ids, position, block_size, n_images, latent_dim).to(device)
                 curr_block = model.sample(block_size, neighbors, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim)
                 curr_block[0] = curr_block[0] - low_res_cond 
                 # prev_block = curr_block[0]
