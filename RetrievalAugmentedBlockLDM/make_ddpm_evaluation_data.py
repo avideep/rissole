@@ -139,7 +139,7 @@ def sample_images_real(data_loader, n_images, real_image_path):
     count = 0
     for x, _ in tqdm(data_loader, desc="sample_real_images"):
         for one_image in x:
-            img = tensor_to_image(x)
+            img = tensor_to_image(one_image)
             img.save(f"{real_image_path}/{count}.jpg")
 
             count += 1
