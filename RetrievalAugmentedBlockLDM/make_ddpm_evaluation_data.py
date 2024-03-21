@@ -43,7 +43,7 @@ parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-18_151152/b
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
-parser.add_argument('--real-image-path', default='',
+parser.add_argument('--real-image-path', default='original',
                     metavar='PATH', help='Path to load samples from the source images into')
 parser.add_argument('--gen-image-path', default='samples/new/',
                     metavar='PATH', help='Path to generated images')
@@ -70,11 +70,21 @@ def main():
     if args.sample_real:
         if args.real_image_path and not os.path.exists(args.real_image_path):
             os.makedirs(args.real_image_path)
+        # GPU setup
+        args.gpus = args.gpus if isinstance(args.gpus, list) else [args.gpus]
+        if len(args.gpus) == 1:
+            device = torch.device(f'cuda:{args.gpus[0]}' if torch.cuda.is_available() else 'cpu')
+        else:
+            raise ValueError('Currently multi-gpu training is not possible')
+        print("{:<16}: {}".format('device', device))
 
-        data_cfg = yaml.load(open(args.data_config, 'r'), Loader=yaml.Loader)
-        data = PlantNet(**data_cfg, batch_size=1, image_size=args.image_size,
-                        num_workers=1)
-        sample_images_real(data.test, args.image_count, args.real_image_path)
+        if args.data == 'CelebA':
+            data = CelebA(args.batch_size)
+        elif args.data == 'CIFAR10':
+            data = CIFAR10(args.batch_size)
+        else:
+            data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
+        sample_images_real(data.val, args.image_count, args.real_image_path)
 
     if args.sample_gen:
         if args.sample_gen and args.gen_image_path and not os.path.exists(args.gen_image_path):
