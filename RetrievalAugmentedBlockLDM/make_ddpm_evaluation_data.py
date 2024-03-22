@@ -47,6 +47,8 @@ parser.add_argument('--real-image-path', default='original',
                     metavar='PATH', help='Path to load samples from the source images into')
 parser.add_argument('--gen-image-path', default='samples/',
                     metavar='PATH', help='Path to generated images')
+parser.add_argument('--use-prev-block', action='store_true',
+                    help='Whether to condition the model with the previous block')
 parser.add_argument('--gpus', default=0, type=int,
                     nargs='+', metavar='GPUS', help='If GPU(s) available, which GPU(s) to use for training.')
 parser.add_argument('--sample_real', action='store_true',
@@ -112,7 +114,10 @@ def main():
         vqgan_model = VQGANLight(**cfg_vqgan['model'])
         vqgan_model, _, _ = load_model_checkpoint(vqgan_model, args.vqgan_path, device)
         vqgan_model.to(device)
-
+        if args.use_prev_block:
+            cfg_unet['in_channels'] = (args.k + 2) * latent_dim # 2 because one if for the input latent representation of the current block and another is that for the previous block
+        else:
+            cfg_unet['in_channels'] = (args.k + 1) * latent_dim
         unet = UNetLight(**cfg_unet)
         unet, _, _ = load_model_checkpoint(unet, args.load_checkpoint_unet, device)
         unet.to(device)
