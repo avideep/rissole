@@ -138,7 +138,7 @@ def main():
         # global vae_latent_dim
         # vae_latent_dim = cfg_vae['model']['latent_dim']        
 
-        sample_images_gen(ddpm, dset, args.block_size, args.image_count, args.gen_image_path, args.image_size, device)
+        sample_images_gen(ddpm, dset, args.block_size, args.image_count, args.gen_image_path, args.image_size, device, args.use_prev_block)
 
 
 def sample_images_real(data_loader, n_images, real_image_path):
@@ -157,7 +157,7 @@ def sample_images_real(data_loader, n_images, real_image_path):
 #     return images
 
 @torch.no_grad()
-def sample_images_gen(model, dset, block_size, n_images, image_path, image_size, device):
+def sample_images_gen(model, dset, block_size, n_images, image_path, image_size, device, use_prev_block):
     model.eval()
 
     # we only want to sample x0 images
@@ -182,8 +182,9 @@ def sample_images_gen(model, dset, block_size, n_images, image_path, image_size,
         # low_res_cond = sample_from_vae(n_images, vae, device)
         # low_res_cond = model.encode(low_res_cond)
         # low_res_cond = F.resize(low_res_cond, [block_size], antialias = True)
+        prev_block = torch.randn((n_images, latent_dim, block_size, block_size)).to(device)
         x_query = dset.get_rand_queries(n_images)
-        neigbor_ids = dset.get_neighbor_ids(x_query)
+        neighbor_ids = dset.get_neighbor_ids(x_query)
         low_res_cond = None
         position = 0
         for i in range(0, img.shape[-1], block_size):
@@ -192,10 +193,10 @@ def sample_images_gen(model, dset, block_size, n_images, image_path, image_size,
                 #     prev_block = img[:,:,i-block_size:i, j:j+block_size]
                 #     prev_block = model.encode(prev_block)
                 block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
-                neighbors = dset.get_neighbors(neigbor_ids, position, block_size, n_images, latent_dim).to(device)
+                neighbors = torch.cat([dset.get_neighbors(neighbor_ids, position, block_size, n_images, latent_dim).to(device), prev_block], dim =1) if use_prev_block else dset.get_neighbors(neighbor_ids, position, block_size, n_images, latent_dim).to(device)
                 curr_block = model.sample(block_size, neighbors, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim)
                 # curr_block[0] = curr_block[0] - low_res_cond 
-                # prev_block = curr_block[0]
+                prev_block = curr_block[0]
                 position += 1
                 for k in range(len(curr_block)):
                     images[k][:, :, i:i+block_size, j:j+block_size] = curr_block[k]
