@@ -47,7 +47,7 @@ parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
 parser.add_argument('--real-image-path', default='original',
                     metavar='PATH', help='Path to load samples from the source images into')
-parser.add_argument('--gen-image-path', default='samples/new',
+parser.add_argument('--gen-image-path', default='samples',
                     metavar='PATH', help='Path to generated images')
 parser.add_argument('--use-prev-block', action='store_true',
                     help='Whether to condition the model with the previous block')
