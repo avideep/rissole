@@ -133,8 +133,9 @@ def main():
         # vae.to(device)
         # global vae_latent_dim
         # vae_latent_dim = cfg_vae['model']['latent_dim']
-        global latent_dim
+        
         latent_dim = cfg_vqgan['model']['latent_dim']
+        global latent_dim
         block_size = args.block_size
 
         sample_images_gen(ddpm, dset, block_size, args.image_count, args.gen_image_path, args.image_size, device)
