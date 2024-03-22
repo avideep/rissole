@@ -114,6 +114,8 @@ def main():
         vqgan_model = VQGANLight(**cfg_vqgan['model'])
         vqgan_model, _, _ = load_model_checkpoint(vqgan_model, args.vqgan_path, device)
         vqgan_model.to(device)
+        global latent_dim
+        latent_dim = cfg_vqgan['model']['latent_dim']
         if args.use_prev_block:
             cfg_unet['in_channels'] = (args.k + 2) * latent_dim # 2 because one if for the input latent representation of the current block and another is that for the previous block
         else:
@@ -132,13 +134,9 @@ def main():
         # vae, _, _ = load_model_checkpoint(vae, args.vae_path, device)
         # vae.to(device)
         # global vae_latent_dim
-        # vae_latent_dim = cfg_vae['model']['latent_dim']
-        
-        latent_dim = cfg_vqgan['model']['latent_dim']
-        global latent_dim
-        block_size = args.block_size
+        # vae_latent_dim = cfg_vae['model']['latent_dim']        
 
-        sample_images_gen(ddpm, dset, block_size, args.image_count, args.gen_image_path, args.image_size, device)
+        sample_images_gen(ddpm, dset, args.block_size, args.image_count, args.gen_image_path, args.image_size, device)
 
 
 def sample_images_real(data_loader, n_images, real_image_path):
