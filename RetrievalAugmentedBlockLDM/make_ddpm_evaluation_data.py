@@ -29,6 +29,8 @@ parser.add_argument('--image-size', default=64, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
 parser.add_argument('--block-size', default=8, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
+parser.add_argument('--k', default=10, metavar='N',
+                    type=int, help='Number of nearest neighbors to search.')
 parser.add_argument('--image-count', default=16,
                     type=int, help='number of images that should be generated for comparison')
 parser.add_argument('--config', default='configs/ddpm_linear.yaml',
@@ -128,7 +130,7 @@ def main():
         ddpm, _, _ = load_model_checkpoint(ddpm, args.load_checkpoint_ddpm, device)
         ddpm.to(device)
 
-        dset = DSetBuilder(data, 10, vqgan_model, device)
+        dset = DSetBuilder(data, args.k, vqgan_model, device)
 
         # vae = IntroVAE(**cfg_vae['model'])
         # vae, _, _ = load_model_checkpoint(vae, args.vae_path, device)
