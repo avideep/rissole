@@ -127,6 +127,10 @@ if __name__ == "__main__":
     vqgan_model = VQGANLight(**cfg_vqgan['model'])
     vqgan_model, _, _ = load_model_checkpoint(vqgan_model, args.vqgan_path, device)
     vqgan_model.to(device)
+    x = torch.randn(16,3,224,224)
+    x = vqgan_model.encode(x)
+    x = vqgan_model.quantize(x)
+    print(x.shape)
     if args.data == 'CelebA':
         data = CelebA(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
     elif args.data == 'CelebAHQ':
