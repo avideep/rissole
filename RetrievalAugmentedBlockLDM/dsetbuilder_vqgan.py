@@ -106,7 +106,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="DSET Building")
     parser.add_argument('--data', '-d', default='CelebA',
                         type=str, metavar='data', help='Dataset Name. Please enter CelebA, CelebAHQ, ImageNet100 or CIFAR10. Default: CelebA')
-    parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-02-15_130652/best_model.pt',
+    parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-18_151152/best_model.pt',
                         metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
     parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
                         metavar='PATH', help='Path to model config file (default: configs/vqgan_cifar10.yaml)')
