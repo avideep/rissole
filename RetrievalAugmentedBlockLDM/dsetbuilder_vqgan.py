@@ -24,21 +24,18 @@ from tqdm import tqdm
 import yaml
 from model import VQGANLight
 from utils.helpers import load_model_checkpoint
-from dataloader import CelebA, CelebAHQ, CIFAR10
+from dataloader import CelebA, CelebAHQ, CIFAR10, ImageNet100
+
 class DSetBuilder:
     def __init__(self, data, k, model, device):
         data_name = data.__class__.__name__
-        if data_name not in ['CelebA', 'CelebAHQ', 'CIFAR10']:
-            raise ValueError("Invalid input. Please enter CelebA, CelebAHQ, or CIFAR10.")
+        if data_name not in ['CelebA', 'CelebAHQ', 'CIFAR10', 'ImageNet100']:
+            raise ValueError("Invalid input. Please enter CelebA, CelebAHQ, ImageNet100 or CIFAR10.")
         self.data = data
         self.mean = [0.5, 0.5, 0.5]
         self.std = [0.5, 0.5, 0.5]
         self.patch_size = self.data.img_size // 2
         self.DSET_PATH = '/hdd/avideep/blockLDM/data/dset/' + data_name + '/vqgan/dset_' + str(k) + '.pth'
-        self.inv_normalize = transforms.Compose([
-                                transforms.Normalize(mean=0, std=[1./s for s in self.std]),
-                                transforms.Normalize(mean=[-m for m in self.mean], std=1.),
-                                lambda x: x*255])
         self.k = k
         self.model = model
         self.device = device
@@ -54,18 +51,6 @@ class DSetBuilder:
             print(f'Loading pre-trained searcher from {searcher_dir}')
             self.searcher = scann.scann_ops_pybind.load_searcher(searcher_dir)
             print('Finished loading searcher.')
-
-    def tensor2img(self, tensor):
-        """ Convert torch.Tensor to PIL image. """
-        n_channels = tensor.shape[0]
-
-        img = tensor.detach().cpu()
-        img = self.inv_normalize(img)
-
-        if n_channels > 1:
-            return Image.fromarray(img.permute(1, 2, 0).numpy().astype('uint8')).convert("RGB")
-        else:
-            return Image.fromarray(img[0].numpy()).convert("L")
         
     @torch.no_grad()
     def encode(self, x: torch.Tensor):
@@ -120,7 +105,7 @@ class DSetBuilder:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="DSET Building")
     parser.add_argument('--data', '-d', default='CelebA',
-                        type=str, metavar='data', help='Dataset Name. Please enter CelebA, CelebAHQ, or CIFAR10. Default: CelebA')
+                        type=str, metavar='data', help='Dataset Name. Please enter CelebA, CelebAHQ, ImageNet100 or CIFAR10. Default: CelebA')
     parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-02-15_130652/best_model.pt',
                         metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
     parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
@@ -146,6 +131,8 @@ if __name__ == "__main__":
         data = CelebA(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
     elif args.data == 'CelebAHQ':
         data = CelebAHQ(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+    elif args.data == 'ImageNet100':
+        data = ImageNet100(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
     else:
         data = CIFAR10(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
     dset = DSetBuilder(data, k=10, model=vqgan_model, device=device)
