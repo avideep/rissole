@@ -43,7 +43,7 @@ parser.add_argument('--num-workers', default=0, metavar='N',
                     type=int, help='Number of workers for the dataloader (default: 0)')
 parser.add_argument('--lr', default=0.0001,
                     type=float, metavar='LR', help='Initial learning rate (default: 0.0001)')
-parser.add_argument('--config', default='configs/vqgan_cifar10.yaml',
+parser.add_argument('--config', default='configs/vqgan_imagenet100.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
 parser.add_argument('--data-config', default='configs/data_se.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/data_se.yaml)')
