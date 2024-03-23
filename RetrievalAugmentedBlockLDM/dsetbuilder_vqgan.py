@@ -93,7 +93,6 @@ class DSetBuilder:
                     patches = []
                     for x, _ in tqdm(self.data.full_dataloader, desc='Building DSET'):
                         x = x.to(self.device)
-                        print(x.shape)
                         patch = x[:, :, i:i+self.patch_size, j:j+self.patch_size]
                         patches.append(self.model.encode(patch))
                     all_patches.append(torch.cat(patches, dim=0).view(len(self.data.full_dataloader.dataset), -1))
