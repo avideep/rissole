@@ -16,7 +16,7 @@ from utils.helpers import load_model_checkpoint, save_model_checkpoint
 from utils.helpers import log2tensorboard_vqvae
 from utils.helpers import count_parameters
 from utils.visualization import get_original_reconstruction_image
-from dataloader import CIFAR10, PlantNet, CelebA, CelebAHQ
+from dataloader import CIFAR10, PlantNet, CelebA, CelebAHQ, ImageNet100
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
@@ -33,6 +33,8 @@ parser.add_argument('--epochs', default=100,
                     type=int, metavar='N', help='Number of epochs to run (default: 2)')
 parser.add_argument('--batch-size', default=64, metavar='N',
                     type=int, help='Mini-batch size (default: 64)')
+parser.add_argument('--dset-batch-size', default=32, metavar='N',
+                    type=int, help='Mini-batch size (default: 32)')
 parser.add_argument('--image-size', default=128, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
 parser.add_argument('--block-size', default=32, metavar='N',
@@ -90,6 +92,8 @@ def main():
         data = CelebA(args.batch_size)
     elif args.data == 'CIFAR10':
         data = CIFAR10(args.batch_size)
+    elif args.data == 'ImageNet100':
+        data = ImageNet100(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
     else:
         data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
     # read config file for model
