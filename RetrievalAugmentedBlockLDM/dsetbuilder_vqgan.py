@@ -93,6 +93,7 @@ class DSetBuilder:
                     patches = []
                     for x, _ in tqdm(self.data.full_dataloader, desc='Building DSET'):
                         x = x.to(self.device)
+                        print(x.shape)
                         patch = x[:, :, i:i+self.patch_size, j:j+self.patch_size]
                         patches.append(self.model.encode(patch))
                     all_patches.append(torch.cat(patches, dim=0).view(len(self.data.full_dataloader.dataset), -1))
@@ -127,10 +128,10 @@ if __name__ == "__main__":
     vqgan_model = VQGANLight(**cfg_vqgan['model'])
     vqgan_model, _, _ = load_model_checkpoint(vqgan_model, args.vqgan_path, device)
     vqgan_model.to(device)
-    x = torch.randn(16,3,224,224).to(device)
-    x = vqgan_model.encode(x)
-    x = vqgan_model.quantize(x)
-    print(x.shape)
+    # x = torch.randn(16,3,224,224).to(device)
+    # x = vqgan_model.encode(x)
+    # x = vqgan_model.quantize(x)
+    # print(x.shape)
     if args.data == 'CelebA':
         data = CelebA(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
     elif args.data == 'CelebAHQ':
