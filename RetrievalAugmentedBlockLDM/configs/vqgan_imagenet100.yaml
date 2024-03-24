@@ -2,14 +2,14 @@ model:
   autoencoder_cfg:
     in_channels: 3
     channels:
-      - 32
       - 64
       - 128
+      - 256
     dim_keys: 64
     n_heads: 4
 
-  latent_dim: 10
-  n_embeddings: 1024
+  latent_dim: 64
+  n_embeddings: 512
 
 loss:
   rec_loss_type: 'L2'
