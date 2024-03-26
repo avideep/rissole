@@ -119,7 +119,7 @@ if __name__ == "__main__":
                         metavar='PATH', help='Path to model config file (default: configs/vqgan_cifar10.yaml)')
     parser.add_argument('--gpus', default=0, type=int,
                     nargs='+', metavar='GPUS', help='If GPU(s) available, which GPU(s) to use for training.')
-    parser.add_argument('--batch-size', default=16, metavar='N',
+    parser.add_argument('--batch-size', default=8, metavar='N',
                     type=int, help='Mini-batch size (default: 16)')
     parser.add_argument('--dset-batch-size', default=16, metavar='N',
                     type=int, help='Mini-batch size (default: 32)')
