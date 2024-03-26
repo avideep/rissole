@@ -16,6 +16,5 @@ use_spatial_transformer: False
 # UNet
 channels:
   - 512
-  - 512
   - 256
   - 128
