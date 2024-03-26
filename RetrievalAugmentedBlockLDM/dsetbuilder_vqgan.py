@@ -93,9 +93,9 @@ class DSetBuilder:
                 for j in range (0, self.data.img_size, self.patch_size):
                     patches = []
                     for x, _ in tqdm(self.data.full_dataloader, desc='Building DSET'):
-                        x = x.to(self.device)
+                        # x = x.to(self.device)
                         patch = x[:, :, i:i+self.patch_size, j:j+self.patch_size]
-                        patches.append(self.model.encode(patch))
+                        patches.append(self.model.encode(patch).cpu().detach())
                         # del x
                         # torch.cuda.empty_cache()
                         # gc.collect()
