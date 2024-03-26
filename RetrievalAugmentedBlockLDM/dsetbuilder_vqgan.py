@@ -24,7 +24,8 @@ from torch.utils.data.dataloader import default_collate
 from tqdm import tqdm
 import yaml
 from model import VQGANLight
-from utils.helpers import load_model_checkpoint
+from utils.helpers import load_model_checkpoint, timer
+import time
 from dataloader import CelebA, CelebAHQ, CIFAR10, ImageNet100
 
 class DSetBuilder:
@@ -41,17 +42,19 @@ class DSetBuilder:
         self.model = model
         self.device = device
         self.dset = self.dsetbuilder()
-
-        searcher_dir = '/hdd/avideep/blockLDM/data/dset/' + data_name + '/vqgan/searcher_ ' + str(k) + '/'
+        searcher_dir = '/hdd/avideep/blockLDM/data/dset/' + data_name + '/vqgan/searcher_' + str(k) + '/'
         if not os.path.exists(searcher_dir):
+            t_start = time.time()
             self.searcher = scann.scann_ops_pybind.builder(self.dset[0] / np.linalg.norm(self.dset[0], axis=1)[:, np.newaxis].astype(np.float32), self.k, "dot_product").tree(num_leaves=2000, num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
-            print(f'Save trained searcher under "{searcher_dir}"')
             os.makedirs(searcher_dir, exist_ok=True)
             self.searcher.serialize(searcher_dir)
+            elapsed_time = timer(t_start, time.time())
+            print(f"Took {elapsed_time} to save trained searcher in {searcher_dir}")
         else:
             print(f'Loading pre-trained searcher from {searcher_dir}')
             self.searcher = scann.scann_ops_pybind.load_searcher(searcher_dir)
             print('Finished loading searcher.')
+        
         
     @torch.no_grad()
     def encode(self, x: torch.Tensor):
@@ -139,4 +142,4 @@ if __name__ == "__main__":
         data = ImageNet100(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
     else:
         data = CIFAR10(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
-    dset = DSetBuilder(data, k=10, model=vqgan_model, device=device)
+    dset = DSetBuilder(data, k=20, model=vqgan_model, device=device)
