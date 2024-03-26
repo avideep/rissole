@@ -14,6 +14,7 @@ from glob import glob
 from multiprocessing import cpu_count
 import numpy as np
 import scann
+import gc
 import torch
 from einops import rearrange
 from omegaconf import OmegaConf
@@ -97,6 +98,8 @@ class DSetBuilder:
                         patches.append(self.model.encode(patch))
                     all_patches.append(torch.cat(patches, dim=0).view(len(self.data.full_dataloader.dataset), -1))
                     del patches
+                    torch.cuda.empty_cache()
+                    gc.collect()
             all_patches = torch.stack(all_patches)
             all_patches = all_patches.cpu().detach()
             torch.save(all_patches, self.DSET_PATH)
