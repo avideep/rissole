@@ -42,7 +42,7 @@ class DSetBuilder:
         self.model = model
         self.device = device
         self.dset = self.dsetbuilder()
-        searcher_dir = '/hdd/avideep/blockLDM/data/dset/' + data_name + '/vqgan/searcher_' + str(k) + '/'
+        searcher_dir = '/hdd/avideep/blockLDM/data/dset/' + data_name + '/vqgan/searcher_ ' + str(k) + '/'
         if not os.path.exists(searcher_dir):
             t_start = time.time()
             self.searcher = scann.scann_ops_pybind.builder(self.dset[0] / np.linalg.norm(self.dset[0], axis=1)[:, np.newaxis].astype(np.float32), self.k, "dot_product").tree(num_leaves=2000, num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
