@@ -51,7 +51,7 @@ parser.add_argument('--lr', default=0.0001,
                     type=float, metavar='LR', help='Initial learning rate (default: 0.0002)')
 parser.add_argument('--config', default='configs/ddpm_linear.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/ddpm_linear.yaml)')
-parser.add_argument('--unet-config', default='configs/unet.yaml',
+parser.add_argument('--unet-config', default='configs/unet_imagenet100.yaml',
                     metavar='PATH', help='Path to unet model config file (default: configs/unet.yaml)')
 parser.add_argument('--data-config', default='configs/data_se.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/data_se.yaml)')
