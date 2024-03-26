@@ -96,15 +96,8 @@ class DSetBuilder:
                         x = x.to(self.device)
                         patch = x[:, :, i:i+self.patch_size, j:j+self.patch_size]
                         patches.append(self.model.encode(patch).cpu().detach())
-                        # del x
-                        # torch.cuda.empty_cache()
-                        # gc.collect()
                     all_patches.append(torch.cat(patches, dim=0).view(len(self.data.full_dataloader.dataset), -1))
-                    del patches
-                    torch.cuda.empty_cache()
-                    gc.collect()
             all_patches = torch.stack(all_patches)
-            # all_patches = all_patches.cpu().detach()
             torch.save(all_patches, self.DSET_PATH)
         print('DSET with shape: {} is ready!'.format(all_patches.shape))
         return all_patches
@@ -119,9 +112,9 @@ if __name__ == "__main__":
                         metavar='PATH', help='Path to model config file (default: configs/vqgan_cifar10.yaml)')
     parser.add_argument('--gpus', default=0, type=int,
                     nargs='+', metavar='GPUS', help='If GPU(s) available, which GPU(s) to use for training.')
-    parser.add_argument('--batch-size', default=8, metavar='N',
+    parser.add_argument('--batch-size', default=16, metavar='N',
                     type=int, help='Mini-batch size (default: 16)')
-    parser.add_argument('--dset-batch-size', default=16, metavar='N',
+    parser.add_argument('--dset-batch-size', default=64, metavar='N',
                     type=int, help='Mini-batch size (default: 32)')
     args = parser.parse_args()
     cfg_vqgan = yaml.load(open(args.vqgan_config, 'r'), Loader=yaml.Loader)
