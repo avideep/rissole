@@ -16,7 +16,7 @@ class DownSample(nn.Module):
 class UpSample(nn.Module):
     def __init__(self, n_channels: int):
         super().__init__()
-        self.conv = nn.ConvTranspose2d(n_channels, n_channels, kernel_size=3, stride=2, padding=1)
+        self.conv = nn.ConvTranspose2d(n_channels, n_channels, kernel_size=3, stride=2, padding=0)
 
     def forward(self, x: torch.Tensor):
         x = self.conv(x)
