@@ -96,9 +96,9 @@ class DSetBuilder:
                         x = x.to(self.device)
                         patch = x[:, :, i:i+self.patch_size, j:j+self.patch_size]
                         patches.append(self.model.encode(patch))
-                        del x
-                        torch.cuda.empty_cache()
-                        gc.collect()
+                        # del x
+                        # torch.cuda.empty_cache()
+                        # gc.collect()
                     all_patches.append(torch.cat(patches, dim=0).view(len(self.data.full_dataloader.dataset), -1))
                     del patches
                     torch.cuda.empty_cache()
