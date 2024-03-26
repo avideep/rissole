@@ -140,7 +140,7 @@ class UNetLight(nn.Module):
         for upsample, block1, attn1, block2, attn2, norm in self.up_blocks:
         # for upsample, block1, block2, norm in self.up_blocks:
             x = upsample(x)
-            print(x.shape, skips[-1].shape)
+            # print(x.shape, skips[-1].shape)
             x = torch.cat((x, skips.pop()), dim=1)
             x = block1(x, t, p)
             if attn1 is not None:
