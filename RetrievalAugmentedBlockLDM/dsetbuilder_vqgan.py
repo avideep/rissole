@@ -96,6 +96,7 @@ class DSetBuilder:
                         patch = x[:, :, i:i+self.patch_size, j:j+self.patch_size]
                         patches.append(self.model.encode(patch))
                     all_patches.append(torch.cat(patches, dim=0).view(len(self.data.full_dataloader.dataset), -1))
+                    del patches
             all_patches = torch.stack(all_patches)
             all_patches = all_patches.cpu().detach()
             torch.save(all_patches, self.DSET_PATH)
