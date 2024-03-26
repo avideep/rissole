@@ -9,7 +9,7 @@ import yaml
 
 from tqdm import tqdm
 import torchvision.transforms.functional as F
-from dataloader import PlantNet, CIFAR10, CelebA, CelebAHQ
+from dataloader import PlantNet, CIFAR10, CelebA, CelebAHQ, ImageNet100
 from dsetbuilder_vqgan import DSetBuilder
 from model import VQGANLight, VAE, IntroVAE
 from model.ddpm.ddpm import DDPM
@@ -37,9 +37,9 @@ parser.add_argument('--batch-size', default=16, metavar='N',
                     type=int, help='Mini-batch size (default: 64)')
 parser.add_argument('--dset-batch-size', default=32, metavar='N',
                     type=int, help='Mini-batch size (default: 32)')
-parser.add_argument('--image-size', default=64, metavar='N',
+parser.add_argument('--image-size', default=224, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
-parser.add_argument('--block-size', default=8, metavar='N',
+parser.add_argument('--block-size', default=14, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
 parser.add_argument('--k', default=10, metavar='N',
                     type=int, help='Number of nearest neighbors to search.')
@@ -47,7 +47,7 @@ parser.add_argument('--image-channels', default=3, metavar='N',
                     type=int, help='Number of image channels (default: 3)')
 parser.add_argument('--num-workers', default=0, metavar='N',
                     type=int, help='Number of workers for the dataloader (default: 0)')
-parser.add_argument('--lr', default=0.00002,
+parser.add_argument('--lr', default=0.0001,
                     type=float, metavar='LR', help='Initial learning rate (default: 0.0002)')
 parser.add_argument('--config', default='configs/ddpm_linear.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/ddpm_linear.yaml)')
@@ -67,9 +67,9 @@ parser.add_argument('--load-ckpt_unet', default=None, metavar='PATH',
                     dest='load_checkpoint_unet', help='Load model checkpoint and continue training')
 parser.add_argument('--log-save-interval', default=5, type=int, metavar='N',
                     dest='save_interval', help="Interval in which logs are saved to disk (default: 5)")
-parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-02-15_130652/best_model.pt',
+parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-25_004359/best_model.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
-parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
+parser.add_argument('--vqgan-config', default='configs/vqgan_imagenet100.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
 parser.add_argument('--vae-path', default='checkpoints/vae/24-02-15_130409/best_model.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
@@ -125,6 +125,8 @@ def main():
         data = CelebA(args.batch_size)
     elif args.data == 'CIFAR10':
         data = CIFAR10(args.batch_size)
+    elif args.data == 'ImageNet100':
+        data = ImageNet100(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
     else:
         data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
     # read config file for model
