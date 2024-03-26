@@ -106,7 +106,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="DSET Building")
     parser.add_argument('--data', '-d', default='CelebA',
                         type=str, metavar='data', help='Dataset Name. Please enter CelebA, CelebAHQ, ImageNet100 or CIFAR10. Default: CelebA')
-    parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-18_151152/best_model.pt',
+    parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-25_004359/best_model.pt',
                         metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
     parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
                         metavar='PATH', help='Path to model config file (default: configs/vqgan_cifar10.yaml)')
@@ -127,10 +127,10 @@ if __name__ == "__main__":
     vqgan_model = VQGANLight(**cfg_vqgan['model'])
     vqgan_model, _, _ = load_model_checkpoint(vqgan_model, args.vqgan_path, device)
     vqgan_model.to(device)
-    # x = torch.randn(16,3,224,224).to(device)
-    # x = vqgan_model.encode(x)
-    # x = vqgan_model.quantize(x)
-    # print(x.shape)
+    x = torch.randn(16,3,224,224).to(device)
+    x = vqgan_model.encode(x)
+    x = vqgan_model.quantize(x)
+    print(x.shape)
     if args.data == 'CelebA':
         data = CelebA(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
     elif args.data == 'CelebAHQ':
