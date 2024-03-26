@@ -103,30 +103,36 @@ class UNetLight(nn.Module):
                 c = self.cond_embedding(x_cond)
         else:
             c = None
-
+        print(x.shape)
         skips = []
         # down sample
         for block1, attn1, block2, attn2, norm, downsample in self.down_blocks:
         # for block1, block2, norm, downsample in self.down_blocks:
             x = block1(x, t, p)
+            print(x.shape)
             if attn1 is not None:
                 x = attn1(x, c)
             x = block2(x, t, p)
+            print(x.shape)
             if attn2 is not None:
                 x = attn2(x, c)
             x = norm(x)
+            print(x.shape)
             skips.append(x)
             x = downsample(x)
+            print(x.shape)
 
         # bottleneck
         x = self.mid_block1(x, t, p)
+        print(x.shape)
         if self.use_spatial_transformer:
             x = self.mid_attn(x,c)
         else:
             x = self.mid_attn(x)
+            print(x.shape)
         # x = self.mid_attn(x)
         x = self.mid_block2(x, t, p)
-
+        print(x.shape)
         # up sample
         for upsample, block1, attn1, block2, attn2, norm in self.up_blocks:
         # for upsample, block1, block2, norm in self.up_blocks:
