@@ -7,7 +7,7 @@ cond_emb_dim: 640
 #max_len: 5000       # maximum number of time steps for the positional embedding
 
 # residual network
-n_groups: 8         # group normalization
+n_groups: 16         # group normalization
 
 # attention
 dim_keys: 64   # dimension of queries, keys, values
