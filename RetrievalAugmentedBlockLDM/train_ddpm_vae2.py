@@ -63,10 +63,10 @@ parser.add_argument('--ckpt-save', default=True, action='store_true',
                     dest='save_checkpoint', help='Save checkpoints to folder')
 parser.add_argument('--load-ddpm', default=None, metavar='PATH',
                     help='Load model checkpoint and continue training')
-parser.add_argument('--load-unet', default=None, metavar='PATH',
-                    help='Load model checkpoint and continue training')
-parser.add_argument('--log-save-interval', default=5, type=int, metavar='N',
-                    dest='save_interval', help="Interval in which logs are saved to disk (default: 5)")
+parser.add_argument('--load-ckpt_ddpm', default=None, metavar='PATH',
+                    dest='load_checkpoint_ddpm', help='Load model checkpoint and continue training')
+parser.add_argument('--load-ckpt_unet', default=None, metavar='PATH',
+                    dest='load_checkpoint_unet', help='Load model checkpoint and continue training')
 parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-25_004359/best_model.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 parser.add_argument('--vqgan-config', default='configs/vqgan_imagenet100.yaml',
@@ -154,13 +154,13 @@ def main():
         cfg_unet['in_channels'] = (args.k + 1) * latent_dim
 
     unet = UNetLight(**cfg_unet)
-    if args.load_unet is not None:
-        unet, _, _ = load_model_checkpoint(unet, args.load_unet, device)
+    # if args.load_unet is not None:
+    #     unet, _, _ = load_model_checkpoint(unet, args.load_unet, device)
     unet.to(device)
 
     ddpm = DDPM(eps_model=unet, vae_model=vqgan_model, **cfg)
-    if args.load_ddpm is not None:
-        ddpm, _, _ = load_model_checkpoint(ddpm, args.load_ddpm, device)
+    # if args.load_ddpm is not None:
+    #     ddpm, _, _ = load_model_checkpoint(ddpm, args.load_ddpm, device)
     ddpm.to(device)
 
     dset = DSetBuilder(data, args.k, vqgan_model, device)
