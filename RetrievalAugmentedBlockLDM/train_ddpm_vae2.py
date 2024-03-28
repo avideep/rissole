@@ -152,10 +152,15 @@ def main():
         cfg_unet['in_channels'] = (args.k + 2) * latent_dim # 2 because one if for the input latent representation of the current block and another is that for the previous block
     else:
         cfg_unet['in_channels'] = (args.k + 1) * latent_dim
+
     unet = UNetLight(**cfg_unet)
+    if args.load_ckpt_unet is not None:
+        unet, _, _ = load_model_checkpoint(unet, args.load_ckpt_unet, device)
     unet.to(device)
 
     ddpm = DDPM(eps_model=unet, vae_model=vqgan_model, **cfg)
+    if args.load_ckpt_ddpm is not None:
+        ddpm, _, _ = load_model_checkpoint(ddpm, args.load_ckpt_ddpm, device)
     ddpm.to(device)
 
     dset = DSetBuilder(data, args.k, vqgan_model, device)
