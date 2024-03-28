@@ -155,12 +155,12 @@ def main():
 
     unet = UNetLight(**cfg_unet)
     if args.load_unet is not None:
-        unet, _, _ = load_model_checkpoint(unet, args.load_ckpt_unet, device)
+        unet, _, _ = load_model_checkpoint(unet, args.load_unet, device)
     unet.to(device)
 
     ddpm = DDPM(eps_model=unet, vae_model=vqgan_model, **cfg)
     if args.load_ddpm is not None:
-        ddpm, _, _ = load_model_checkpoint(ddpm, args.load_ckpt_ddpm, device)
+        ddpm, _, _ = load_model_checkpoint(ddpm, args.load_ddpm, device)
     ddpm.to(device)
 
     dset = DSetBuilder(data, args.k, vqgan_model, device)
