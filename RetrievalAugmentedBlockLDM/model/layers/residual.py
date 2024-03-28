@@ -66,15 +66,16 @@ class ResidualBlockUNet(nn.Module):
         self.block1 = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
             nn.BatchNorm2d(out_channels),
-            nn.GroupNorm(n_groups, out_channels),
+            # nn.GroupNorm(n_groups, out_channels),
             nn.Dropout(0.5),
             nn.SiLU()
         )
 
         self.block2 = nn.Sequential(
             nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
-            nn.BatchNorm2d(out_channels),
+            # nn.BatchNorm2d(out_channels),
             nn.GroupNorm(n_groups, out_channels),
+            nn.Dropout(0.5)
             nn.SiLU()
         )
 
@@ -91,7 +92,7 @@ class ResidualBlockUNet(nn.Module):
             nn.Conv2d(cond_emb_dim, out_channels, kernel_size=3, padding=1),
             nn.BatchNorm2d(out_channels),
             nn.GroupNorm(n_groups, out_channels),
-            nn.Dropout(0.6),
+            nn.Dropout(0.5),
             nn.SiLU()
         )
 
