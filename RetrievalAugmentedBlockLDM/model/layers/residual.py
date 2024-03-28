@@ -76,7 +76,7 @@ class ResidualBlockUNet(nn.Module):
             # nn.BatchNorm2d(out_channels),
             nn.GroupNorm(n_groups, out_channels),
             nn.Dropout(0.5),
-            nn.SiLU()
+            nn.ReLU()
         )
 
         if in_channels != out_channels:
@@ -93,7 +93,7 @@ class ResidualBlockUNet(nn.Module):
             nn.BatchNorm2d(out_channels),
             nn.GroupNorm(n_groups, out_channels),
             nn.Dropout(0.5),
-            nn.SiLU()
+            nn.ReLU()
         )
 
         # self.low_cond_emb = nn.Sequential(
