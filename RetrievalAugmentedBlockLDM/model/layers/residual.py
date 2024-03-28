@@ -75,7 +75,7 @@ class ResidualBlockUNet(nn.Module):
             nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
             # nn.BatchNorm2d(out_channels),
             nn.GroupNorm(n_groups, out_channels),
-            nn.Dropout(0.5)
+            nn.Dropout(0.5),
             nn.SiLU()
         )
 
