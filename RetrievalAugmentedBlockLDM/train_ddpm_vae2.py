@@ -47,7 +47,7 @@ parser.add_argument('--image-channels', default=3, metavar='N',
                     type=int, help='Number of image channels (default: 3)')
 parser.add_argument('--num-workers', default=0, metavar='N',
                     type=int, help='Number of workers for the dataloader (default: 0)')
-parser.add_argument('--lr', default=0.0001,
+parser.add_argument('--lr', default=2e-4,
                     type=float, metavar='LR', help='Initial learning rate (default: 0.0002)')
 parser.add_argument('--config', default='configs/ddpm_linear.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/ddpm_linear.yaml)')
