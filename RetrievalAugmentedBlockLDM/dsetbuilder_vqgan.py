@@ -111,7 +111,7 @@ if __name__ == "__main__":
                         type=str, metavar='data', help='Dataset Name. Please enter CelebA, CelebAHQ, ImageNet100 or CIFAR10. Default: CelebA')
     parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-29_153956/best_model.pt',
                         metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
-    parser.add_argument('--vqgan-config', default='configs/vqgan_imagenet100.yaml',
+    parser.add_argument('--vqgan-config', default='configs/vqgan_rgb.yaml',
                         metavar='PATH', help='Path to model config file (default: configs/vqgan_cifar10.yaml)')
     parser.add_argument('--gpus', default=0, type=int,
                     nargs='+', metavar='GPUS', help='If GPU(s) available, which GPU(s) to use for training.')
