@@ -67,7 +67,7 @@ parser.add_argument('--load-ckpt_ddpm', default=None, metavar='PATH',
                     dest='load_checkpoint_ddpm', help='Load model checkpoint and continue training')
 parser.add_argument('--load-ckpt_unet', default=None, metavar='PATH',
                     dest='load_checkpoint_unet', help='Load model checkpoint and continue training')
-parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-25_004359/best_model.pt',
+parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-29_153956/best_model.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 parser.add_argument('--vqgan-config', default='configs/vqgan_imagenet100.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
