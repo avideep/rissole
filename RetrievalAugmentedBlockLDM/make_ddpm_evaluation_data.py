@@ -14,7 +14,7 @@ from model.unet.unet_light import UNetLight
 import torchvision.transforms.functional as F
 from utils.helpers import load_model_checkpoint
 from dsetbuilder_vqgan import DSetBuilder
-from dataloader import CelebA, CelebAHQ, CIFAR10
+from dataloader import CelebA, CelebAHQ, CIFAR10, ImageNet100
 # from: https://stackoverflow.com/questions/20554074/sklearn-omp-error-15-initializing-libiomp5md-dll-but-found-mk2iomp5md-dll-a
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
@@ -37,13 +37,13 @@ parser.add_argument('--config', default='configs/ddpm_linear.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/ddpm_linear.yaml)')
 parser.add_argument('--unet-config', default='configs/unet.yaml',
                     metavar='PATH', help='Path to unet model config file (default: configs/unet.yaml)')
-parser.add_argument('--load-ckpt-ddpm', default='checkpoints/second_stage/ddpm_linear/24-03-21_114211/ddpm/best_model.pt', metavar='PATH',
+parser.add_argument('--load-ckpt-ddpm', default='checkpoints/second_stage/ddpm_linear/24-04-02_150042/ddpm/best_model.pt', metavar='PATH',
                     dest='load_checkpoint_ddpm', help='Load model checkpoint and continue training')
-parser.add_argument('--load-ckpt-unet', default='checkpoints/second_stage/ddpm_linear/24-03-21_114211/unet/best_model.pt', metavar='PATH',
+parser.add_argument('--load-ckpt-unet', default='checkpoints/second_stage/ddpm_linear/24-04-02_150042/unet/best_model.pt', metavar='PATH',
                     dest='load_checkpoint_unet', help='Load model checkpoint and continue training')
-parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-18_151152/best_model.pt',
+parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-29_153956/best_model.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
-parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
+parser.add_argument('--vqgan-config', default='configs/vqgan_rgb.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
 parser.add_argument('--real-image-path', default='original',
                     metavar='PATH', help='Path to load samples from the source images into')
@@ -86,6 +86,8 @@ def main():
             data = CelebA(args.batch_size)
         elif args.data == 'CIFAR10':
             data = CIFAR10(args.batch_size)
+        elif args.data == 'ImageNet100':
+            data = ImageNet100(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
         else:
             data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
         sample_images_real(data.val, args.image_count, args.real_image_path)
