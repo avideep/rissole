@@ -25,13 +25,13 @@ parser.add_argument('--batch-size', default=16, metavar='N',
                     type=int, help='Mini-batch size (default: 64)')
 parser.add_argument('--dset-batch-size', default=32, metavar='N',
                     type=int, help='Mini-batch size (default: 32)')
-parser.add_argument('--image-size', default=64, metavar='N',
+parser.add_argument('--image-size', default=224, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
-parser.add_argument('--block-size', default=8, metavar='N',
+parser.add_argument('--block-size', default=14, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
-parser.add_argument('--k', default=10, metavar='N',
+parser.add_argument('--k', default=20, metavar='N',
                     type=int, help='Number of nearest neighbors to search.')
-parser.add_argument('--image-count', default=16,
+parser.add_argument('--image-count', default=50,
                     type=int, help='number of images that should be generated for comparison')
 parser.add_argument('--config', default='configs/ddpm_linear.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/ddpm_linear.yaml)')
