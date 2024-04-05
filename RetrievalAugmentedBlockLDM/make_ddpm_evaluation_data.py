@@ -208,7 +208,7 @@ def sample_images_gen(model, dset, block_size, n_images, image_path, image_size,
         images = [img for img in images_decoded[0]]
         images = torch.stack(images)
         # images = model.decode(images)
-
+        image_path = image_path + '/' +dset.data.__class__.__name__
         for n, img in enumerate(images):
             img = tensor_to_image(img)
             img.save(f"{image_path}/{step_count}_{n}.jpg")
