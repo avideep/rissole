@@ -188,8 +188,8 @@ class ClassDSetBuilder:
                     data[i] = torch.stack(data[i])
                 all_patches[cl_name] = torch.stack(data)
             print(all_patches.keys())
-            print(all_patches[self.classes[0]].shape)
-            # torch.save(all_patches, self.DSET_PATH)
+            print(all_patches[0].shape)
+            torch.save(all_patches, self.DSET_PATH)
         print('DSET with shape: {} is ready!'.format(all_patches.shape))
         return all_patches
     
