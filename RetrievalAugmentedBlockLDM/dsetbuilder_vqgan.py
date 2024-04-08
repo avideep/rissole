@@ -120,11 +120,11 @@ class ClassDSetBuilder:
         self.device = device
         self.classes = self.data.train_set_full.classes
         self.dset = self.dsetbuilder()
-        for class_name in self.classes:
-            searcher_dir = '/hdd/avideep/blockLDM/data/dset/' + data_name + '/vqgan/classy/searcher_' + str(k) + '_' + str(class_name) + '/'
+        for class_idx in range(len(self.classes)):
+            searcher_dir = '/hdd/avideep/blockLDM/data/dset/' + data_name + '/vqgan/classy/searcher_' + str(k) + '_' + str(self.classes[class_idx]) + '/'
             if not os.path.exists(searcher_dir):
                 t_start = time.time()
-                self.searcher = scann.scann_ops_pybind.builder(self.dset[class_name][0] / np.linalg.norm(self.dset[0], axis=1)[:, np.newaxis].astype(np.float32), self.k, "dot_product").tree(num_leaves=2000, num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
+                self.searcher = scann.scann_ops_pybind.builder(self.dset[class_idx][0] / np.linalg.norm(self.dset[class_idx][0], axis=1)[:, np.newaxis].astype(np.float32), self.k, "dot_product").tree(num_leaves=2000, num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
                 os.makedirs(searcher_dir, exist_ok=True)
                 self.searcher.serialize(searcher_dir)
                 elapsed_time = timer(t_start, time.time())
