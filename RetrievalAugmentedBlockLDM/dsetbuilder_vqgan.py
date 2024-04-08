@@ -191,6 +191,7 @@ class ClassDSetBuilder:
             # torch.save(all_patches, self.DSET_PATH)
         print('DSET with shape: {} is ready!'.format(all_patches.shape))
         return all_patches
+    
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="DSET Building")
     parser.add_argument('--data', '-d', default='CelebA',
