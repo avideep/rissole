@@ -190,7 +190,7 @@ class ClassDSetBuilder:
             print(all_patches.keys())
             print(all_patches[0].shape)
             torch.save(all_patches, self.DSET_PATH)
-        print('DSET with shape: {} is ready!'.format(all_patches.shape))
+        # print('DSET with shape: {} is ready!'.format(all_patches.shape))
         return all_patches
     
 if __name__ == "__main__":
