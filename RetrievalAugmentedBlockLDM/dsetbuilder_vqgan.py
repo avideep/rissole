@@ -179,8 +179,9 @@ class ClassDSetBuilder:
                         # print(self.classes)
                         x = x.to(self.device)
                         patch = x[:, :, i:i+self.patch_size, j:j+self.patch_size]
+                        patch_encoded = self.model.encode(patch).cpu().detach().view(-1)
                         for i in range(x.size(0)):
-                            all_patches[c[i].item()][position].append(self.model.encode(patch).cpu().detach().view(-1)[i])
+                            all_patches[c[i].item()][position].append(patch_encoded[i])
                     position += 1
             for cl_name, data in all_patches.items():
                 for i in range(self.get_num_blocks()):
