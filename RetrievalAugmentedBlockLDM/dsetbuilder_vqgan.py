@@ -171,7 +171,7 @@ class ClassDSetBuilder:
             all_patches = torch.load(self.DSET_PATH)
         else:
             position = 0
-            all_patches = {class_name: [[] for i in range(self.get_num_blocks())] for class_name in self.classes}
+            all_patches = {i: [[] for i in range(self.get_num_blocks())] for i in range(len(self.classes))}
             for i in range(0, self.data.img_size, self.patch_size):
                 for j in range (0, self.data.img_size, self.patch_size):
                     for x, c in tqdm(self.data.full_dataloader, desc='Building DSET'):
