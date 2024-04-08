@@ -132,9 +132,7 @@ class ClassDSetBuilder:
             else:
                 print(f'Loading pre-trained searcher from {searcher_dir}')
                 self.searcher = scann.scann_ops_pybind.load_searcher(searcher_dir)
-                print('Finished loading searcher.')
-        
-        
+        print('Finished loading searchers.')
     @torch.no_grad()
     def encode(self, x: torch.Tensor):
         x = self.model.encode(x)
