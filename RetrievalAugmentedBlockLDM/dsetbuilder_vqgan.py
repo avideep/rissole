@@ -175,8 +175,8 @@ class ClassDSetBuilder:
             for i in range(0, self.data.img_size, self.patch_size):
                 for j in range (0, self.data.img_size, self.patch_size):
                     for x, c in tqdm(self.data.full_dataloader, desc='Building DSET'):
-                        print(c)
-                        print(self.classes)
+                        # print(c)
+                        # print(self.classes)
                         patch = x[:, :, i:i+self.patch_size, j:j+self.patch_size]
                         for i in range(x.size(0)):
                             all_patches[c[i].item()][position].append(self.model.encode(patch).cpu().detach().view(-1)[i])
