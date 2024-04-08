@@ -114,24 +114,25 @@ class ClassDSetBuilder:
         self.mean = [0.5, 0.5, 0.5]
         self.std = [0.5, 0.5, 0.5]
         self.patch_size = self.data.img_size // 2
-        self.DSET_PATH = '/hdd/avideep/blockLDM/data/dset/' + data_name + '/vqgan/dset.pth'
+        self.DSET_PATH = '/hdd/avideep/blockLDM/data/dset/' + data_name + '/vqgan/classy/dset.pth'
         self.k = k
         self.model = model
         self.device = device
         self.classes = self.data.train_set_full.classes
         self.dset = self.dsetbuilder()
-        searcher_dir = '/hdd/avideep/blockLDM/data/dset/' + data_name + '/vqgan/searcher_' + str(k) + '/'
-        if not os.path.exists(searcher_dir):
-            t_start = time.time()
-            self.searcher = scann.scann_ops_pybind.builder(self.dset[0] / np.linalg.norm(self.dset[0], axis=1)[:, np.newaxis].astype(np.float32), self.k, "dot_product").tree(num_leaves=2000, num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
-            os.makedirs(searcher_dir, exist_ok=True)
-            self.searcher.serialize(searcher_dir)
-            elapsed_time = timer(t_start, time.time())
-            print(f"Took {elapsed_time} to save trained searcher in {searcher_dir}")
-        else:
-            print(f'Loading pre-trained searcher from {searcher_dir}')
-            self.searcher = scann.scann_ops_pybind.load_searcher(searcher_dir)
-            print('Finished loading searcher.')
+        for class_name in self.classes:
+            searcher_dir = '/hdd/avideep/blockLDM/data/dset/' + data_name + '/vqgan/classy/searcher_' + str(k) + '_' + str(class_name) + '/'
+            if not os.path.exists(searcher_dir):
+                t_start = time.time()
+                self.searcher = scann.scann_ops_pybind.builder(self.dset[class_name][0] / np.linalg.norm(self.dset[0], axis=1)[:, np.newaxis].astype(np.float32), self.k, "dot_product").tree(num_leaves=2000, num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
+                os.makedirs(searcher_dir, exist_ok=True)
+                self.searcher.serialize(searcher_dir)
+                elapsed_time = timer(t_start, time.time())
+                print(f"Took {elapsed_time} to save trained searcher in {searcher_dir}")
+            else:
+                print(f'Loading pre-trained searcher from {searcher_dir}')
+                self.searcher = scann.scann_ops_pybind.load_searcher(searcher_dir)
+                print('Finished loading searcher.')
         
         
     @torch.no_grad()
@@ -183,12 +184,10 @@ class ClassDSetBuilder:
             for cl_name, data in all_patches.items():
                 for i in range(self.get_num_blocks()):
                     data[i] = torch.stack(data[i])
-        
-
-                        
-                    all_patches.append(torch.cat(patches, dim=0).view(len(self.data.full_dataloader.dataset), -1))
-            all_patches = torch.stack(all_patches)
-            torch.save(all_patches, self.DSET_PATH)
+                all_patches[cl_name] = torch.stack(data)
+            print(all_patches.keys())
+            print(all_patches[self.classes[0]].shape)
+            # torch.save(all_patches, self.DSET_PATH)
         print('DSET with shape: {} is ready!'.format(all_patches.shape))
         return all_patches
 if __name__ == "__main__":
