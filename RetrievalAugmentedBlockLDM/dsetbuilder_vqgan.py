@@ -105,6 +105,92 @@ class DSetBuilder:
         print('DSET with shape: {} is ready!'.format(all_patches.shape))
         return all_patches
     
+class ClassDSetBuilder:
+    def __init__(self, data, k, model, device):
+        data_name = data.__class__.__name__
+        if data_name not in ['CelebA', 'CelebAHQ', 'CIFAR10', 'ImageNet100']:
+            raise ValueError("Invalid input. Please enter CelebA, CelebAHQ, ImageNet100 or CIFAR10.")
+        self.data = data
+        self.mean = [0.5, 0.5, 0.5]
+        self.std = [0.5, 0.5, 0.5]
+        self.patch_size = self.data.img_size // 2
+        self.DSET_PATH = '/hdd/avideep/blockLDM/data/dset/' + data_name + '/vqgan/dset.pth'
+        self.k = k
+        self.model = model
+        self.device = device
+        self.classes = self.data.train_set_full.classes
+        self.dset = self.dsetbuilder()
+        searcher_dir = '/hdd/avideep/blockLDM/data/dset/' + data_name + '/vqgan/searcher_' + str(k) + '/'
+        if not os.path.exists(searcher_dir):
+            t_start = time.time()
+            self.searcher = scann.scann_ops_pybind.builder(self.dset[0] / np.linalg.norm(self.dset[0], axis=1)[:, np.newaxis].astype(np.float32), self.k, "dot_product").tree(num_leaves=2000, num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
+            os.makedirs(searcher_dir, exist_ok=True)
+            self.searcher.serialize(searcher_dir)
+            elapsed_time = timer(t_start, time.time())
+            print(f"Took {elapsed_time} to save trained searcher in {searcher_dir}")
+        else:
+            print(f'Loading pre-trained searcher from {searcher_dir}')
+            self.searcher = scann.scann_ops_pybind.load_searcher(searcher_dir)
+            print('Finished loading searcher.')
+        
+        
+    @torch.no_grad()
+    def encode(self, x: torch.Tensor):
+        x = self.model.encode(x)
+        x = self.model.quantize(x)
+
+        return x
+    
+    def get_neighbor_ids(self, x):
+        # b = x.size(0)
+        # x_vqgan = self.model.encode(x).view(b, -1)
+        neighbors, _ = self.searcher.search_batched(x.cpu().numpy().astype(np.float32))
+        return neighbors
+    
+    def get_rand_queries(self, n):
+        indices = torch.randperm(self.dset.size(1))[:n]
+        return self.dset[0, indices, :]
+    
+    def get_neighbors(self, neighbor_ids, position, block_size, b, latent_dim):
+        mat = []
+        for neighbor in neighbor_ids:
+            mat.append(self.dset[position][np.int64(neighbor)])
+        output = torch.stack(mat).view(b, self.k*latent_dim, block_size, block_size)
+        # pad = (block_size - output.shape[-1])//2
+        # padding = (pad, pad)
+        # output = F.pad(output, padding, "constant", 0)
+        return output
+    def get_num_blocks(self):
+        return (self.data.img_size//self.patch_size)**2
+    
+    @torch.no_grad()
+    def dsetbuilder(self):
+        # x, _ = next(iter(self.data.full_dataloader))
+        # print(self.model.encode(x.to(self.device)).shape)
+        """ Creates the D Set for this particular Dataset"""
+        if os.path.exists(self.DSET_PATH):
+            all_patches = torch.load(self.DSET_PATH)
+        else:
+            position = 0
+            all_patches = {class_name: [[] for i in self.get_num_blocks()] for class_name in self.classes}
+            for i in range(0, self.data.img_size, self.patch_size):
+                for j in range (0, self.data.img_size, self.patch_size):
+                    for x, c in tqdm(self.data.full_dataloader, desc='Building DSET'):
+                        patch = x[:, :, i:i+self.patch_size, j:j+self.patch_size]
+                        for i in range(x.size(0)):
+                            all_patches[c[i].item()][position].append(self.model.encode(patch).cpu().detach().view(-1)[i])
+                    position += 1
+            for cl_name, data in all_patches.items():
+                for i in range(self.get_num_blocks()):
+                    data[i] = torch.stack(data[i])
+        
+
+                        
+                    all_patches.append(torch.cat(patches, dim=0).view(len(self.data.full_dataloader.dataset), -1))
+            all_patches = torch.stack(all_patches)
+            torch.save(all_patches, self.DSET_PATH)
+        print('DSET with shape: {} is ready!'.format(all_patches.shape))
+        return all_patches
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="DSET Building")
     parser.add_argument('--data', '-d', default='CelebA',
