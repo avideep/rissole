@@ -11,6 +11,7 @@ import torch.nn.functional as F
 import os
 import math
 from argparse import ArgumentParser
+import random
 from glob import glob
 from multiprocessing import cpu_count
 import numpy as np
@@ -150,12 +151,11 @@ class ClassDSetBuilder:
             neighbor, _ = self.searchers[class_idx].search(data.cpu().numpy().astype(np.float32))
             neighbors.append([neighbor, class_idx])
         return neighbors
-
     
     def get_rand_queries(self, n):
         n = int(math.sqrt(n))
         indices = torch.randperm(self.dset.size(1))[:n]
-        classes = torch.randint(0,len(self.classes) - 1, (n,))
+        classes = random.randint(0,len(self.classes) - 1, (n,))
         return self.dset[classes][0, indices, :], classes
     
     def get_neighbors(self, neighbor_ids, position, block_size, b, latent_dim):
@@ -167,6 +167,7 @@ class ClassDSetBuilder:
         # padding = (pad, pad)
         # output = F.pad(output, padding, "constant", 0)
         return output
+    
     def get_num_blocks(self):
         return (self.data.img_size//self.patch_size)**2
     
