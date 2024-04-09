@@ -154,7 +154,7 @@ class ClassDSetBuilder:
     
     def get_rand_queries(self, n):
         n = int(math.sqrt(n))
-        indices = torch.randperm(self.dset.size(1))[:n]
+        indices = torch.randperm(self.dset[0].size(1))[:n]
         classes = torch.randint(0,len(self.classes) - 1, (n,))
         return self.dset[classes][0, indices, :], classes
     
