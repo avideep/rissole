@@ -10,7 +10,7 @@ import yaml
 from tqdm import tqdm
 import torchvision.transforms.functional as F
 from dataloader import PlantNet, CIFAR10, CelebA, CelebAHQ, ImageNet100
-from dsetbuilder_vqgan import DSetBuilder
+from dsetbuilder_vqgan import DSetBuilder, ClassDSetBuilder
 from model import VQGANLight, VAE, IntroVAE
 from model.ddpm.ddpm import DDPM
 from model.unet import UNet
@@ -163,7 +163,7 @@ def main():
     #     ddpm, _, _ = load_model_checkpoint(ddpm, args.load_ddpm, device)
     ddpm.to(device)
 
-    dset = DSetBuilder(data, args.k, vqgan_model, device)
+    dset = ClassDSetBuilder(data, args.k, vqgan_model, device)
 
     print("{:<16}: {}".format('DDPM model params', count_parameters(ddpm)))
 
