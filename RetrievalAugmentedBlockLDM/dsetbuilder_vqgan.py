@@ -9,6 +9,7 @@ import numpy as np
 from PIL import Image
 import torch.nn.functional as F
 import os
+import math
 from argparse import ArgumentParser
 from glob import glob
 from multiprocessing import cpu_count
@@ -120,18 +121,21 @@ class ClassDSetBuilder:
         self.device = device
         self.classes = self.data.train_set_full.classes
         self.dset = self.dsetbuilder()
+        self.searchers = []
         for class_idx in range(len(self.classes)):
             searcher_dir = '/hdd/avideep/blockLDM/data/dset/' + data_name + '/vqgan/classy/searcher_' + str(k) + '_' + str(class_idx) + '/'
             if not os.path.exists(searcher_dir):
                 t_start = time.time()
-                self.searcher = scann.scann_ops_pybind.builder(self.dset[class_idx][0] / np.linalg.norm(self.dset[class_idx][0], axis=1)[:, np.newaxis].astype(np.float32), self.k, "dot_product").tree(num_leaves=self.dset[class_idx].size(1), num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
+                searcher = scann.scann_ops_pybind.builder(self.dset[class_idx][0] / np.linalg.norm(self.dset[class_idx][0], axis=1)[:, np.newaxis].astype(np.float32), self.k, "dot_product").tree(num_leaves=self.dset[class_idx].size(1), num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
                 os.makedirs(searcher_dir, exist_ok=True)
-                self.searcher.serialize(searcher_dir)
+                searcher.serialize(searcher_dir)
                 elapsed_time = timer(t_start, time.time())
                 print(f"Took {elapsed_time} to save trained searcher in {searcher_dir}")
+                self.searchers.append(searcher)
             else:
                 print(f'Loading pre-trained searcher from {searcher_dir}')
-                self.searcher = scann.scann_ops_pybind.load_searcher(searcher_dir)
+                searcher = scann.scann_ops_pybind.load_searcher(searcher_dir)
+                self.searchers.append(searcher)
         print('Finished loading searchers.')
     @torch.no_grad()
     def encode(self, x: torch.Tensor):
@@ -140,20 +144,24 @@ class ClassDSetBuilder:
 
         return x
     
-    def get_neighbor_ids(self, x):
-        # b = x.size(0)
-        # x_vqgan = self.model.encode(x).view(b, -1)
-        neighbors, _ = self.searcher.search_batched(x.cpu().numpy().astype(np.float32))
+    def get_neighbor_ids(self, x, c):
+        neighbors = [] 
+        for data, class_idx in zip(x,c):
+            neighbor, _ = self.searchers[class_idx].search(data)
+            neighbors.append([neighbor, class_idx])
         return neighbors
+
     
     def get_rand_queries(self, n):
+        n = int(math.sqrt(n))
         indices = torch.randperm(self.dset.size(1))[:n]
-        return self.dset[0, indices, :]
+        classes = torch.randint(0,len(self.classes) - 1, (n,))
+        return self.dset[classes][0, indices, :], classes
     
     def get_neighbors(self, neighbor_ids, position, block_size, b, latent_dim):
         mat = []
-        for neighbor in neighbor_ids:
-            mat.append(self.dset[position][np.int64(neighbor)])
+        for neighbor, class_idx in neighbor_ids:
+            mat.append(self.dset[class_idx][position][np.int64(neighbor)])
         output = torch.stack(mat).view(b, self.k*latent_dim, block_size, block_size)
         # pad = (block_size - output.shape[-1])//2
         # padding = (pad, pad)
