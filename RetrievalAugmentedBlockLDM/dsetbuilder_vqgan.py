@@ -155,13 +155,13 @@ class ClassDSetBuilder:
     def get_rand_queries(self, n):
         n = int(math.sqrt(n))
         indices = torch.randperm(self.dset.size(1))[:n]
-        classes = random.randint(0,len(self.classes) - 1, (n,))
+        classes = torch.randint(0,len(self.classes) - 1, (n,))
         return self.dset[classes][0, indices, :], classes
     
     def get_neighbors(self, neighbor_ids, position, block_size, b, latent_dim):
         mat = []
         for neighbor, class_idx in neighbor_ids:
-            mat.append(self.dset[class_idx][position][np.int64(neighbor)])
+            mat.append(self.dset[class_idx.item()][position][np.int64(neighbor)])
         output = torch.stack(mat).view(b, self.k*latent_dim, block_size, block_size)
         # pad = (block_size - output.shape[-1])//2
         # padding = (pad, pad)
