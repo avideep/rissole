@@ -147,7 +147,7 @@ class ClassDSetBuilder:
     def get_neighbor_ids(self, x, c):
         neighbors = [] 
         for data, class_idx in zip(x,c):
-            neighbor, _ = self.searchers[class_idx].search(data)
+            neighbor, _ = self.searchers[class_idx].search(data.cpu().numpy().astype(np.float32))
             neighbors.append([neighbor, class_idx])
         return neighbors
 
