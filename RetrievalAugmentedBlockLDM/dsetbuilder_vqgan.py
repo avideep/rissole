@@ -156,7 +156,8 @@ class ClassDSetBuilder:
         n = int(math.sqrt(n))
         indices = torch.randperm(self.dset[0].size(1))[:n]
         classes = torch.randint(0,len(self.classes) - 1, (n,))
-        return self.dset[tuple(classes.tolist())][0, indices, :], classes
+        queries = torch.cat([self.dset[cl][0, indices, :] for cl in classes.tolist()],dim=1)
+        return queries, classes
     
     def get_neighbors(self, neighbor_ids, position, block_size, b, latent_dim):
         mat = []
