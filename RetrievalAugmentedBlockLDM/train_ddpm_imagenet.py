@@ -189,7 +189,7 @@ def main():
         logger.global_train_step = logger.running_epoch
         print(f"Epoch [{epoch + 1} / {args.epochs}]")
 
-        train(ddpm, data, dset, optimizer, block_size, vae, device, args)
+        # train(ddpm, data, dset, optimizer, block_size, vae, device, args)
 
         validate(ddpm, data, dset, block_size, vae, device, args)
 
