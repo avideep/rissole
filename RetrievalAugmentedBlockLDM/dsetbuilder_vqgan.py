@@ -160,7 +160,7 @@ class ClassDSetBuilder:
     def get_neighbors(self, neighbor_ids, position, block_size, b, latent_dim):
         mat = []
         for neighbor, class_idx in neighbor_ids:
-            mat.append(self.dset[class_idx.item()][position][np.int64(neighbor)])
+            mat.append(self.dset[class_idx][position][np.int64(neighbor)])
         output = torch.stack(mat).view(b, self.k*latent_dim, block_size, block_size)
         # pad = (block_size - output.shape[-1])//2
         # padding = (pad, pad)
