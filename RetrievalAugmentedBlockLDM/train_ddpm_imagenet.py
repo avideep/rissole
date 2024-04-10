@@ -295,7 +295,7 @@ def validate(model, data, dset, block_size, vae, device, args):
         low_res_cond = None
     position = 0
     x_query, c_query = dset.get_rand_queries(n_images)
-    print(x_query.shape, c_query.shape)
+    # print(x_query.shape, c_query.shape)
     neighbor_ids = dset.get_neighbor_ids(x_query, c_query)
 
     w = args.guidance_weight
