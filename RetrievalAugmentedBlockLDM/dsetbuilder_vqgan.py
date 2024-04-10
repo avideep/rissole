@@ -153,10 +153,8 @@ class ClassDSetBuilder:
         return neighbors
     
     def get_rand_queries(self, n):
-        n = int(math.sqrt(n))
-        indices = torch.randperm(self.dset[0].size(1))[:n]
-        classes = torch.randint(0,len(self.classes) - 1, (n,))
-        queries = torch.cat([self.dset[cl][0, indices, :] for cl in classes.tolist()],dim=0)
+        classes = [random.randint(0, len(self.classes) - 1) for _ in range(n)]
+        queries = torch.cat([self.dset[cl][0, random.randint(0, len(self.dset[cl][0])), :] for cl in classes.tolist()],dim=0)
         return queries, classes
     
     def get_neighbors(self, neighbor_ids, position, block_size, b, latent_dim):
