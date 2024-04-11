@@ -141,7 +141,7 @@ if __name__ == "__main__":
     # x = torch.randn(16,3,112,112).to(device)
     # x = vqgan_model.encode(x)
     # x = vqgan_model.quantize(x)
-    print(x.shape)
+
     if args.data == 'CelebA':
         data = CelebA(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
     elif args.data == 'CelebAHQ':
