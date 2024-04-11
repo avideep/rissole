@@ -154,7 +154,7 @@ class ClassDSetBuilder:
     
     def get_rand_queries(self, n):
         classes = np.array(random.choices(list(range(len(self.classes))), k = n))
-        queries = torch.stack([self.dset[cl][0, random.randint(0, len(self.dset[cl][0])), :] for cl in classes])
+        queries = torch.stack([self.dset[cl][0, random.randint(0, len(self.dset[cl][0])-1), :] for cl in classes])
         return queries, torch.tensor(classes)
     
     def get_neighbors(self, neighbor_ids, position, block_size, b, latent_dim):

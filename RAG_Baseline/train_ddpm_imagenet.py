@@ -61,8 +61,6 @@ parser.add_argument('--gpus', default=0, type=int,
                     nargs='+', metavar='GPUS', help='If GPU(s) available, which GPU(s) to use for training.')
 parser.add_argument('--ckpt-save', default=True, action='store_true',
                     dest='save_checkpoint', help='Save checkpoints to folder')
-parser.add_argument('--load-ddpm', default=None, metavar='PATH',
-                    help='Load model checkpoint and continue training')
 parser.add_argument('--load-ckpt_ddpm', default=None, metavar='PATH',
                     dest='load_checkpoint_ddpm', help='Load model checkpoint and continue training')
 parser.add_argument('--load-ckpt_unet', default=None, metavar='PATH',
