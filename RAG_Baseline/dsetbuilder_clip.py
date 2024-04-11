@@ -35,8 +35,8 @@ from dataloader import CelebA, CelebAHQ, CIFAR10, ImageNet100
 class DSetBuilder:
     def __init__(self, data, k):
         data_name = data.__class__.__name__
-        if data_name not in ['CelebA', 'CelebAHQ', 'CIFAR10']:
-            raise ValueError("Invalid input. Please enter CelebA, CelebAHQ, or CIFAR10.")
+        if data_name not in ['CelebA', 'CelebAHQ', 'CIFAR10', 'ImageNet100']:
+            raise ValueError("Invalid input. Please enter CelebA, CelebAHQ, or CIFAR10 or ImageNet100.")
         self.data = data
         self.mean = [0.5, 0.5, 0.5]
         self.std = [0.5, 0.5, 0.5]
