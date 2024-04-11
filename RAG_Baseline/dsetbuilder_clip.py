@@ -92,8 +92,8 @@ class DSetBuilder:
         for image in images:
             for _ in range(self.num_patches):
                 # Randomly select top-left corner coordinates for the patch
-                top = random.randint(0, image.shape[1] - self.patch_size[0])
-                left = random.randint(0, image.shape[2] - self.patch_size[1])
+                top = random.randint(0, image.shape[1] - self.patch_size)
+                left = random.randint(0, image.shape[2] - self.patch_size)
 
                 # Extract the patch
                 patch = image[:, top:top+self.patch_size[0], left:left+self.patch_size[1]]
