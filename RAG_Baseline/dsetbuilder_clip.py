@@ -128,19 +128,19 @@ if __name__ == "__main__":
     parser.add_argument('--dset-batch-size', default=64, metavar='N',
                     type=int, help='Mini-batch size (default: 32)')
     args = parser.parse_args()
-    cfg_vqgan = yaml.load(open(args.vqgan_config, 'r'), Loader=yaml.Loader)
-    # setup GPU
-    args.gpus = args.gpus if isinstance(args.gpus, list) else [args.gpus]
-    if len(args.gpus) == 1:
-        device = torch.device(f'cuda:{args.gpus[0]}' if torch.cuda.is_available() else 'cpu')
-    else:
-        raise ValueError('Currently multi-gpu training is not possible')
-    vqgan_model = VQGANLight(**cfg_vqgan['model'])
-    vqgan_model, _, _ = load_model_checkpoint(vqgan_model, args.vqgan_path, device)
-    vqgan_model.to(device)
-    x = torch.randn(16,3,112,112).to(device)
-    x = vqgan_model.encode(x)
-    x = vqgan_model.quantize(x)
+    # cfg_vqgan = yaml.load(open(args.vqgan_config, 'r'), Loader=yaml.Loader)
+    # # setup GPU
+    # args.gpus = args.gpus if isinstance(args.gpus, list) else [args.gpus]
+    # if len(args.gpus) == 1:
+    #     device = torch.device(f'cuda:{args.gpus[0]}' if torch.cuda.is_available() else 'cpu')
+    # else:
+    #     raise ValueError('Currently multi-gpu training is not possible')
+    # vqgan_model = VQGANLight(**cfg_vqgan['model'])
+    # vqgan_model, _, _ = load_model_checkpoint(vqgan_model, args.vqgan_path, device)
+    # vqgan_model.to(device)
+    # x = torch.randn(16,3,112,112).to(device)
+    # x = vqgan_model.encode(x)
+    # x = vqgan_model.quantize(x)
     print(x.shape)
     if args.data == 'CelebA':
         data = CelebA(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
@@ -150,4 +150,4 @@ if __name__ == "__main__":
         data = ImageNet100(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
     else:
         data = CIFAR10(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
-    dset = DSetBuilder(data, k=20, model=vqgan_model, device=device)
+    dset = DSetBuilder(data, k=20, device=device)
