@@ -96,7 +96,7 @@ class DSetBuilder:
                 left = random.randint(0, image.shape[2] - self.patch_size)
 
                 # Extract the patch
-                patch = image[:, top:top+self.patch_size[0], left:left+self.patch_size[1]]
+                patch = image[:, top:top+self.patch_size, left:left+self.patch_size]
                 batch_patches.append(patch)
         return torch.stack(batch_patches)
     def dsetbuilder(self):
