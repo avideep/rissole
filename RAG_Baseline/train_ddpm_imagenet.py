@@ -10,7 +10,7 @@ import yaml
 from tqdm import tqdm
 import torchvision.transforms.functional as F
 from dataloader import PlantNet, CIFAR10, CelebA, CelebAHQ, ImageNet100
-from dsetbuilder_vqgan import DSetBuilder, ClassDSetBuilder
+from RAG_Baseline.dsetbuilder_clip import DSetBuilder, ClassDSetBuilder
 from model import VQGANLight, VAE, IntroVAE
 from model.ddpm.ddpm import DDPM
 from model.unet import UNet
