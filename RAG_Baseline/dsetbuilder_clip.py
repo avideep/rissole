@@ -98,6 +98,7 @@ class DSetBuilder:
                 # Extract the patch
                 patch = image[:, top:top+self.patch_size, left:left+self.patch_size]
                 batch_patches.append(patch)
+                del patch
         return torch.stack(batch_patches)
     def dsetbuilder(self):
         """ Creates the D Set for this particular Dataset"""
@@ -108,6 +109,7 @@ class DSetBuilder:
             for x, _ in tqdm(self.data.full_dataloader, desc='Building DSET'):
                 batch_patches = self.get_random_patches(x)
                 all_patches.append(batch_patches)
+                del batch_patches
             all_patches = torch.cat(all_patches, dim = 0)
 
             torch.save(all_patches.view(all_patches.size(0), -1), self.DSET_PATH)
