@@ -13,7 +13,7 @@ from model.ddpm.ddpm import DDPM
 from model.unet.unet_light import UNetLight
 import torchvision.transforms.functional as F
 from utils.helpers import load_model_checkpoint
-from dsetbuilder_vqgan import DSetBuilder
+from dsetbuilder_vqgan import DSetBuilder, ClassDSetBuilder
 from dataloader import CelebA, CelebAHQ, CIFAR10, ImageNet100
 # from: https://stackoverflow.com/questions/20554074/sklearn-omp-error-15-initializing-libiomp5md-dll-but-found-mk2iomp5md-dll-a
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
@@ -134,7 +134,7 @@ def main():
         ddpm, _, _ = load_model_checkpoint(ddpm, args.load_checkpoint_ddpm, device)
         ddpm.to(device)
 
-        dset = DSetBuilder(data, args.k, vqgan_model, device)
+        dset = ClassDSetBuilder(data, args.k, vqgan_model, device)
 
         # vae = IntroVAE(**cfg_vae['model'])
         # vae, _, _ = load_model_checkpoint(vae, args.vae_path, device)
