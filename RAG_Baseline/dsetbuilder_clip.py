@@ -113,7 +113,7 @@ class DSetBuilder:
             all_patches = torch.cat(all_patches, dim = 0)
 
             torch.save(all_patches.view(all_patches.size(0), -1), self.DSET_PATH)
-            print('Dset of shape {} is ready!'.format(all_patches.shape))
+        print('Dset of shape {} is ready!'.format(all_patches.shape))
         return all_patches
     
 if __name__ == "__main__":
