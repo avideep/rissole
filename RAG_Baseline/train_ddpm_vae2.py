@@ -243,18 +243,15 @@ def train(model, data, dset, optimizer, block_size, vae, device, args):
         position = 0
         loss_agg = 0
         neighbor_ids = dset.get_neighbor_ids(first_block.contiguous().view(x.size(0), -1))
-        for i in range(0, x.shape[-1], block_size):
-            for j in range(0, x.shape[-1], block_size):
-                # if j==0 and i>0:
-                #         prev_block = x[:,:,i-block_size:i, j:j+block_size]
-                block_pos = torch.full((x.size(0),),position, dtype=torch.int64).to(device)
-                curr_block = x[:, :, i:i+block_size, j:j+block_size]
-                # print(prev_block.shape)
-                neighbors = torch.cat([dset.get_neighbors(neighbor_ids, position, block_size, x.size(0), latent_dim).to(device), prev_block], dim = 1) if args.use_prev_block else dset.get_neighbors(neighbor_ids, position, block_size, x.size(0), latent_dim).to(device)
-                loss = model.p_losses2(curr_block, neighbors, position = block_pos, low_res_cond = low_res_cond)
-                prev_block = curr_block
-                loss_agg += loss
-                position += 1
+        #         prev_block = x[:,:,i-block_size:i, j:j+block_size]
+        block_pos = torch.full((x.size(0),),position, dtype=torch.int64).to(device)
+        curr_block = x[:, :, i:i+block_size, j:j+block_size]
+        # print(prev_block.shape)
+        neighbors = torch.cat([dset.get_neighbors(neighbor_ids, position, block_size, x.size(0), latent_dim).to(device), prev_block], dim = 1) if args.use_prev_block else dset.get_neighbors(neighbor_ids, position, block_size, x.size(0), latent_dim).to(device)
+        loss = model.p_losses2(curr_block, neighbors, position = block_pos, low_res_cond = low_res_cond)
+        prev_block = curr_block
+        loss_agg += loss
+        position += 1
         loss_agg.backward()
         optimizer.step()
         loss_agg = loss_agg.item()/position #average loss over all the blocks
