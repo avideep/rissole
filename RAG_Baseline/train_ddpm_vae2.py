@@ -122,10 +122,12 @@ def main():
         raise ValueError('Currently multi-gpu training is not possible')
     # load data
     if args.data == 'CelebA':
+        args.img_size = 64
         data = CelebA(args.batch_size)
     elif args.data == 'CIFAR10':
         data = CIFAR10(args.batch_size)
     elif args.data == 'ImageNet100':
+        args.img_size = 224
         data = ImageNet100(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
     else:
         data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
@@ -154,13 +156,9 @@ def main():
         cfg_unet['in_channels'] = (args.k + 1) * latent_dim
 
     unet = UNetLight(**cfg_unet)
-    # if args.load_unet is not None:
-    #     unet, _, _ = load_model_checkpoint(unet, args.load_unet, device)
     unet.to(device)
 
     ddpm = DDPM(eps_model=unet, vae_model=vqgan_model, **cfg)
-    # if args.load_ddpm is not None:
-    #     ddpm, _, _ = load_model_checkpoint(ddpm, args.load_ddpm, device)
     ddpm.to(device)
 
     dset = DSetBuilder(data, args.k, vqgan_model, device)
@@ -189,9 +187,9 @@ def main():
         logger.global_train_step = logger.running_epoch
         print(f"Epoch [{epoch + 1} / {args.epochs}]")
 
-        train(ddpm, data, dset, optimizer, block_size, vae, device, args)
+        train(ddpm, data, dset, optimizer, device, args)
 
-        validate(ddpm, data, dset, block_size, vae, device, args)
+        validate(ddpm, dset, device, args)
 
         # logging
         output = ' - '.join([f'{k}: {v.avg:.4f}' for k, v in logger.epoch.items()])
@@ -216,7 +214,7 @@ def debug(model,data_loader,device):
     print(model.encode(x).shape)
 
 
-def train(model, data, dset, optimizer, block_size, vae, device, args):
+def train(model, data, dset, optimizer, device, args):
     model.train()
 
     ema_loss = None
@@ -224,100 +222,33 @@ def train(model, data, dset, optimizer, block_size, vae, device, args):
     for x, _ in tqdm(data.train, desc="Training"):
         x = x.to(device)
         x = model.encode(x)
-        if args.use_cfg:
-            if args.use_low_res  and  np.random.choice([1, 0], p=[1-p, p]): # setting the condition to None as per the guidance probability, should the condition be used
-                x_hat = sample_from_vae(x.shape[0],vae, device)
-                x_resized = model.encode(x_hat)
-                low_res_cond = F.resize(x_resized, [block_size], antialias = True)
-            else:
-                low_res_cond = None
-        elif args.use_low_res: # if cfg is not used but low res cond is going to be used
-            x_hat = sample_from_vae(x.shape[0],vae, device)
-            x_resized = model.encode(x_hat)
-            low_res_cond = F.resize(x_resized, [block_size], antialias = True)
-        else: # if nothing is used
-            low_res_cond = None
-        first_block = x[:, :, :block_size, :block_size]
-        prev_block = torch.rand_like(first_block).to(device) if args.use_prev_block else None
         optimizer.zero_grad()
-        position = 0
-        loss_agg = 0
-        neighbor_ids = dset.get_neighbor_ids(first_block.contiguous().view(x.size(0), -1))
-        #         prev_block = x[:,:,i-block_size:i, j:j+block_size]
-        block_pos = torch.full((x.size(0),),position, dtype=torch.int64).to(device)
-        curr_block = x[:, :, i:i+block_size, j:j+block_size]
-        # print(prev_block.shape)
-        neighbors = torch.cat([dset.get_neighbors(neighbor_ids, position, block_size, x.size(0), latent_dim).to(device), prev_block], dim = 1) if args.use_prev_block else dset.get_neighbors(neighbor_ids, position, block_size, x.size(0), latent_dim).to(device)
-        loss = model.p_losses2(curr_block, neighbors, position = block_pos, low_res_cond = low_res_cond)
-        prev_block = curr_block
-        loss_agg += loss
-        position += 1
-        loss_agg.backward()
+        neighbor_ids = dset.get_neighbor_ids(x.contiguous().view(x.size(0), -1))
+        neighbors = dset.get_neighbors(neighbor_ids, x.size(0), latent_dim).to(device)
+        loss = model.p_losses2(x, neighbors)
+        loss.backward()
         optimizer.step()
-        loss_agg = loss_agg.item()/position #average loss over all the blocks
+        loss = loss.item()
         if ema_loss is None:
-            ema_loss = loss_agg
+            ema_loss = loss
         else:
-            ema_loss = 0.9 * ema_loss + 0.1 * loss_agg
+            ema_loss = 0.9 * ema_loss + 0.1 * loss
 
-        metrics = {'ema_loss': ema_loss, 'loss': loss_agg}
-        logger.log_metrics(metrics, phase='Train', aggregate=True, n=curr_block.shape[0])
-
-@torch.no_grad()
-def sample_from_vae(n_images, model, device):
-    z = torch.randn(n_images, vae_latent_dim).to(device)
-    images = model.decode(z)
-    return images
+        metrics = {'ema_loss': ema_loss, 'loss': loss}
+        logger.log_metrics(metrics, phase='Train', aggregate=True, n=x.shape[0])
 
 @torch.no_grad()
-def validate(model, data, dset, block_size, vae, device, args):
+def validate(model, dset, device, args):
     model.eval()
-    x, _ = next(iter(data.val))
-    x = x.to(device)
-    x = model.encode(x)
     n_images = 8
-    _, c, w, h = x.size()
-    images_decoded = images = [0]*model.n_steps
-    img = torch.ones((n_images, c, w, h), device=device)
-    for i in range(len(images)):
-        images[i] = img
-    # prev_block = torch.rand_like(img[:, :, :block_size, :block_size]).to(device)
-    first_block = x[:n_images, :, :block_size, :block_size]
-    prev_block = torch.randn_like(first_block).to(device)
-    if args.use_low_res: 
-        low_res_cond = sample_from_vae(n_images, vae, device)
-        low_res_cond = model.encode(low_res_cond)
-        low_res_cond = F.resize(low_res_cond, [block_size], antialias = True)
-    else:
-        low_res_cond = None
-    position = 0
     x_query = dset.get_rand_queries(n_images)
     neighbor_ids = dset.get_neighbor_ids(x_query)
+    neighbors = dset.get_neighbors(neighbor_ids, n_images, latent_dim).to(device)
+    images = model.sample(args.img_size, neighbors, batch_size=n_images, channels=latent_dim)
+    images = [model.decode(img) for img in images]
 
-    w = args.guidance_weight
-    for i in range(0, img.shape[-1], block_size):
-        for j in range(0, img.shape[-1], block_size):
-            # if j==0 and i>0:
-            #     prev_block = curr_block[0][:,:,i-block_size:i, j:j+block_size]
-            block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
-            neighbors = torch.cat([dset.get_neighbors(neighbor_ids, position, block_size, n_images, latent_dim).to(device), prev_block], dim =1) if args.use_prev_block else dset.get_neighbors(neighbor_ids, position, block_size, n_images, latent_dim).to(device)
-            if args.use_low_res and args.use_cfg:
-                curr_block_uncond = model.sample(block_size, prev_block, block_pos, low_res_cond = None, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance (CFG)
-                curr_block_cond = model.sample(block_size, prev_block, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance 
-                curr_block = [(1 + w)*curr_block_cond[i] - w*curr_block_uncond[i] for i in range(model.n_steps)] #sampling strategy for classifier-free guidance 
-            elif args.use_low_res:
-                curr_block = model.sample(block_size, prev_block, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim) # if CFG is not used 
-            else:
-                curr_block = model.sample(block_size, neighbors, block_pos, low_res_cond = None, batch_size=n_images, channels=latent_dim) # if CFG is not used and low-res-conditioning is also not used
-
-            prev_block = curr_block[0]
-            position += 1
-            for k in range(len(curr_block)):
-                images[k][:, :, i:i+block_size, j:j+block_size] = curr_block[k]
-    for k in range(len(images)):
-        images_decoded[k] = model.decode(images[k])
     logger.tensorboard.add_figure('Val: DDPM',
-                                  get_sample_images_for_ddpm(images_decoded, n_ims=n_images),
+                                  get_sample_images_for_ddpm(images, n_ims=n_images),
                                   global_step=logger.global_train_step)
 
 

@@ -42,6 +42,7 @@ class DSetBuilder:
         self.std = [0.5, 0.5, 0.5]
         self.patch_size = self.data.img_size // 2
         self.num_patches = 5
+        self.num_channels = 3
         self.DSET_PATH = '/hdd/avideep/blockLDM/data/baseline_dset/' + data_name + '/dset.pth'
         self.encoder = SentenceTransformer('clip-ViT-B-32')
         self.inv_normalize = transforms.Compose([
@@ -72,18 +73,17 @@ class DSetBuilder:
             return Image.fromarray(img.permute(1, 2, 0).numpy().astype('uint8')).convert("RGB")
         else:
             return Image.fromarray(img[0].numpy()).convert("L")
-
+    def get_rand_queries(self, n):
+        return  self.dset[torch.randperm(self.dset.size(0))[:n]].view(n, 3, self.patch_size, self.patch_size)
+    
     def get_neighbor_ids(self, x):
         x_clip = torch.tensor(np.array([self.encoder.encode(self.tensor2img(x_i)) for x_i in x]))
         neighbors, _ = self.searcher.search_batched(x_clip)
         return neighbors
-
-    def get_neighbors(self, neighbor_ids, position, block_size, b):
-        mat = []
-        for neighbor in neighbor_ids:
-            mat.append(self.dset[position][np.int64(neighbor)])
-        output = torch.stack(mat).view(b, self.k, block_size, -1)
-        pad = (block_size - output.shape[-1])//2
+    def get_neighbors(self, neighbor_ids, img_size, b):
+        mat = [self.dset[np.int64(neighbor)] for neighbor in neighbor_ids]
+        output = torch.stack(mat).view(b, self.k, img_size, -1)
+        pad = (img_size - output.shape[-1])//2
         padding = (pad, pad)
         output = F.pad(output, padding, "constant", 0)
         return output
