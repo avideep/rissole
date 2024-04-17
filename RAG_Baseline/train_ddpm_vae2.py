@@ -241,7 +241,7 @@ def validate(model, dset, device, args):
     x_query = dset.get_rand_queries(n_images)
     neighbor_ids = dset.get_neighbor_ids(x_query)
     neighbors = dset.get_neighbors(neighbor_ids, n_images, latent_dim).to(device)
-    images = model.sample(args.img_size, neighbors, batch_size=n_images, channels=latent_dim)
+    images = model.sample(16, neighbors, batch_size=n_images, channels=latent_dim)
     images = [model.decode(img) for img in images]
 
     logger.tensorboard.add_figure('Val: DDPM',
