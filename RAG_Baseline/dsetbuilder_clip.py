@@ -82,8 +82,9 @@ class DSetBuilder:
         x = transforms.functional.resize(x, [self.patch_size], antialias = True)
         neighbors, _ = self.searcher.search_batched(x.contiguous().view(x.size(0), -1))
         return neighbors
-    def get_neighbors(self, neighbor_ids, img_size, b):
+    def get_neighbors(self, neighbor_ids, shape):
         # mat = [torch.stack([torch.tensor(self.encoder.encode(self.tensor2img(self.dset[np.int64(one_neighbor)].view(self.num_channels, self.patch_size, self.patch_size))) for one_neighbor in neighbor])) for neighbor in neighbor_ids]
+        batch_size, num_channels, img_size, _ = shape
         mat = []
         for neighbor in neighbor_ids:
             neighbor_images = []
@@ -93,7 +94,7 @@ class DSetBuilder:
                 neighbor_images.append(torch.tensor(encoded_image))
             mat.append(torch.stack(neighbor_images))
         
-        output = torch.stack(mat).view(b, self.k, img_size, -1)
+        output = torch.stack(mat).view(batch_size, self.k*num_channels, img_size, -1)
         pad = (img_size - output.shape[-1])//2
         padding = (pad, pad)
         output = F.pad(output, padding, "constant", 0)

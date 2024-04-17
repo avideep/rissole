@@ -224,7 +224,7 @@ def train(model, data, dset, optimizer, device, args):
         x = x.to(device)
         x = model.encode(x)
         optimizer.zero_grad()
-        neighbors = dset.get_neighbors(neighbor_ids, args.img_size, latent_dim).to(device)
+        neighbors = dset.get_neighbors(neighbor_ids, x.size()).to(device)
         print(x.shape)
         print(neighbors.shape)
         loss = model.p_losses2(x, neighbors)
