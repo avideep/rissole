@@ -223,7 +223,7 @@ def train(model, data, dset, optimizer, device, args):
         x = x.to(device)
         x = model.encode(x)
         optimizer.zero_grad()
-        neighbor_ids = dset.get_neighbor_ids(x.contiguous().view(x.size(0), -1))
+        neighbor_ids = dset.get_neighbor_ids(x)
         neighbors = dset.get_neighbors(neighbor_ids, x.size(0), latent_dim).to(device)
         loss = model.p_losses2(x, neighbors)
         loss.backward()
