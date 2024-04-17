@@ -150,7 +150,7 @@ def main():
     vqgan_model.to(device)
     global latent_dim
     latent_dim = cfg_vqgan['model']['latent_dim']
-    cfg_unet['in_channels'] = (args.k + 1) * latent_dim
+    # cfg_unet['in_channels'] = (args.k + 1) * latent_dim
 
     unet = UNetLight(**cfg_unet)
     unet.to(device)
