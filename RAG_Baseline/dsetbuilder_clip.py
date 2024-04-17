@@ -8,6 +8,7 @@ from torch.utils.data import SubsetRandomSampler
 import numpy as np
 from PIL import Image
 import torch.nn.functional as F
+
 from sentence_transformers import SentenceTransformer
 import os
 import math
@@ -78,6 +79,7 @@ class DSetBuilder:
     
     def get_neighbor_ids(self, x):
         # x_clip = torch.tensor(np.array([self.encoder.encode(self.tensor2img(x_i)) for x_i in x]))
+        x = transforms.functional.resize(x, [self.patch_size], antialias = True)
         neighbors, _ = self.searcher.search_batched(x.contiguous().view(x.size(0), -1))
         return neighbors
     def get_neighbors(self, neighbor_ids, img_size, b):
