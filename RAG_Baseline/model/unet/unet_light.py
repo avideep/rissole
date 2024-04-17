@@ -92,6 +92,7 @@ class UNetLight(nn.Module):
 
     def forward(self, x: torch.Tensor, x_cond: torch.Tensor, t: torch.Tensor):
         t = self.time_embedding(t)
+        print(x.shape, x_cond.shape)
         x = torch.cat([x, x_cond], dim = 1)
         x = self.init_conv(x)
         if self.use_spatial_transformer:
