@@ -221,9 +221,9 @@ def train(model, data, dset, optimizer, device, args):
     p = args.guidance_probability
     for x, _ in tqdm(data.train, desc="Training"):
         x = x.to(device)
+        neighbor_ids = dset.get_neighbor_ids(x)
         x = model.encode(x)
         optimizer.zero_grad()
-        neighbor_ids = dset.get_neighbor_ids(x)
         neighbors = dset.get_neighbors(neighbor_ids, x.size(0), latent_dim).to(device)
         loss = model.p_losses2(x, neighbors)
         loss.backward()
