@@ -298,6 +298,5 @@ class DDPM(nn.Module):
         Returns:
             sampled images
         """
-        latent_size = self.encode(torch.rand(batch_size, 3, image_size, image_size)).size(2)
-        return  self.p_sample_loop(cond_block, position, shape=(batch_size, channels, latent_size, latent_size), sample_step=sample_step)
+        return  self.p_sample_loop(cond_block, position, shape=(batch_size, channels, image_size, image_size), sample_step=sample_step)
 

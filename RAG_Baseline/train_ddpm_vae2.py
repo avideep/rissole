@@ -71,14 +71,6 @@ parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-18_151152/b
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
-parser.add_argument('--vae-path', default='checkpoints/vae/24-02-15_130409/best_model.pt',
-                    metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
-parser.add_argument('--vae-config', default='configs/vae.yaml',
-                    metavar='PATH', help='Path to model config file (default: configs/vaeyaml)')
-parser.add_argument('--use-low-res', action='store_true',
-                    help='Whether to condition the model with a low resolution whole image sampled from a VAE')
-parser.add_argument('--use-prev-block', action='store_true',
-                    help='Whether to condition the model with the previous block')
 parser.add_argument('--use-cfg', action='store_true',
                     help='Whether to use classifier-free guidance')
 parser.add_argument('--guidance-probability', default=0.7, type=float,
@@ -135,16 +127,6 @@ def main():
     cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
     cfg_unet = yaml.load(open(args.unet_config, 'r'), Loader=yaml.Loader)
     cfg_vqgan = yaml.load(open(args.vqgan_config, 'r'), Loader=yaml.Loader)
-    cfg_vae = yaml.load(open(args.vae_config,'r'),Loader=yaml.Loader)
-    vae = None
-    if args.use_low_res:
-        vae = VAE(**cfg_vae['model'])
-        # vae = IntroVAE(**cfg_vae['model'])
-        vae, _, _ = load_model_checkpoint(vae, args.vae_path, device)
-        vae.to(device)
-        global vae_latent_dim
-        vae_latent_dim = cfg_vae['model']['latent_dim']
-        cfg_unet['cond_emb_dim'] = 2 * cfg_unet['cond_emb_dim']
     vqgan_model = VQGANLight(**cfg_vqgan['model'])
     vqgan_model, _, _ = load_model_checkpoint(vqgan_model, args.vqgan_path, device)
     vqgan_model.to(device)
@@ -240,8 +222,9 @@ def validate(model, dset, device, args):
     n_images = 8
     x_query = dset.get_rand_queries(n_images)
     neighbor_ids = dset.get_neighbor_ids(x_query)
-    neighbors = dset.get_neighbors(neighbor_ids, n_images, latent_dim).to(device)
-    images = model.sample(16, neighbors, batch_size=n_images, channels=latent_dim)
+    shape = model.encode(torch.rand(n_images, args.image_channels, args.img_size, args.img_size))
+    neighbors = dset.get_neighbors(neighbor_ids, shape).to(device)
+    images = model.sample(shape[2], neighbors, batch_size=n_images, channels=latent_dim)
     images = [model.decode(img) for img in images]
 
     logger.tensorboard.add_figure('Val: DDPM',
