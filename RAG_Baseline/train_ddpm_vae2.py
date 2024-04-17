@@ -226,7 +226,7 @@ def validate(model, dset, device, args):
     neighbors = dset.get_neighbors(neighbor_ids, shape).to(device)
     images = model.sample(shape[2], neighbors, batch_size=n_images, channels=latent_dim)
     images = [model.decode(img) for img in images]
-
+    print(torch.stack(images).size())
     logger.tensorboard.add_figure('Val: DDPM',
                                   get_sample_images_for_ddpm(images, n_ims=n_images),
                                   global_step=logger.global_train_step)
