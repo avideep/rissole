@@ -222,7 +222,7 @@ def validate(model, dset, device, args):
     n_images = 8
     x_query = dset.get_rand_queries(n_images)
     neighbor_ids = dset.get_neighbor_ids(x_query)
-    shape = model.encode(torch.rand(n_images, args.image_channels, args.img_size, args.img_size))
+    shape = model.encode(torch.rand(n_images, args.image_channels, args.img_size, args.img_size).to(device))
     neighbors = dset.get_neighbors(neighbor_ids, shape).to(device)
     images = model.sample(shape[2], neighbors, batch_size=n_images, channels=latent_dim)
     images = [model.decode(img) for img in images]
