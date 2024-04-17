@@ -168,3 +168,7 @@ if __name__ == "__main__":
     else:
         data = CIFAR10(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
     dset = DSetBuilder(data, k=20)
+    x = torch.rand(16, 3, 224, 224)
+    n_ids = dset.get_neighbor_ids(x)
+    ns = dset.get_neighbors(n_ids, x.size())
+    
