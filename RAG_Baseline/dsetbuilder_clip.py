@@ -96,10 +96,10 @@ class DSetBuilder:
         
         output = torch.stack(mat)
         print(output.shape)
-        output = output.view(batch_size, self.k*num_channels, img_size, -1)
-        pad = (img_size - output.shape[-1])//2
-        padding = (pad, pad)
-        output = F.pad(output, padding, "constant", 0)
+        output = output.view(batch_size, -1, img_size, img_size)
+        # pad = (img_size - output.shape[-1])//2
+        # padding = (pad, pad)
+        # output = F.pad(output, padding, "constant", 0)
         return output
     def get_random_patches(self, images):
         batch_patches = []
@@ -171,4 +171,3 @@ if __name__ == "__main__":
     x = torch.rand(16, 3, 224, 224)
     n_ids = dset.get_neighbor_ids(x)
     ns = dset.get_neighbors(n_ids, x.size())
-    
