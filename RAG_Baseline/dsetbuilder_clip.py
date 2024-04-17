@@ -83,25 +83,16 @@ class DSetBuilder:
         neighbors, _ = self.searcher.search_batched(x.contiguous().view(x.size(0), -1))
         return neighbors
     def get_neighbors(self, neighbor_ids, img_size, b):
-        # mat = [torch.stack([self.encoder.encode(self.tensor2img(self.dset[np.int64(one_neighbor)].view(self.num_channels, self.patch_size, self.patch_size))) for one_neighbor in neighbor]) for neighbor in neighbor_ids]
+        # mat = [torch.stack([torch.tensor(self.encoder.encode(self.tensor2img(self.dset[np.int64(one_neighbor)].view(self.num_channels, self.patch_size, self.patch_size))) for one_neighbor in neighbor])) for neighbor in neighbor_ids]
         mat = []
-        # Loop over each list of neighbor ids
         for neighbor in neighbor_ids:
-            # Create an empty list to store the encoded images for each neighbor
             neighbor_images = []
-            
-            # Loop over each neighbor id
             for one_neighbor in neighbor:
-                # Get the corresponding image from the dataset, reshape it, convert it to a tensor,
-                # convert it to an image, and encode it
                 image = self.dset[np.int64(one_neighbor)].view(self.num_channels, self.patch_size, self.patch_size)
                 encoded_image = self.encoder.encode(self.tensor2img(image))
-                
-                # Append the encoded image to the list of neighbor images
                 neighbor_images.append(torch.tensor(encoded_image))
-            
-            # Stack the encoded images for each neighbor and append the result to the final list
             mat.append(torch.stack(neighbor_images))
+        
         output = torch.stack(mat).view(b, self.k, img_size, -1)
         pad = (img_size - output.shape[-1])//2
         padding = (pad, pad)

@@ -90,20 +90,13 @@ class UNetLight(nn.Module):
         # self.final_conv = nn.Conv2d(self.channels[0], out_channels, 1)
 
 
-    def forward(self, x: torch.Tensor, x_cond: torch.Tensor, t: torch.Tensor, p: torch.Tensor, l: torch.Tensor = None):
+    def forward(self, x: torch.Tensor, x_cond: torch.Tensor, t: torch.Tensor):
         t = self.time_embedding(t)
-        if l is not None:
-            x = torch.cat([x, x_cond, l], dim = 1)
-        else:
-            x = torch.cat([x, x_cond], dim = 1)
+        x = torch.cat([x, x_cond], dim = 1)
         x = self.init_conv(x)
-        p = self.pos_embedding(p)
         if self.use_spatial_transformer:
-            if l is not None:
-                c = torch.cat([x_cond, l], dim=1)
-                c = self.cond_embedding(c)
-            else:
-                c = self.cond_embedding(x_cond)
+
+            c = self.cond_embedding(x_cond)
         else:
             c = None
         # print(x.shape)
@@ -111,11 +104,11 @@ class UNetLight(nn.Module):
         # down sample
         for block1, attn1, block2, attn2, norm, downsample in self.down_blocks:
         # for block1, block2, norm, downsample in self.down_blocks:
-            x = block1(x, t, p)
+            x = block1(x, t)
             # print(x.shape)
             if attn1 is not None:
                 x = attn1(x, c)
-            x = block2(x, t, p)
+            x = block2(x, t)
             # print(x.shape)
             if attn2 is not None:
                 x = attn2(x, c)
@@ -126,7 +119,7 @@ class UNetLight(nn.Module):
             # print(x.shape)
 
         # bottleneck
-        x = self.mid_block1(x, t, p)
+        x = self.mid_block1(x, t)
         # print(x.shape)
         if self.use_spatial_transformer:
             x = self.mid_attn(x,c)
@@ -134,7 +127,7 @@ class UNetLight(nn.Module):
             x = self.mid_attn(x)
             # print(x.shape)
         # x = self.mid_attn(x)
-        x = self.mid_block2(x, t, p)
+        x = self.mid_block2(x, t)
         # print(x.shape)
         # up sample
         for upsample, block1, attn1, block2, attn2, norm in self.up_blocks:
@@ -142,10 +135,10 @@ class UNetLight(nn.Module):
             x = upsample(x)
             # print(x.shape, skips[-1].shape)
             x = torch.cat((x, skips.pop()), dim=1)
-            x = block1(x, t, p)
+            x = block1(x, t)
             if attn1 is not None:
                 x = attn1(x, c)
-            x = block2(x, t, p)
+            x = block2(x, t)
             if attn2 is not None:
                 x = attn2(x, c)
             x = norm(x)

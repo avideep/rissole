@@ -104,7 +104,7 @@ class ResidualBlockUNet(nn.Module):
         # )
 
     # def forward(self, x: torch.Tensor, x_cond: torch.Tensor = None, t: torch.Tensor = None, p:torch.Tensor = None):
-    def forward(self, x: torch.Tensor, t: torch.Tensor = None, p:torch.Tensor = None):
+    def forward(self, x: torch.Tensor, t: torch.Tensor = None):
 
         identity = self.shortcut(x)
 
@@ -114,9 +114,6 @@ class ResidualBlockUNet(nn.Module):
         if self.time_emb is not None:
             t = self.time_emb(t)        # [bs, out_channels]
             x += t[:, :, None, None]
-        if self.pos_emb is not None:
-            p = self.pos_emb(p)
-            x += p[:, :, None, None]
         # if self.cond_emb is not None:
         #     c = self.cond_emb(x_cond)
         #     if x.shape[2] == c.shape[2]:
