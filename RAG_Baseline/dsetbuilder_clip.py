@@ -95,7 +95,6 @@ class DSetBuilder:
             mat.append(torch.stack(neighbor_images))
         
         output = torch.stack(mat)
-        print(output.shape)
         output = output.view(batch_size, -1, img_size, img_size)
         # pad = (img_size - output.shape[-1])//2
         # padding = (pad, pad)
