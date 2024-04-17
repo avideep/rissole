@@ -94,7 +94,9 @@ class DSetBuilder:
                 neighbor_images.append(torch.tensor(encoded_image))
             mat.append(torch.stack(neighbor_images))
         
-        output = torch.stack(mat).view(batch_size, self.k*num_channels, img_size, -1)
+        output = torch.stack(mat)
+        print(output.shape)
+        output = output.view(batch_size, self.k*num_channels, img_size, -1)
         pad = (img_size - output.shape[-1])//2
         padding = (pad, pad)
         output = F.pad(output, padding, "constant", 0)
