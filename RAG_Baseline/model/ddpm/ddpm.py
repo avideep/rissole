@@ -226,7 +226,7 @@ class DDPM(nn.Module):
         return img
     
     @torch.no_grad()
-    def p_sample(self, x, x_prev, position, t, t_index, low_res_cond = None):
+    def p_sample(self, x, x_cond, t, t_index):
         """
         samples an image from the latent space
 
@@ -246,7 +246,7 @@ class DDPM(nn.Module):
         # Use our model (noise predictor) to predict the mean
 
         model_mean = sqrt_recip_alphas_t * (
-                x - betas_t * self.eps_model(x, x_prev, t, position, low_res_cond) / sqrt_one_minus_alphas_cumprod_t
+                x - betas_t * self.eps_model(x, x_cond, t) / sqrt_one_minus_alphas_cumprod_t
         )
         if t_index == 0:
             return model_mean
@@ -257,7 +257,7 @@ class DDPM(nn.Module):
             return model_mean + torch.sqrt(posterior_variance_t) * noise
         
     @torch.no_grad()
-    def p_sample_loop(self, cond_block, position, shape, low_res_cond = None, sample_step=None):
+    def p_sample_loop(self, cond_block, shape, sample_step=None):
         """
         Implements Algorithm 2 of https://arxiv.org/abs/2006.11239 for sampling
 
@@ -275,10 +275,8 @@ class DDPM(nn.Module):
         imgs = []
         # print(img.shape, cond_block.shape)
         for i in tqdm(reversed(range(0, self.n_steps)), desc='sampling loop time step', total=self.n_steps):
-            if low_res_cond is not None:
-                img = self.p_sample(img, cond_block, position, torch.full((b,), i, device=device, dtype=torch.int64), i, low_res_cond)
-            else:
-                img = self.p_sample(img, cond_block, position, torch.full((b,), i, device=device, dtype=torch.int64), i)
+
+            img = self.p_sample(img, cond_block, torch.full((b,), i, device=device, dtype=torch.int64), i)
             if sample_step is not None and i == sample_step:
                 imgs.append(img)
             elif sample_step is None:
@@ -286,7 +284,7 @@ class DDPM(nn.Module):
         return imgs
 
     @torch.no_grad()
-    def sample(self, image_size, cond_block, position, low_res_cond = None, batch_size=16, channels=3, sample_step=None):
+    def sample(self, image_size, cond_block, batch_size=16, channels=3, sample_step=None):
         """
         sampling from the latent space
 
@@ -298,5 +296,5 @@ class DDPM(nn.Module):
         Returns:
             sampled images
         """
-        return  self.p_sample_loop(cond_block, position, shape=(batch_size, channels, image_size, image_size), sample_step=sample_step)
+        return  self.p_sample_loop(cond_block, shape=(batch_size, channels, image_size, image_size), sample_step=sample_step)
 
