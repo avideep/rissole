@@ -161,7 +161,7 @@ def main():
     ddpm = DDPM(eps_model=unet, vae_model=vqgan_model, **cfg)
     ddpm.to(device)
 
-    dset = DSetBuilder(data, args.k, vqgan_model, device)
+    dset = DSetBuilder(data, args.k)
 
     print("{:<16}: {}".format('DDPM model params', count_parameters(ddpm)))
 
