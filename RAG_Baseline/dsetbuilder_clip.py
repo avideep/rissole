@@ -98,7 +98,7 @@ class DSetBuilder:
                 encoded_image = self.encoder.encode(self.tensor2img(image))
                 
                 # Append the encoded image to the list of neighbor images
-                neighbor_images.append(encoded_image)
+                neighbor_images.append(torch.tensor(encoded_image))
             
             # Stack the encoded images for each neighbor and append the result to the final list
             mat.append(torch.stack(neighbor_images))
