@@ -113,8 +113,7 @@ class DSetBuilder:
                 batch_patches.append(patch)
                 del patch
         return torch.stack(batch_patches)
-    def get_clip_embeddings(self, x):
-        return 
+
     def dsetbuilder(self):
         """ Creates the D Set for this particular Dataset"""
         if os.path.exists(self.DSET_PATH):
@@ -123,7 +122,6 @@ class DSetBuilder:
             all_patches = []
             for x, _ in tqdm(self.data.full_dataloader, desc='Building DSET'):
                 batch_patches = self.get_random_patches(x)
-                print(batch_patches.shape)
                 clips = torch.stack([torch.tensor(self.encoder.encode(self.tensor2img(x_i))) for x_i in batch_patches])
                 all_patches.append(clips)
                 del batch_patches
@@ -146,7 +144,7 @@ if __name__ == "__main__":
                     nargs='+', metavar='GPUS', help='If GPU(s) available, which GPU(s) to use for training.')
     parser.add_argument('--batch-size', default=16, metavar='N',
                     type=int, help='Mini-batch size (default: 16)')
-    parser.add_argument('--dset-batch-size', default=32, metavar='N',
+    parser.add_argument('--dset-batch-size', default=16, metavar='N',
                     type=int, help='Mini-batch size (default: 32)')
     args = parser.parse_args()
     # cfg_vqgan = yaml.load(open(args.vqgan_config, 'r'), Loader=yaml.Loader)
