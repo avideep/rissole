@@ -39,7 +39,7 @@ parser.add_argument('--dset-batch-size', default=32, metavar='N',
                     type=int, help='Mini-batch size (default: 32)')
 parser.add_argument('--image-size', default=224, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
-parser.add_argument('--block-size', default=14, metavar='N',
+parser.add_argument('--block-size', default=7, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
 parser.add_argument('--k', default=10, metavar='N',
                     type=int, help='Number of nearest neighbors to search.')
@@ -163,7 +163,7 @@ def main():
     #     ddpm, _, _ = load_model_checkpoint(ddpm, args.load_ddpm, device)
     ddpm.to(device)
 
-    dset = DSetBuilder(data, args.k, vqgan_model, device)
+    dset = DSetBuilder(data, args.k, vqgan_model, device, block_factor=4)
 
     print("{:<16}: {}".format('DDPM model params', count_parameters(ddpm)))
 
