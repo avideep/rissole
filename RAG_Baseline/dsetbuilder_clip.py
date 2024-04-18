@@ -42,9 +42,9 @@ class DSetBuilder:
         self.mean = [0.5, 0.5, 0.5]
         self.std = [0.5, 0.5, 0.5]
         self.patch_size = self.data.img_size // 2
-        self.num_patches = 5
+        self.num_patches = 4
         self.num_channels = 3
-        self.DSET_PATH = '/hdd/avideep/blockLDM/data/baseline_dset/' + data_name + '/dset.pth'
+        self.DSET_PATH = '/hdd/avideep/blockLDM/data/baseline_dset/' + data_name + '/dset_clip.pth'
         self.encoder = SentenceTransformer('clip-ViT-B-32')
         self.inv_normalize = transforms.Compose([
                                 transforms.Normalize(mean=0, std=[1./s for s in self.std]),
@@ -52,7 +52,7 @@ class DSetBuilder:
                                 lambda x: x*255])
         self.dset = self.dsetbuilder()
         self.k = k
-        searcher_dir = '/hdd/avideep/blockLDM/data/baseline_dset/' + data_name + '/searcher/'
+        searcher_dir = '/hdd/avideep/blockLDM/data/baseline_dset/' + data_name + '/searcher_clip/'
         if not os.path.exists(searcher_dir):
             self.searcher = scann.scann_ops_pybind.builder(self.dset / np.linalg.norm(self.dset, axis=1)[:, np.newaxis], self.k, "dot_product").tree(num_leaves=2000, num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
             print(f'Save trained searcher under "{searcher_dir}"')
@@ -113,6 +113,11 @@ class DSetBuilder:
                 batch_patches.append(patch)
                 del patch
         return torch.stack(batch_patches)
+    def get_clip_embeddings(self, x):
+        clips = []
+        for x_i in x:
+            clips.append(self.encoder.encode(self.tensor2img(x_i)))
+        return torch.stack(clips)
     def dsetbuilder(self):
         """ Creates the D Set for this particular Dataset"""
         if os.path.exists(self.DSET_PATH):
@@ -121,8 +126,10 @@ class DSetBuilder:
             all_patches = []
             for x, _ in tqdm(self.data.full_dataloader, desc='Building DSET'):
                 batch_patches = self.get_random_patches(x)
-                all_patches.append(batch_patches)
+                clips = self.get_clip_embeddings(batch_patches)
+                all_patches.append(clips)
                 del batch_patches
+                del clips
             all_patches = torch.cat(all_patches, dim = 0)
 
             torch.save(all_patches.view(all_patches.size(0), -1), self.DSET_PATH)
