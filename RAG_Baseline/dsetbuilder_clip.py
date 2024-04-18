@@ -114,10 +114,7 @@ class DSetBuilder:
                 del patch
         return torch.stack(batch_patches)
     def get_clip_embeddings(self, x):
-        clips = []
-        for x_i in x:
-            clips.append(torch.tensor(self.encoder.encode(self.tensor2img(x_i))))
-        return torch.stack(clips)
+        return 
     def dsetbuilder(self):
         """ Creates the D Set for this particular Dataset"""
         if os.path.exists(self.DSET_PATH):
@@ -126,7 +123,8 @@ class DSetBuilder:
             all_patches = []
             for x, _ in tqdm(self.data.full_dataloader, desc='Building DSET'):
                 batch_patches = self.get_random_patches(x)
-                clips = self.get_clip_embeddings(batch_patches)
+                print(batch_patches.shape)
+                clips = torch.stack([torch.tensor(self.encoder.encode(self.tensor2img(x_i))) for x_i in batch_patches])
                 all_patches.append(clips)
                 del batch_patches
                 del clips
