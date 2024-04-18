@@ -116,7 +116,7 @@ class DSetBuilder:
     def get_clip_embeddings(self, x):
         clips = []
         for x_i in x:
-            clips.append(self.encoder.encode(self.tensor2img(x_i)))
+            clips.append(torch.tensor(self.encoder.encode(self.tensor2img(x_i))))
         return torch.stack(clips)
     def dsetbuilder(self):
         """ Creates the D Set for this particular Dataset"""
