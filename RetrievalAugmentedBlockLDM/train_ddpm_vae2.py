@@ -51,7 +51,7 @@ parser.add_argument('--lr', default=2e-4,
                     type=float, metavar='LR', help='Initial learning rate (default: 0.0002)')
 parser.add_argument('--config', default='configs/ddpm_linear.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/ddpm_linear.yaml)')
-parser.add_argument('--unet-config', default='configs/unet_imagenet100.yaml',
+parser.add_argument('--unet-config', default='configs/unet.yaml',
                     metavar='PATH', help='Path to unet model config file (default: configs/unet.yaml)')
 parser.add_argument('--data-config', default='configs/data_se.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/data_se.yaml)')
@@ -122,10 +122,12 @@ def main():
         raise ValueError('Currently multi-gpu training is not possible')
     # load data
     if args.data == 'CelebA':
+        args.img_size = 64
         data = CelebA(args.batch_size)
     elif args.data == 'CIFAR10':
         data = CIFAR10(args.batch_size)
     elif args.data == 'ImageNet100':
+        args.img_size = 224
         data = ImageNet100(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
     else:
         data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
