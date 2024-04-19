@@ -33,7 +33,7 @@ parser.add_argument('--name', '-n', default='',
                     type=str, metavar='NAME', help='Model name and folder where logs are stored')
 parser.add_argument('--epochs', default=200,
                     type=int, metavar='N', help='Number of epochs to run (default: 100)')
-parser.add_argument('--batch-size', default=16, metavar='N',
+parser.add_argument('--batch-size', default=128, metavar='N',
                     type=int, help='Mini-batch size (default: 64)')
 parser.add_argument('--dset-batch-size', default=128, metavar='N',
                     type=int, help='Mini-batch size (default: 32)')
