@@ -243,4 +243,4 @@ if __name__ == "__main__":
         data = ImageNet100(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
     else:
         data = CIFAR10(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
-    dset = ClassDSetBuilder(data, k=20, model=vqgan_model, device=device)
+    dset = DSetBuilder(data, k=20, model=vqgan_model, device=device)
