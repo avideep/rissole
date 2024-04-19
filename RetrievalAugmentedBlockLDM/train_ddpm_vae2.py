@@ -39,7 +39,7 @@ parser.add_argument('--dset-batch-size', default=32, metavar='N',
                     type=int, help='Mini-batch size (default: 32)')
 parser.add_argument('--image-size', default=224, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
-parser.add_argument('--block-size', default=7, metavar='N',
+parser.add_argument('--block-factor', default=4, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
 parser.add_argument('--k', default=10, metavar='N',
                     type=int, help='Number of nearest neighbors to search.')
@@ -163,11 +163,12 @@ def main():
     #     ddpm, _, _ = load_model_checkpoint(ddpm, args.load_ddpm, device)
     ddpm.to(device)
 
-    dset = DSetBuilder(data, args.k, vqgan_model, device, block_factor=4)
+    dset = DSetBuilder(data, args.k, vqgan_model, device, block_factor=args.block_factor)
+
 
     print("{:<16}: {}".format('DDPM model params', count_parameters(ddpm)))
 
-    block_size = args.block_size
+    block_size = get_block_size(args, vqgan_model, device)
     optimizer = torch.optim.Adam(unet.parameters(), args.lr)
 
     # resume training
@@ -209,6 +210,12 @@ def main():
 
     elapsed_time = timer(t_start, time.time())
     print(f"Total training time: {elapsed_time}")
+
+def get_block_size(args, vqgan_model, device):
+    x = torch.rand(1, args.image_channels, args.img_size, args.img_size).to(device)
+    x = vqgan_model.encode(x)
+    x = vqgan_model.quantize(x)
+    return x.size(2) // args.block_factor
 
 def debug(model,data_loader,device):
     x, _ = next(iter(data_loader))
