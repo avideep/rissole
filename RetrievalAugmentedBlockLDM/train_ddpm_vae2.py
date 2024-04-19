@@ -299,7 +299,7 @@ def validate(model, data, dset, block_size, device, args):
     x_query = dset.get_rand_queries(n_images)
     neighbor_ids = dset.get_neighbor_ids(x_query)
 
-    w = args.guidance_weight
+    # w = args.guidance_weight
     for i in range(0, img.shape[-1], block_size):
         for j in range(0, img.shape[-1], block_size):
             # if j==0 and i>0:
