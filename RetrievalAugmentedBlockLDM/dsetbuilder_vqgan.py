@@ -112,6 +112,7 @@ class DSetBuilder:
                         del x, z, patch
                     cat_patch = torch.cat(patches, dim=0)
                     print(cat_patch.shape)
+                    print(len(self.data.full_dataloader.dataset))
                     all_patches.append(torch.cat(patches, dim=0).view(len(self.data.full_dataloader.dataset), -1))
 
             all_patches = torch.stack(all_patches)
