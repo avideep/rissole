@@ -148,10 +148,10 @@ def main():
     vqgan_model.to(device)
     global latent_dim
     latent_dim = cfg_vqgan['model']['latent_dim']
-    if args.use_prev_block:
-        cfg_unet['in_channels'] = (args.k + 2) * latent_dim # 2 because one if for the input latent representation of the current block and another is that for the previous block
-    else:
-        cfg_unet['in_channels'] = (args.k + 1) * latent_dim
+    # if args.use_prev_block:
+    #     cfg_unet['in_channels'] = (args.k + 2) * latent_dim # 2 because one if for the input latent representation of the current block and another is that for the previous block
+    # else:
+    cfg_unet['in_channels'] = (args.k + 1) * latent_dim
 
     unet = UNetLight(**cfg_unet)
     unet.to(device)
@@ -186,9 +186,9 @@ def main():
         logger.global_train_step = logger.running_epoch
         print(f"Epoch [{epoch + 1} / {args.epochs}]")
 
-        train(ddpm, data, dset, optimizer, block_size, vae, device, args)
+        train(ddpm, data, dset, optimizer, block_size, device, args)
 
-        validate(ddpm, data, dset, block_size, vae, device, args)
+        validate(ddpm, data, dset, block_size, device, args)
 
         # logging
         output = ' - '.join([f'{k}: {v.avg:.4f}' for k, v in logger.epoch.items()])
@@ -219,7 +219,7 @@ def debug(model,data_loader,device):
     print(model.encode(x).shape)
 
 
-def train(model, data, dset, optimizer, block_size, vae, device, args):
+def train(model, data, dset, optimizer, block_size, device, args):
     model.train()
 
     ema_loss = None
@@ -272,7 +272,7 @@ def train(model, data, dset, optimizer, block_size, vae, device, args):
 
 
 @torch.no_grad()
-def validate(model, data, dset, block_size, vae, device, args):
+def validate(model, data, dset, block_size, device, args):
     model.eval()
     x, _ = next(iter(data.val))
     x = x.to(device)
