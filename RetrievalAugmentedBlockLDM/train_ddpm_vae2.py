@@ -71,20 +71,20 @@ parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-18_151152/b
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
-parser.add_argument('--vae-path', default='checkpoints/vae/24-02-15_130409/best_model.pt',
-                    metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
-parser.add_argument('--vae-config', default='configs/vae.yaml',
-                    metavar='PATH', help='Path to model config file (default: configs/vaeyaml)')
-parser.add_argument('--use-low-res', action='store_true',
-                    help='Whether to condition the model with a low resolution whole image sampled from a VAE')
-parser.add_argument('--use-prev-block', action='store_true',
-                    help='Whether to condition the model with the previous block')
-parser.add_argument('--use-cfg', action='store_true',
-                    help='Whether to use classifier-free guidance')
-parser.add_argument('--guidance-probability', default=0.7, type=float,
-                    help='probability of unconditional generation (default: 0.8)')
-parser.add_argument('--guidance-weight', default=10, type=int,
-                    help='weight on unconditional generaton. (default: 5)')
+# parser.add_argument('--vae-path', default='checkpoints/vae/24-02-15_130409/best_model.pt',
+#                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
+# parser.add_argument('--vae-config', default='configs/vae.yaml',
+#                     metavar='PATH', help='Path to model config file (default: configs/vaeyaml)')
+# parser.add_argument('--use-low-res', action='store_true',
+#                     help='Whether to condition the model with a low resolution whole image sampled from a VAE')
+# parser.add_argument('--use-prev-block', action='store_true',
+#                     help='Whether to condition the model with the previous block')
+# parser.add_argument('--use-cfg', action='store_true',
+#                     help='Whether to use classifier-free guidance')
+# parser.add_argument('--guidance-probability', default=0.7, type=float,
+#                     help='probability of unconditional generation (default: 0.8)')
+# parser.add_argument('--guidance-weight', default=10, type=int,
+#                     help='weight on unconditional generaton. (default: 5)')
 
 
 logger = Logger(LOG_DIR)
