@@ -67,10 +67,7 @@ class DSetBuilder:
         return x
     
     def get_latent_shape(self):
-        x = torch.randn(1,3,self.data.img_size,self.data.img_size).to(self.device)
-        x = vqgan_model.encode(x)
-        x = vqgan_model.quantize(x)
-        return x.size()
+        return self.encode(torch.randn(1,3,self.data.img_size,self.data.img_size).to(self.device)).size()
     
     def get_neighbor_ids(self, x):
         # b = x.size(0)
