@@ -225,7 +225,7 @@ def train(model, data, dset, optimizer, block_size, device, args):
     model.train()
 
     ema_loss = None
-    p = args.guidance_probability
+    # p = args.guidance_probability
     for x, _ in tqdm(data.train, desc="Training"):
         x = x.to(device)
         x = model.encode(x)
