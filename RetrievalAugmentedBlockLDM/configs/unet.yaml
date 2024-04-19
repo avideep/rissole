@@ -17,4 +17,4 @@ use_spatial_transformer: False
 channels:
   - 128
   - 256
-  - 512
+
