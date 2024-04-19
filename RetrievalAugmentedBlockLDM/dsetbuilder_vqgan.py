@@ -109,10 +109,9 @@ class DSetBuilder:
                         z = self.encode(x)
                         patch = z[:, :, i:i+self.latent_patch_size, j:j+self.latent_patch_size]
                         patches.append(patch.cpu().detach())
-                        # del x, z, patch
-                    cat_patch = torch.cat(patches, dim=0)
-                    cat_patch_reshaped = cat_patch.view(len(self.data.full_dataloader.dataset), -1)
-                    all_patches.append(cat_patch_reshaped)
+                        del x, z, patch
+                    all_patches.append(torch.cat(patches, dim=0).contiguous().view(len(self.data.full_dataloader.dataset), -1))
+                    del patches
             all_patches = torch.stack(all_patches)
             torch.save(all_patches, self.DSET_PATH)
         print('DSET with shape: {} is ready!'.format(all_patches.shape))
