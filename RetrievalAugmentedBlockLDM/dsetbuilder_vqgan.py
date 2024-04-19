@@ -230,12 +230,12 @@ if __name__ == "__main__":
     x = vqgan_model.encode(x)
     x = vqgan_model.quantize(x)
     print(x.shape)
-    # if args.data == 'CelebA':
-    #     data = CelebA(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
-    # elif args.data == 'CelebAHQ':
-    #     data = CelebAHQ(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
-    # elif args.data == 'ImageNet100':
-    #     data = ImageNet100(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
-    # else:
-    #     data = CIFAR10(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
-    # dset = ClassDSetBuilder(data, k=20, model=vqgan_model, device=device)
+    if args.data == 'CelebA':
+        data = CelebA(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+    elif args.data == 'CelebAHQ':
+        data = CelebAHQ(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+    elif args.data == 'ImageNet100':
+        data = ImageNet100(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+    else:
+        data = CIFAR10(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+    dset = ClassDSetBuilder(data, k=20, model=vqgan_model, device=device)
