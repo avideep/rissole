@@ -109,7 +109,7 @@ class DSetBuilder:
                         z = self.encode(x)
                         patch = z[:, :, i:i+self.latent_patch_size, j:j+self.latent_patch_size]
                         patches.append(patch.cpu().detach())
-                        del x, z, patch
+                        # del x, z, patch
                     cat_patch = torch.cat(patches, dim=0)
                     print(cat_patch.shape)
                     print(len(self.data.full_dataloader.dataset))
