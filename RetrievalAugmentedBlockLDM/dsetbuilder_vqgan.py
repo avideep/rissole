@@ -43,6 +43,8 @@ class DSetBuilder:
         self.k = k
         self.model = model
         self.device = device
+        self.latent_dim, self.latent_size = self.get_latent_shape()[1], self.get_latent_shape()[2]
+        self.latent_patch_size = self.latent_size // block_factor
         self.dset = self.dsetbuilder()
         searcher_dir = '/hdd/avideep/blockLDM/data/dset/{}/vqgan/searcher_k_{}_f_{}/'.format(data_name, k, block_factor)
         if not os.path.exists(searcher_dir):
@@ -62,8 +64,13 @@ class DSetBuilder:
     def encode(self, x: torch.Tensor):
         x = self.model.encode(x)
         x = self.model.quantize(x)
-
         return x
+    
+    def get_latent_shape(self):
+        x = torch.randn(1,3,self.data.img_size,self.data.img_size).to(self.device)
+        x = vqgan_model.encode(x)
+        x = vqgan_model.quantize(x)
+        return x.size()
     
     def get_neighbor_ids(self, x):
         # b = x.size(0)
@@ -94,13 +101,15 @@ class DSetBuilder:
             all_patches = torch.load(self.DSET_PATH)
         else:
             all_patches = []
-            for i in range(0, self.data.img_size, self.patch_size):
-                for j in range (0, self.data.img_size, self.patch_size):
+            for i in range(0, self.latent_size, self.latent_patch_size):
+                for j in range (0, self.latent_size, self.latent_patch_size):
                     patches = []
                     for x, _ in tqdm(self.data.full_dataloader, desc='Building DSET'):
                         x = x.to(self.device)
-                        patch = x[:, :, i:i+self.patch_size, j:j+self.patch_size]
-                        patches.append(self.model.encode(patch).cpu().detach())
+                        z = self.encode(x)
+                        patch = z[:, :, i:i+self.latent_patch_size, j:j+self.latent_patch_size]
+                        patches.append(patch.cpu().detach())
+                        del x, z, patch
                     all_patches.append(torch.cat(patches, dim=0).view(len(self.data.full_dataloader.dataset), -1))
             all_patches = torch.stack(all_patches)
             torch.save(all_patches, self.DSET_PATH)
@@ -142,9 +151,8 @@ class ClassDSetBuilder:
     def encode(self, x: torch.Tensor):
         x = self.model.encode(x)
         x = self.model.quantize(x)
-
         return x
-    
+
     def get_neighbor_ids(self, x, c):
         neighbors = [] 
         for data, class_idx in zip(x,c):
@@ -226,10 +234,7 @@ if __name__ == "__main__":
     vqgan_model = VQGANLight(**cfg_vqgan['model'])
     vqgan_model, _, _ = load_model_checkpoint(vqgan_model, args.vqgan_path, device)
     vqgan_model.to(device)
-    x = torch.randn(16,3,16,16).to(device)
-    x = vqgan_model.encode(x)
-    x = vqgan_model.quantize(x)
-    print(x.shape)
+
     if args.data == 'CelebA':
         data = CelebA(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
     elif args.data == 'CelebAHQ':
