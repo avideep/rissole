@@ -243,7 +243,7 @@ def train(model, data, dset, optimizer, block_size, device, args):
         # else: # if nothing is used
         low_res_cond = None
         first_block = x[:, :, :block_size, :block_size]
-        prev_block = torch.rand_like(first_block).to(device) if args.use_prev_block else None
+        # prev_block = torch.rand_like(first_block).to(device) if args.use_prev_block else None
         optimizer.zero_grad()
         position = 0
         loss_agg = 0
@@ -258,7 +258,7 @@ def train(model, data, dset, optimizer, block_size, device, args):
                 # neighbors = torch.cat([dset.get_neighbors(neighbor_ids, position, block_size, x.size(0), latent_dim).to(device), prev_block], dim = 1) if args.use_prev_block else 
                 neighbors = dset.get_neighbors(neighbor_ids, position, block_size, x.size(0), latent_dim).to(device)
                 loss = model.p_losses2(curr_block, neighbors, position = block_pos, low_res_cond = low_res_cond)
-                prev_block = curr_block
+                # prev_block = curr_block
                 loss_agg += loss
                 position += 1
         loss_agg.backward()
@@ -316,7 +316,7 @@ def validate(model, data, dset, block_size, device, args):
             # else:
             curr_block = model.sample(block_size, neighbors, block_pos, low_res_cond = None, batch_size=n_images, channels=latent_dim) # if CFG is not used and low-res-conditioning is also not used
 
-            prev_block = curr_block[0]
+            # prev_block = curr_block[0]
             position += 1
             for k in range(len(curr_block)):
                 images[k][:, :, i:i+block_size, j:j+block_size] = curr_block[k]
