@@ -226,16 +226,16 @@ if __name__ == "__main__":
     vqgan_model = VQGANLight(**cfg_vqgan['model'])
     vqgan_model, _, _ = load_model_checkpoint(vqgan_model, args.vqgan_path, device)
     vqgan_model.to(device)
-    x = torch.randn(16,3,112,112).to(device)
+    x = torch.randn(16,3,16,16).to(device)
     x = vqgan_model.encode(x)
     x = vqgan_model.quantize(x)
     print(x.shape)
-    if args.data == 'CelebA':
-        data = CelebA(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
-    elif args.data == 'CelebAHQ':
-        data = CelebAHQ(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
-    elif args.data == 'ImageNet100':
-        data = ImageNet100(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
-    else:
-        data = CIFAR10(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
-    dset = ClassDSetBuilder(data, k=20, model=vqgan_model, device=device)
+    # if args.data == 'CelebA':
+    #     data = CelebA(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+    # elif args.data == 'CelebAHQ':
+    #     data = CelebAHQ(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+    # elif args.data == 'ImageNet100':
+    #     data = ImageNet100(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+    # else:
+    #     data = CIFAR10(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+    # dset = ClassDSetBuilder(data, k=20, model=vqgan_model, device=device)
