@@ -85,9 +85,9 @@ class DSetBuilder:
     def get_neighbors(self, neighbor_ids, shape):
         b, c, h,  _ = shape
         output = torch.stack([self.dset[np.int64(neighbor)] for neighbor in neighbor_ids])
-        print(output.shape)
+        # print(output.shape)
         output = output.view(b, c, h, -1)
-        print(output.shape)
+        # print(output.shape)
         pad = (h - output.shape[-1])//2
         padding = (pad, pad)
         output = F.pad(output, padding, "constant", 0)
