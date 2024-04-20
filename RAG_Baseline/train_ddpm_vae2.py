@@ -204,6 +204,7 @@ def train(model, data, dset, optimizer, device, args):
         x = model.encode(x)
         optimizer.zero_grad()
         neighbors = dset.get_neighbors(neighbor_ids, x.size()).to(device)
+        print(x.shape, neighbors.shape)
         loss = model.p_losses2(x, neighbors)
         loss.backward()
         optimizer.step()
