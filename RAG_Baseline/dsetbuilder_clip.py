@@ -44,7 +44,7 @@ class DSetBuilder:
         self.patch_size = self.data.img_size // 2
         self.num_patches = 4
         self.num_channels = 3
-        self.DSET_PATH = '/hdd/avideep/blockLDM/data/baseline_dset/' + data_name + '/dset_clip.pth'
+        self.DSET_PATH = self.data.root + 'baseline_dset/' + data_name + '/dset_clip.pth'
         self.encoder = SentenceTransformer('clip-ViT-B-32')
         self.inv_normalize = transforms.Compose([
                                 transforms.Normalize(mean=0, std=[1./s for s in self.std]),
@@ -52,7 +52,7 @@ class DSetBuilder:
                                 lambda x: x*255])
         self.dset = self.dsetbuilder()
         self.k = k
-        searcher_dir = '/hdd/avideep/blockLDM/data/baseline_dset/' + data_name + '/searcher_clip/'
+        searcher_dir = self.data.root + 'baseline_dset/' + data_name + '/searcher_clip/'
         if not os.path.exists(searcher_dir):
             self.searcher = scann.scann_ops_pybind.builder(self.dset / np.linalg.norm(self.dset, axis=1)[:, np.newaxis], self.k, "dot_product").tree(num_leaves=2000, num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
             print(f'Save trained searcher under "{searcher_dir}"')
