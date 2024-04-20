@@ -83,22 +83,12 @@ class DSetBuilder:
         neighbors, _ = self.searcher.search_batched(x_clip.contiguous().view(x.size(0), -1))
         return neighbors
     def get_neighbors(self, neighbor_ids, shape):
-        # mat = [torch.stack([torch.tensor(self.encoder.encode(self.tensor2img(self.dset[np.int64(one_neighbor)].view(self.num_channels, self.patch_size, self.patch_size))) for one_neighbor in neighbor])) for neighbor in neighbor_ids]
-        batch_size, num_channels, img_size, _ = shape
-        mat = []
-        for neighbor in neighbor_ids:
-            neighbor_images = []
-            for one_neighbor in neighbor:
-                image = self.dset[np.int64(one_neighbor)].view(self.num_channels, self.patch_size, self.patch_size)
-                encoded_image = self.encoder.encode(self.tensor2img(image))
-                neighbor_images.append(torch.tensor(encoded_image))
-            mat.append(torch.stack(neighbor_images))
-        
-        output = torch.stack(mat)
-        output = output.view(batch_size, -1, img_size, img_size)
-        # pad = (img_size - output.shape[-1])//2
-        # padding = (pad, pad)
-        # output = F.pad(output, padding, "constant", 0)
+        b, c, h,  _ = shape
+        output = torch.stack([self.dset[np.int64(neighbor)] for neighbor in neighbor_ids])
+        output = output.view(b, c, h, -1)
+        pad = (h - output.shape[-1])//2
+        padding = (pad, pad)
+        output = F.pad(output, padding, "constant", 0)
         return output
     def get_random_patches(self, images):
         batch_patches = []
