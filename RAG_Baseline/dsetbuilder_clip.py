@@ -78,9 +78,9 @@ class DSetBuilder:
         return self.dset[torch.randperm(self.dset.size(0))[:n], :]
     
     def get_neighbor_ids(self, x):
-        x_clip = torch.tensor(np.array([self.encoder.encode(self.tensor2img(x_i)) for x_i in x]))
-        # x = transforms.functional.resize(x, [self.patch_size], antialias = True)
-        neighbors, _ = self.searcher.search_batched(x_clip.contiguous().view(x.size(0), -1))
+        if len(x.size()) > 2:
+            x = torch.tensor(np.array([self.encoder.encode(self.tensor2img(x_i)) for x_i in x]))
+        neighbors, _ = self.searcher.search_batched(x.contiguous().view(x.size(0), -1))
         return neighbors
     def get_neighbors(self, neighbor_ids, shape):
         b, c, h,  _ = shape
