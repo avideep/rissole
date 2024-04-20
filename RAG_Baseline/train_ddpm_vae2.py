@@ -53,8 +53,8 @@ parser.add_argument('--config', default='configs/ddpm_linear.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/ddpm_linear.yaml)')
 parser.add_argument('--unet-config', default='configs/unet.yaml',
                     metavar='PATH', help='Path to unet model config file (default: configs/unet.yaml)')
-parser.add_argument('--data-config', default='configs/data_se.yaml',
-                    metavar='PATH', help='Path to model config file (default: configs/data_se.yaml)')
+parser.add_argument('--data-path', default='',
+                    metavar='PATH', help='Path to root of the data')
 parser.add_argument('--data', '-d', default='CelebA',
                         type=str, metavar='data', help='Dataset Name. Please enter CelebA, CelebAHQ, or CIFAR10. Default: CelebA')
 parser.add_argument('--gpus', default=0, type=int,
@@ -115,12 +115,12 @@ def main():
     # load data
     if args.data == 'CelebA':
         args.img_size = 64
-        data = CelebA(args.batch_size)
+        data = CelebA(root= args.data_path, batch_size= args.batch_size)
     elif args.data == 'CIFAR10':
         data = CIFAR10(args.batch_size)
     elif args.data == 'ImageNet100':
         args.img_size = 224
-        data = ImageNet100(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+        data = ImageNet100(root= args.data_path, batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
     else:
         data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
     # read config file for model
