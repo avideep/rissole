@@ -75,7 +75,7 @@ class DSetBuilder:
         else:
             return Image.fromarray(img[0].numpy()).convert("L")
     def get_rand_queries(self, n):
-        return  self.dset[torch.randperm(self.dset.size(0))[:n]].view(n, 3, self.patch_size, self.patch_size)
+        return self.dset[0, torch.randperm(self.dset.size(1))[:n], :]
     
     def get_neighbor_ids(self, x):
         x_clip = torch.tensor(np.array([self.encoder.encode(self.tensor2img(x_i)) for x_i in x]))
