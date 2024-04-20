@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 
 class ImageNet100:
-    def __init__(self, root = '/hdd/avideep/blockLDM/data/imagenet100/train/', batch_size: int = 16, dset_batch_size: int = 32, img_size = 224, block_size = 16):
+    def __init__(self, root = '/hdd/avideep/blockLDM/data/', batch_size: int = 16, dset_batch_size: int = 32, img_size = 224, block_size = 16):
         """
         Wrapper to load, preprocess and deprocess CIFAR-10 dataset.
         Args:
@@ -39,7 +39,7 @@ class ImageNet100:
             transforms.CenterCrop(img_size),
             transforms.Normalize(self.mean, self.std)
         ])
-        self.IMAGE_PATH = root
+        self.IMAGE_PATH = root + 'imagenet100/train/'
         # train_size = int(50000 * 0.9)
         # # val size is 10000 in cifar10
         # test_size = 50000 - train_size
