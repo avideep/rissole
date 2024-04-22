@@ -139,7 +139,7 @@ def main():
         ddpm, _, _ = load_model_checkpoint(ddpm, args.load_checkpoint_ddpm, device)
         ddpm.to(device)
 
-        dset = DSetBuilder(data, args.k, vqgan_model, device)
+        dset = DSetBuilder(data, args.k, vqgan_model, device, block_factor=args.block_factor)
 
         # vae = IntroVAE(**cfg_vae['model'])
         # vae, _, _ = load_model_checkpoint(vae, args.vae_path, device)
