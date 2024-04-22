@@ -146,9 +146,14 @@ def main():
         # vae.to(device)
         # global vae_latent_dim
         # vae_latent_dim = cfg_vae['model']['latent_dim']        
+        block_size = get_block_size(args, vqgan_model, device)
+        sample_images_gen(ddpm, dset, block_size, args.image_count, args.gen_image_path, args.image_size, device, args.use_prev_block)
 
-        sample_images_gen(ddpm, dset, args.block_size, args.image_count, args.gen_image_path, args.image_size, device, args.use_prev_block)
-
+def get_block_size(args, vqgan_model, device):
+    x = torch.rand(1, args.image_channels, args.img_size, args.img_size).to(device)
+    x = vqgan_model.encode(x)
+    x = vqgan_model.quantize(x)
+    return x.size(2) // args.block_factor
 
 def sample_images_real(data_loader, n_images, real_image_path):
     count = 0
@@ -166,7 +171,7 @@ def sample_images_real(data_loader, n_images, real_image_path):
 #     return images
 
 @torch.no_grad()
-def sample_images_gen(model, dset, block_size, n_images, image_path, image_size, device, use_prev_block):
+def sample_images_gen(model, dset, block_size, n_images, image_path, image_size, device):
     model.eval()
 
     # we only want to sample x0 images
