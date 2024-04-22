@@ -35,7 +35,7 @@ parser.add_argument('--block-size', default=14, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
 parser.add_argument('--k', default=20, metavar='N',
                     type=int, help='Number of nearest neighbors to search.')
-parser.add_argument('--image-count', default=10,
+parser.add_argument('--image-count', default=25,
                     type=int, help='number of images that should be generated for comparison')
 parser.add_argument('--config', default='configs/ddpm_linear.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/ddpm_linear.yaml)')
