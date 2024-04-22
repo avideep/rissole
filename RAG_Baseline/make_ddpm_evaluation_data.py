@@ -21,6 +21,8 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 parser = argparse.ArgumentParser(description="PyTorch Second Stage Training")
 parser.add_argument('--data', '-d', default='CelebA',
                         type=str, metavar='data', help='Dataset Name. Please enter CelebA, CelebAHQ, or CIFAR10. Default: CelebA')
+parser.add_argument('--data-path', metavar='PATH', help='Path to root of the data')
+
 parser.add_argument('--batch-size', default=16, metavar='N',
                     type=int, help='Mini-batch size (default: 64)')
 parser.add_argument('--dset-batch-size', default=32, metavar='N',
@@ -107,12 +109,12 @@ def main():
         print("{:<16}: {}".format('device', device))
         if args.data == 'CelebA':
             args.img_size = 64
-            data = CelebA(args.batch_size)
+            data = CelebA(root= args.data_path, batch_size= args.batch_size)
         elif args.data == 'CIFAR10':
             data = CIFAR10(args.batch_size)
         elif args.data == 'ImageNet100':
             args.img_size = 224
-            data = ImageNet100(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+            data = ImageNet100(root= args.data_path, batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
         else:
             data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
         # read config file for model
