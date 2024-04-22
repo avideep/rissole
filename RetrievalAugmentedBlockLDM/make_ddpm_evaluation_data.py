@@ -27,7 +27,7 @@ parser.add_argument('--dset-batch-size', default=32, metavar='N',
                     type=int, help='Mini-batch size (default: 32)')
 parser.add_argument('--image-size', default=224, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
-parser.add_argument('--block-size', default=14, metavar='N',
+parser.add_argument('--block-factor', default=4, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
 parser.add_argument('--k', default=20, metavar='N',
                     type=int, help='Number of nearest neighbors to search.')
@@ -37,17 +37,17 @@ parser.add_argument('--config', default='configs/ddpm_linear.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/ddpm_linear.yaml)')
 parser.add_argument('--unet-config', default='configs/unet_imagenet100.yaml',
                     metavar='PATH', help='Path to unet model config file (default: configs/unet.yaml)')
-parser.add_argument('--load-ckpt-ddpm', default='checkpoints/second_stage/ddpm_linear/24-04-11_234704/ddpm/best_model.pt', metavar='PATH',
+parser.add_argument('--load-ckpt-ddpm', default='checkpoints/second_stage/ddpm_linear/24-04-19_144715/ddpm/best_model.pt', metavar='PATH',
                     dest='load_checkpoint_ddpm', help='Load model checkpoint and continue training')
-parser.add_argument('--load-ckpt-unet', default='checkpoints/second_stage/ddpm_linear/24-04-11_234704/unet/best_model.pt', metavar='PATH',
+parser.add_argument('--load-ckpt-unet', default='checkpoints/second_stage/ddpm_linear/24-04-19_144715/unet/best_model.pt', metavar='PATH',
                     dest='load_checkpoint_unet', help='Load model checkpoint and continue training')
-parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-29_153956/best_model.pt',
+parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-18_151152/best_model.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 parser.add_argument('--vqgan-config', default='configs/vqgan_rgb.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
 parser.add_argument('--real-image-path', default='original',
                     metavar='PATH', help='Path to load samples from the source images into')
-parser.add_argument('--gen-image-path', default='samples/classy',
+parser.add_argument('--gen-image-path', default='samples/blocks_16',
                     metavar='PATH', help='Path to generated images')
 parser.add_argument('--use-prev-block', action='store_true',
                     help='Whether to condition the model with the previous block')
@@ -83,10 +83,12 @@ def main():
         print("{:<16}: {}".format('device', device))
 
         if args.data == 'CelebA':
+            args.img_size = 64
             data = CelebA(args.batch_size)
         elif args.data == 'CIFAR10':
             data = CIFAR10(args.batch_size)
         elif args.data == 'ImageNet100':
+            args.img_size = 224
             data = ImageNet100(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
         else:
             data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
@@ -104,10 +106,12 @@ def main():
             raise ValueError('Currently multi-gpu training is not possible')
         print("{:<16}: {}".format('device', device))
         if args.data == 'CelebA':
+            args.img_size = 64
             data = CelebA(args.batch_size)
         elif args.data == 'CIFAR10':
             data = CIFAR10(args.batch_size)
         elif args.data == 'ImageNet100':
+            args.img_size = 224
             data = ImageNet100(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
         else:
             data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
@@ -122,10 +126,11 @@ def main():
         vqgan_model.to(device)
         global latent_dim
         latent_dim = cfg_vqgan['model']['latent_dim']
-        if args.use_prev_block:
-            cfg_unet['in_channels'] = (args.k + 2) * latent_dim # 2 because one if for the input latent representation of the current block and another is that for the previous block
-        else:
-            cfg_unet['in_channels'] = (args.k + 1) * latent_dim
+        # if args.use_prev_block:
+        #     cfg_unet['in_channels'] = (args.k + 2) * latent_dim # 2 because one if for the input latent representation of the current block and another is that for the previous block
+        # else:
+        cfg_unet['in_channels'] = (args.k + 1) * latent_dim
+
         unet = UNetLight(**cfg_unet)
         unet, _, _ = load_model_checkpoint(unet, args.load_checkpoint_unet, device)
         unet.to(device)
@@ -134,7 +139,7 @@ def main():
         ddpm, _, _ = load_model_checkpoint(ddpm, args.load_checkpoint_ddpm, device)
         ddpm.to(device)
 
-        dset = ClassDSetBuilder(data, args.k, vqgan_model, device)
+        dset = DSetBuilder(data, args.k, vqgan_model, device)
 
         # vae = IntroVAE(**cfg_vae['model'])
         # vae, _, _ = load_model_checkpoint(vae, args.vae_path, device)
@@ -197,10 +202,11 @@ def sample_images_gen(model, dset, block_size, n_images, image_path, image_size,
                 #     prev_block = img[:,:,i-block_size:i, j:j+block_size]
                 #     prev_block = model.encode(prev_block)
                 block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
-                neighbors = torch.cat([dset.get_neighbors(neighbor_ids, position, block_size, n_images, latent_dim).to(device), prev_block], dim =1) if use_prev_block else dset.get_neighbors(neighbor_ids, position, block_size, n_images, latent_dim).to(device)
+                # neighbors = torch.cat([dset.get_neighbors(neighbor_ids, position, block_size, n_images, latent_dim).to(device), prev_block], dim =1) if use_prev_block else
+                neighbors = dset.get_neighbors(neighbor_ids, position, block_size, n_images, latent_dim).to(device)
                 curr_block = model.sample(block_size, neighbors, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim)
                 # curr_block[0] = curr_block[0] - low_res_cond 
-                prev_block = curr_block[0]
+                # prev_block = curr_block[0]
                 position += 1
                 for k in range(len(curr_block)):
                     images[k][:, :, i:i+block_size, j:j+block_size] = curr_block[k]

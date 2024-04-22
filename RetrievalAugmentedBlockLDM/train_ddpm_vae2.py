@@ -41,7 +41,7 @@ parser.add_argument('--image-size', default=224, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
 parser.add_argument('--block-factor', default=4, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
-parser.add_argument('--k', default=10, metavar='N',
+parser.add_argument('--k', default=20, metavar='N',
                     type=int, help='Number of nearest neighbors to search.')
 parser.add_argument('--image-channels', default=3, metavar='N',
                     type=int, help='Number of image channels (default: 3)')
