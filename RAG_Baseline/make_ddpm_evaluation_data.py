@@ -188,7 +188,7 @@ def sample_images_gen(model, dset, n_images, image_path, args, device):
         shape = model.encode(torch.rand(n_images, args.image_channels, args.img_size, args.img_size).to(device)).size()
         neighbors = dset.get_neighbors(neighbor_ids, shape).to(device)
         images = model.sample(shape[2], neighbors, batch_size=n_images, channels=latent_dim)
-        images = [img for img in images[0]]
+        images = [img for img in images[-1]]
         images = torch.stack(images)
         images = model.decode(images)
 
