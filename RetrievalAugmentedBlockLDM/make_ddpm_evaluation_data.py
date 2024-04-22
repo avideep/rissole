@@ -149,7 +149,7 @@ def main():
         # global vae_latent_dim
         # vae_latent_dim = cfg_vae['model']['latent_dim']        
         block_size = get_block_size(args, vqgan_model, device)
-        sample_images_gen(ddpm, dset, block_size, args.image_count, args.gen_image_path, args.image_size, device, args.use_prev_block)
+        sample_images_gen(ddpm, dset, block_size, args.image_count, args.gen_image_path, args.img_size, device)
 
 def get_block_size(args, vqgan_model, device):
     x = torch.rand(1, args.image_channels, args.img_size, args.img_size).to(device)
