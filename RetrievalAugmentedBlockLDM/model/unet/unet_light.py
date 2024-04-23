@@ -47,11 +47,11 @@ class UNetLight(nn.Module):
             self.pre_init_conv = nn.Conv2d(in_channels, self.channels[0] // 2, kernel_size = 7, padding = 3)
             self.cond_conv = nn.Conv2d(cond_emb_dim, self.channels[0] // 2, kernel_size = 7, padding = 3)
             if self.use_addition:
-                self.layer_norm = nn.LayerNorm(self.channels[0] // 2)
+                self.layer_norm = nn.LayerNorm(-1)
                 self.init_conv = nn.Conv2d(self.channels[0] // 2, self.channels[0], kernel_size=7, padding=3)
         else:
             if self.use_addition:
-                self.layer_norm = nn.LayerNorm(self.channels[0])
+                self.layer_norm = nn.LayerNorm(-1)
             else:
                 in_channels += cond_emb_dim
             self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=3)
