@@ -39,7 +39,7 @@ class DSetBuilder:
         self.mean = [0.5, 0.5, 0.5]
         self.std = [0.5, 0.5, 0.5]
         self.patch_size = self.data.img_size // block_factor
-        self.DSET_PATH = self.data.ROOT_PATH = 'dset/{}/vqgan/dset_f_{}.pth'.format(data_name, block_factor)
+        self.DSET_PATH = self.data.ROOT_PATH + 'dset/{}/vqgan/dset_f_{}.pth'.format(data_name, block_factor)
         self.k = k
         self.model = model
         self.device = device
