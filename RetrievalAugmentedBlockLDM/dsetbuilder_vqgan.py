@@ -97,6 +97,7 @@ class DSetBuilder:
         if os.path.exists(self.DSET_PATH):
             all_patches = torch.load(self.DSET_PATH)
         else:
+            print('DSET at {} does note exist. Building...'.format(self.DSET_PATH))
             all_patches = []
             for i in range(0, self.latent_size, self.latent_patch_size):
                 for j in range (0, self.latent_size, self.latent_patch_size):
