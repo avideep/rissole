@@ -14,7 +14,7 @@ from tqdm import tqdm
 # gpus = tf.config.list_physical_devices('GPU')
 # tf.config.set_visible_devices(gpus[0], 'GPU')
 class CelebA:
-    def __init__(self, batch_size: int = 16, dset_batch_size: int = 32, img_size = 64, block_size = 16):
+    def __init__(self, root = '/hdd/avideep/blockLDM/data/', batch_size: int = 16, dset_batch_size: int = 32, img_size = 64, block_size = 16):
         """
         Wrapper to load, preprocess and deprocess CIFAR-10 dataset.
         Args:
@@ -40,12 +40,11 @@ class CelebA:
             transforms.CenterCrop(64),
             transforms.Normalize(self.mean, self.std)
         ])
-        self.ROOT_PATH = '/hdd/avideep/blockLDM/data/celeba/'
-        self.IMAGE_PATH = '/hdd/avideep/blockLDM/data/celeba/processed/'
+        self.ROOT_PATH = root
+        self.IMAGE_PATH = root + 'celeba/processed/'
         train_size = int(50000 * 0.9)
         # val size is 10000 in cifar10
         test_size = 50000 - train_size
-
         self.train_set_full = ImageFolder(self.IMAGE_PATH, self.train_transform)
         self.train_loader, self.val_loader = self.train_val_test_split(self.train_set_full, self.batch_size)
         self.full_dataloader = DataLoader(self.train_set_full, batch_size=dset_batch_size, num_workers=12, pin_memory=True)
