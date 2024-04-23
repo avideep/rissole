@@ -47,7 +47,7 @@ class CelebA:
         test_size = 50000 - train_size
         self.train_set_full = ImageFolder(self.IMAGE_PATH, self.train_transform)
         self.train_loader, self.val_loader = self.train_val_test_split(self.train_set_full, self.batch_size)
-        self.full_dataloader = DataLoader(self.train_set_full, batch_size=dset_batch_size, num_workers=12, pin_memory=True)
+        self.full_dataloader = DataLoader(self.train_set_full, batch_size=dset_batch_size, num_workers=4, pin_memory=True)
         # invert normalization for tensor to image transform
         self.inv_normalize = transforms.Compose([
             transforms.Normalize(mean=0, std=[1./s for s in self.std]),
@@ -74,9 +74,9 @@ class CelebA:
         
         train_indices = list(train_indices)
 
-        train_loader = DataLoader(dataset, batch_size=batch_size, sampler=SubsetRandomSampler(train_indices), num_workers=12, pin_memory=True)
+        train_loader = DataLoader(dataset, batch_size=batch_size, sampler=SubsetRandomSampler(train_indices), num_workers=4, pin_memory=True)
 
-        val_loader = DataLoader(dataset, batch_size=batch_size, sampler=SubsetRandomSampler(val_indices), num_workers=12, pin_memory=True)
+        val_loader = DataLoader(dataset, batch_size=batch_size, sampler=SubsetRandomSampler(val_indices), num_workers=4, pin_memory=True)
 
         # test_loader = DataLoader(dataset, batch_size=batch_size, sampler=SubsetRandomSampler(test_indices), num_workers=12, pin_memory=True)
 
