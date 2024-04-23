@@ -45,18 +45,22 @@ class UNetLight(nn.Module):
         self.use_addition = use_addition
         if self.activate_cond_layer:
             self.pre_init_conv = nn.Conv2d(in_channels, self.channels[0] // 2, kernel_size = 7, padding = 3)
-            self.cond_conv = nn.Conv2d(in_channels, self.channels[0] // 2, kernel_size = 7, padding = 3)
+            self.cond_conv = nn.Conv2d(cond_emb_dim, self.channels[0] // 2, kernel_size = 7, padding = 3)
             if self.use_addition:
                 self.layer_norm = nn.LayerNorm(self.channels[0] // 2)
+                self.init_conv = nn.Conv2d(self.channels[0] // 2, self.channels[0], kernel_size=7, padding=3)
         else:
-            self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=3)
             if self.use_addition:
                 self.layer_norm = nn.LayerNorm(self.channels[0])
+            else:
+                in_channels += cond_emb_dim
+            self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=3)
         # self.cond_attn = CrossAttention(in_channels, in_channels, dim_keys, n_heads)
 
         # contracting path
         self.down_blocks = nn.ModuleList([])
-        prev_channel = self.channels[0]
+    
+        prev_channel = self.channels[0] 
         cond_emb_dim = self.channels[0]
         for c in self.channels:
             self.down_blocks.append(
