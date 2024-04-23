@@ -10,7 +10,7 @@ from typing import List
 
 class UNetLight(nn.Module):
     def __init__(self,
-                 in_channels: int, out_channels: int, time_emb_dim: int, pos_emb_dim: int, cond_emb_dim: int,
+                 in_channels: int, out_channels: int, time_emb_dim: int, pos_emb_dim: int, cond_emb_dim: int, activate_cond_layer: bool = False, use_addition: bool = False,
                  channels: List[int] = None, n_groups: int = 8, 
                  dim_keys: int = 64, n_heads: int = 4, use_spatial_transformer: bool = False):
         """
@@ -41,7 +41,17 @@ class UNetLight(nn.Module):
         # initial convolutional layer
         # in_channels = 3 * in_channels
         # self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=4)
-        self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=3)
+        self.activate_cond_layer = activate_cond_layer
+        self.use_addition = use_addition
+        if self.activate_cond_layer:
+            self.pre_init_conv = nn.Conv2d(in_channels, self.channels[0] // 2, kernel_size = 7, padding = 3)
+            self.cond_conv = nn.Conv2d(in_channels, self.channels[0] // 2, kernel_size = 7, padding = 3)
+            if self.use_addition:
+                self.layer_norm = nn.LayerNorm(self.channels[0] // 2)
+        else:
+            self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=3)
+            if self.use_addition:
+                self.layer_norm = nn.LayerNorm(self.channels[0])
         # self.cond_attn = CrossAttention(in_channels, in_channels, dim_keys, n_heads)
 
         # contracting path
@@ -92,11 +102,22 @@ class UNetLight(nn.Module):
 
     def forward(self, x: torch.Tensor, x_cond: torch.Tensor, t: torch.Tensor, p: torch.Tensor, l: torch.Tensor = None):
         t = self.time_embedding(t)
-        if l is not None:
-            x = torch.cat([x, x_cond, l], dim = 1)
+        if self.activate_cond_layer:
+            x_cond = self.cond_conv(x_cond)
+            x = self.pre_init_conv(x)
+            if self.use_addition:
+                x = x + x_cond
+                x = self.layer_norm(x)
+                x = self.init_conv(x)
+            else:
+                x = torch.cat([x, x_cond], dim = 1)
         else:
-            x = torch.cat([x, x_cond], dim = 1)
-        x = self.init_conv(x)
+            if self.use_addition:
+                x = x + x_cond
+                x = self.layer_norm(x)
+            else:
+                x = torch.cat([x, x_cond], dim = 1)
+            x = self.init_conv(x)
         p = self.pos_embedding(p)
         if self.use_spatial_transformer:
             if l is not None:
