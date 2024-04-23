@@ -112,7 +112,7 @@ class UNetLight(nn.Module):
             x = self.pre_init_conv(x)
             if self.use_addition:
                 x = x + x_cond
-                x = nn.LayerNorm([x.size(1), x.size(2), x.size(3)])(x)
+                x = nn.LayerNorm([x.size(1), x.size(2), x.size(3)]).cuda()(x)
                 x = self.init_conv(x)
             else:
                 x = torch.cat([x, x_cond], dim = 1)
