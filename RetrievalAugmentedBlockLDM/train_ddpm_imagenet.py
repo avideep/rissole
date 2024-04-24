@@ -52,7 +52,7 @@ parser.add_argument('--lr', default=2e-4,
                     type=float, metavar='LR', help='Initial learning rate (default: 0.0002)')
 parser.add_argument('--config', default='configs/ddpm_linear.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/ddpm_linear.yaml)')
-parser.add_argument('--unet-config', default='configs/unet.yaml',
+parser.add_argument('--unet-config', default='configs/unet_imagenet100.yaml',
                     metavar='PATH', help='Path to unet model config file (default: configs/unet.yaml)')
 parser.add_argument('--data-config', default='configs/data_se.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/data_se.yaml)')
@@ -68,9 +68,9 @@ parser.add_argument('--load-ckpt_ddpm', default=None, metavar='PATH',
                     dest='load_checkpoint_ddpm', help='Load model checkpoint and continue training')
 parser.add_argument('--load-ckpt_unet', default=None, metavar='PATH',
                     dest='load_checkpoint_unet', help='Load model checkpoint and continue training')
-parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-18_151152/best_model.pt',
+parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-29_153956/best_model.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
-parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
+parser.add_argument('--vqgan-config', default='configs/vqgan_rgb.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
 # parser.add_argument('--vae-path', default='checkpoints/vae/24-02-15_130409/best_model.pt',
 #                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
