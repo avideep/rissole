@@ -192,9 +192,9 @@ def main():
         logger.global_train_step = logger.running_epoch
         print(f"Epoch [{epoch + 1} / {args.epochs}]")
 
-        train(ddpm, data, dset, optimizer, block_size, vae, device, args)
+        train(ddpm, data, dset, optimizer, block_size, device, args)
 
-        validate(ddpm, data, dset, block_size, vae, device, args)
+        validate(ddpm, data, dset, block_size, device, args)
 
         # logging
         output = ' - '.join([f'{k}: {v.avg:.4f}' for k, v in logger.epoch.items()])
@@ -212,7 +212,7 @@ def main():
 
     elapsed_time = timer(t_start, time.time())
     print(f"Total training time: {elapsed_time}")
-    
+
 def get_block_size(args, vqgan_model, device):
     x = torch.rand(1, args.image_channels, args.img_size, args.img_size).to(device)
     x = vqgan_model.encode(x)
@@ -225,7 +225,7 @@ def debug(model,data_loader,device):
     print(model.encode(x).shape)
 
 
-def train(model, data, dset, optimizer, block_size, vae, device, args):
+def train(model, data, dset, optimizer, block_size, device, args):
     model.train()
 
     ema_loss = None
@@ -235,13 +235,13 @@ def train(model, data, dset, optimizer, block_size, vae, device, args):
         x = model.encode(x)
         if args.use_cfg:
             if args.use_low_res  and  np.random.choice([1, 0], p=[1-p, p]): # setting the condition to None as per the guidance probability, should the condition be used
-                x_hat = sample_from_vae(x.shape[0],vae, device)
+                # x_hat = sample_from_vae(x.shape[0],vae, device)
                 x_resized = model.encode(x_hat)
                 low_res_cond = F.resize(x_resized, [block_size], antialias = True)
             else:
                 low_res_cond = None
         elif args.use_low_res: # if cfg is not used but low res cond is going to be used
-            x_hat = sample_from_vae(x.shape[0],vae, device)
+            # x_hat = sample_from_vae(x.shape[0],vae, device)
             x_resized = model.encode(x_hat)
             low_res_cond = F.resize(x_resized, [block_size], antialias = True)
         else: # if nothing is used
@@ -275,14 +275,14 @@ def train(model, data, dset, optimizer, block_size, vae, device, args):
         metrics = {'ema_loss': ema_loss, 'loss': loss_agg}
         logger.log_metrics(metrics, phase='Train', aggregate=True, n=curr_block.shape[0])
 
-@torch.no_grad()
-def sample_from_vae(n_images, model, device):
-    z = torch.randn(n_images, vae_latent_dim).to(device)
-    images = model.decode(z)
-    return images
+# @torch.no_grad()
+# def sample_from_vae(n_images, model, device):
+#     z = torch.randn(n_images, vae_latent_dim).to(device)
+#     images = model.decode(z)
+#     return images
 
 @torch.no_grad()
-def validate(model, data, dset, block_size, vae, device, args):
+def validate(model, data, dset, block_size, device, args):
     model.eval()
     x, _ = next(iter(data.val))
     x = x.to(device)
@@ -297,7 +297,7 @@ def validate(model, data, dset, block_size, vae, device, args):
     first_block = x[:n_images, :, :block_size, :block_size]
     prev_block = torch.randn_like(first_block).to(device)
     if args.use_low_res: 
-        low_res_cond = sample_from_vae(n_images, vae, device)
+        # low_res_cond = sample_from_vae(n_images, vae, device)
         low_res_cond = model.encode(low_res_cond)
         low_res_cond = F.resize(low_res_cond, [block_size], antialias = True)
     else:
