@@ -40,22 +40,22 @@ class UNetLight(nn.Module):
         self.pos_embedding = TimeEmbedding(time_emb_dim, pos_emb_dim)
         # initial convolutional layer
         # in_channels = 3 * in_channels
-        # self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=4)
+        # self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=3) # for Celeb. Padding = 4 for ImageNet100 
         self.activate_cond_layer = activate_cond_layer
         self.use_addition = use_addition
         if self.activate_cond_layer:
-            self.pre_init_conv = nn.Conv2d(in_channels, self.channels[0] // 2, kernel_size = 7, padding = 3)
-            self.cond_conv = nn.Conv2d(cond_emb_dim, self.channels[0] // 2, kernel_size = 7, padding = 3)
+            self.pre_init_conv = nn.Conv2d(in_channels, self.channels[0] // 2, kernel_size = 7, padding = 4)
+            self.cond_conv = nn.Conv2d(cond_emb_dim, self.channels[0] // 2, kernel_size = 7, padding = 4)
             if self.use_addition:
                 # self.layer_norm = nn.LayerNorm(None)
-                self.init_conv = nn.Conv2d(self.channels[0] // 2, self.channels[0], kernel_size=7, padding=3)
+                self.init_conv = nn.Conv2d(self.channels[0] // 2, self.channels[0], kernel_size=7, padding=4)
         else:
             if self.use_addition:
                 pass
                 # self.layer_norm = nn.LayerNorm(None)
             else:
                 in_channels += cond_emb_dim
-            self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=3)
+            self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=4)
         # self.cond_attn = CrossAttention(in_channels, in_channels, dim_keys, n_heads)
 
         # contracting path
@@ -101,8 +101,8 @@ class UNetLight(nn.Module):
             prev_channel = c
 
         # final output 1x1 convolution
-        # self.final_conv = nn.Conv2d(self.channels[0], out_channels, kernel_size = 5, padding = 1)
-        self.final_conv = nn.Conv2d(self.channels[0], out_channels, 1)
+        self.final_conv = nn.Conv2d(self.channels[0], out_channels, kernel_size = 5, padding = 1)
+        # self.final_conv = nn.Conv2d(self.channels[0], out_channels, 1)
 
 
     def forward(self, x: torch.Tensor, x_cond: torch.Tensor, t: torch.Tensor, p: torch.Tensor, l: torch.Tensor = None):
