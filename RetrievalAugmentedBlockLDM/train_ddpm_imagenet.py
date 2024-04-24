@@ -10,7 +10,7 @@ import yaml
 from tqdm import tqdm
 import torchvision.transforms.functional as F
 from dataloader import PlantNet, CIFAR10, CelebA, CelebAHQ, ImageNet100
-from dsetbuilder_vqgan import DSetBuilder, ClassDSetBuilder
+from dsetbuilder_vqgan import DSetBuilder
 from model import VQGANLight, VAE, IntroVAE
 from model.ddpm.ddpm import DDPM
 from model.unet import UNet
@@ -33,25 +33,26 @@ parser.add_argument('--name', '-n', default='',
                     type=str, metavar='NAME', help='Model name and folder where logs are stored')
 parser.add_argument('--epochs', default=200,
                     type=int, metavar='N', help='Number of epochs to run (default: 100)')
-parser.add_argument('--batch-size', default=16, metavar='N',
+parser.add_argument('--batch-size', default=128, metavar='N',
                     type=int, help='Mini-batch size (default: 64)')
-parser.add_argument('--dset-batch-size', default=32, metavar='N',
+parser.add_argument('--dset-batch-size', default=128, metavar='N',
                     type=int, help='Mini-batch size (default: 32)')
 parser.add_argument('--image-size', default=224, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
-parser.add_argument('--block-size', default=14, metavar='N',
+parser.add_argument('--block-factor', default=2, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
-parser.add_argument('--k', default=10, metavar='N',
+parser.add_argument('--k', default=20, metavar='N',
                     type=int, help='Number of nearest neighbors to search.')
 parser.add_argument('--image-channels', default=3, metavar='N',
                     type=int, help='Number of image channels (default: 3)')
+parser.add_argument('--data-path', default= '/hdd/avideep/blockLDM/data/', metavar='PATH', help='Path to root of the data')
 parser.add_argument('--num-workers', default=0, metavar='N',
                     type=int, help='Number of workers for the dataloader (default: 0)')
 parser.add_argument('--lr', default=2e-4,
                     type=float, metavar='LR', help='Initial learning rate (default: 0.0002)')
 parser.add_argument('--config', default='configs/ddpm_linear.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/ddpm_linear.yaml)')
-parser.add_argument('--unet-config', default='configs/unet_imagenet100.yaml',
+parser.add_argument('--unet-config', default='configs/unet.yaml',
                     metavar='PATH', help='Path to unet model config file (default: configs/unet.yaml)')
 parser.add_argument('--data-config', default='configs/data_se.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/data_se.yaml)')
@@ -67,24 +68,24 @@ parser.add_argument('--load-ckpt_ddpm', default=None, metavar='PATH',
                     dest='load_checkpoint_ddpm', help='Load model checkpoint and continue training')
 parser.add_argument('--load-ckpt_unet', default=None, metavar='PATH',
                     dest='load_checkpoint_unet', help='Load model checkpoint and continue training')
-parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-29_153956/best_model.pt',
+parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-18_151152/best_model.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
-parser.add_argument('--vqgan-config', default='configs/vqgan_rgb.yaml',
+parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
-parser.add_argument('--vae-path', default='checkpoints/vae/24-02-15_130409/best_model.pt',
-                    metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
-parser.add_argument('--vae-config', default='configs/vae.yaml',
-                    metavar='PATH', help='Path to model config file (default: configs/vaeyaml)')
-parser.add_argument('--use-low-res', action='store_true',
-                    help='Whether to condition the model with a low resolution whole image sampled from a VAE')
-parser.add_argument('--use-prev-block', action='store_true',
-                    help='Whether to condition the model with the previous block')
-parser.add_argument('--use-cfg', action='store_true',
-                    help='Whether to use classifier-free guidance')
-parser.add_argument('--guidance-probability', default=0.7, type=float,
-                    help='probability of unconditional generation (default: 0.8)')
-parser.add_argument('--guidance-weight', default=10, type=int,
-                    help='weight on unconditional generaton. (default: 5)')
+# parser.add_argument('--vae-path', default='checkpoints/vae/24-02-15_130409/best_model.pt',
+#                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
+# parser.add_argument('--vae-config', default='configs/vae.yaml',
+#                     metavar='PATH', help='Path to model config file (default: configs/vaeyaml)')
+# parser.add_argument('--use-low-res', action='store_true',
+#                     help='Whether to condition the model with a low resolution whole image sampled from a VAE')
+# parser.add_argument('--use-prev-block', action='store_true',
+#                     help='Whether to condition the model with the previous block')
+# parser.add_argument('--use-cfg', action='store_true',
+#                     help='Whether to use classifier-free guidance')
+# parser.add_argument('--guidance-probability', default=0.7, type=float,
+#                     help='probability of unconditional generation (default: 0.8)')
+# parser.add_argument('--guidance-weight', default=10, type=int,
+#                     help='weight on unconditional generaton. (default: 5)')
 
 
 logger = Logger(LOG_DIR)
@@ -122,36 +123,38 @@ def main():
         raise ValueError('Currently multi-gpu training is not possible')
     # load data
     if args.data == 'CelebA':
-        data = CelebA(args.batch_size)
+        args.img_size = 64
+        data = CelebA(root= args.data_path, batch_size= args.batch_size)
     elif args.data == 'CIFAR10':
         data = CIFAR10(args.batch_size)
     elif args.data == 'ImageNet100':
-        data = ImageNet100(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+        args.img_size = 224
+        data = ImageNet100(root= args.data_path, batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
     else:
         data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
     # read config file for model
     cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
     cfg_unet = yaml.load(open(args.unet_config, 'r'), Loader=yaml.Loader)
     cfg_vqgan = yaml.load(open(args.vqgan_config, 'r'), Loader=yaml.Loader)
-    cfg_vae = yaml.load(open(args.vae_config,'r'),Loader=yaml.Loader)
-    vae = None
-    if args.use_low_res:
-        vae = VAE(**cfg_vae['model'])
-        # vae = IntroVAE(**cfg_vae['model'])
-        vae, _, _ = load_model_checkpoint(vae, args.vae_path, device)
-        vae.to(device)
-        global vae_latent_dim
-        vae_latent_dim = cfg_vae['model']['latent_dim']
-        cfg_unet['cond_emb_dim'] = 2 * cfg_unet['cond_emb_dim']
+    # cfg_vae = yaml.load(open(args.vae_config,'r'),Loader=yaml.Loader)
+    # vae = None
+    # if args.use_low_res:
+    #     vae = VAE(**cfg_vae['model'])
+    #     # vae = IntroVAE(**cfg_vae['model'])
+    #     vae, _, _ = load_model_checkpoint(vae, args.vae_path, device)
+    #     vae.to(device)
+    #     global vae_latent_dim
+    #     vae_latent_dim = cfg_vae['model']['latent_dim']
+    #     cfg_unet['cond_emb_dim'] = 2 * cfg_unet['cond_emb_dim']
     vqgan_model = VQGANLight(**cfg_vqgan['model'])
     vqgan_model, _, _ = load_model_checkpoint(vqgan_model, args.vqgan_path, device)
     vqgan_model.to(device)
     global latent_dim
     latent_dim = cfg_vqgan['model']['latent_dim']
-    if args.use_prev_block:
-        cfg_unet['in_channels'] = (args.k + 2) * latent_dim # 2 because one if for the input latent representation of the current block and another is that for the previous block
-    else:
-        cfg_unet['in_channels'] = (args.k + 1) * latent_dim
+    # if args.use_prev_block:
+    #     cfg_unet['in_channels'] = (args.k + 2) * latent_dim # 2 because one if for the input latent representation of the current block and another is that for the previous block
+    # else:
+    cfg_unet['cond_emb_dim'] = args.k * latent_dim
 
     unet = UNetLight(**cfg_unet)
     # if args.load_unet is not None:
@@ -163,11 +166,11 @@ def main():
     #     ddpm, _, _ = load_model_checkpoint(ddpm, args.load_ddpm, device)
     ddpm.to(device)
 
-    dset = ClassDSetBuilder(data, args.k, vqgan_model, device)
+    dset = DSetBuilder(data, args.k, vqgan_model, device, block_factor=args.block_factor)
 
     print("{:<16}: {}".format('DDPM model params', count_parameters(ddpm)))
 
-    block_size = args.block_size
+    block_size = get_block_size(args, vqgan_model, device)
     optimizer = torch.optim.Adam(unet.parameters(), args.lr)
 
     # resume training
@@ -209,6 +212,12 @@ def main():
 
     elapsed_time = timer(t_start, time.time())
     print(f"Total training time: {elapsed_time}")
+    
+def get_block_size(args, vqgan_model, device):
+    x = torch.rand(1, args.image_channels, args.img_size, args.img_size).to(device)
+    x = vqgan_model.encode(x)
+    x = vqgan_model.quantize(x)
+    return x.size(2) // args.block_factor
 
 def debug(model,data_loader,device):
     x, _ = next(iter(data_loader))
