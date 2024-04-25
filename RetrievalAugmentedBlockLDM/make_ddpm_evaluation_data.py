@@ -29,6 +29,7 @@ parser.add_argument('--image-size', default=224, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
 parser.add_argument('--image-channels', default=3, metavar='N',
                     type=int, help='Number of image channels (default: 3)')
+parser.add_argument('--data-path', default= '/hdd/avideep/blockLDM/data/', metavar='PATH', help='Path to root of the data')
 parser.add_argument('--block-factor', default=4, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
 parser.add_argument('--k', default=20, metavar='N',
@@ -86,14 +87,15 @@ def main():
 
         if args.data == 'CelebA':
             args.img_size = 64
-            data = CelebA(args.batch_size)
+            data = CelebA(root= args.data_path, batch_size= args.batch_size)
         elif args.data == 'CIFAR10':
             data = CIFAR10(args.batch_size)
         elif args.data == 'ImageNet100':
             args.img_size = 224
-            data = ImageNet100(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+            data = ImageNet100(root= args.data_path, batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
         else:
             data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
+    # read config file for model
         sample_images_real(data.val, args.image_count, args.real_image_path)
 
     if args.sample_gen:
@@ -131,7 +133,7 @@ def main():
         # if args.use_prev_block:
         #     cfg_unet['in_channels'] = (args.k + 2) * latent_dim # 2 because one if for the input latent representation of the current block and another is that for the previous block
         # else:
-        cfg_unet['in_channels'] = (args.k + 1) * latent_dim
+        cfg_unet['cond_emb_dim'] = args.k * latent_dim
 
         unet = UNetLight(**cfg_unet)
         unet, _, _ = load_model_checkpoint(unet, args.load_checkpoint_unet, device)
