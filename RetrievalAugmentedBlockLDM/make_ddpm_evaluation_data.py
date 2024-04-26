@@ -99,7 +99,7 @@ def main():
         sample_images_real(data.val, args.image_count, args.real_image_path)
 
     if args.sample_gen:
-        if args.sample_gen and args.gen_image_path and not os.path.exists(args.gen_image_path):
+        if args.gen_image_path and not os.path.exists(args.gen_image_path):
             os.makedirs(args.gen_image_path)
 
         # GPU setup
