@@ -45,6 +45,7 @@ parser.add_argument('--k', default=10, metavar='N',
                     type=int, help='Number of nearest neighbors to search.')
 parser.add_argument('--image-channels', default=3, metavar='N',
                     type=int, help='Number of image channels (default: 3)')
+parser.add_argument('--data-path', default= '/hdd/avideep/blockLDM/data/', metavar='PATH', help='Path to root of the data')
 parser.add_argument('--num-workers', default=0, metavar='N',
                     type=int, help='Number of workers for the dataloader (default: 0)')
 parser.add_argument('--lr', default=2e-4,
@@ -120,11 +121,13 @@ def main():
         raise ValueError('Currently multi-gpu training is not possible')
     # load data
     if args.data == 'CelebA':
-        data = CelebA(args.batch_size)
+        args.img_size = 64
+        data = CelebA(root= args.data_path, batch_size= args.batch_size)
     elif args.data == 'CIFAR10':
         data = CIFAR10(args.batch_size)
     elif args.data == 'ImageNet100':
-        data = ImageNet100(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+        args.img_size = 224
+        data = ImageNet100(root= args.data_path, batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
     else:
         data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
     # read config file for model
