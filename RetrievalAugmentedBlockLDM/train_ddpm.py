@@ -72,6 +72,8 @@ parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-18_151152/b
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
+parser.add_argument('--use-rag', action='store_true',
+                     help='Whether to condition the model with retrieved neighbors')
 # parser.add_argument('--vae-path', default='checkpoints/vae/24-02-15_130409/best_model.pt',
 #                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 # parser.add_argument('--vae-config', default='configs/vae.yaml',
@@ -162,12 +164,15 @@ def main():
     ddpm = DDPM(eps_model=unet, vae_model=vqgan_model, **cfg)
     ddpm.to(device)
 
-    dset = DSetBuilder(data, args.k, vqgan_model, device, block_factor=args.block_factor)
+    block_size = get_block_size(args, vqgan_model, device)
 
+    if args.use_rag:
+        dset = DSetBuilder(data, args.k, vqgan_model, device, block_factor=args.block_factor)
+    else:
+        dset = torch.zeros(args.batch_size,  args.k * latent_dim, block_size, block_size)
 
     print("{:<16}: {}".format('DDPM model params', count_parameters(ddpm)))
 
-    block_size = get_block_size(args, vqgan_model, device)
     optimizer = torch.optim.Adam(unet.parameters(), args.lr)
 
     # resume training
@@ -248,7 +253,7 @@ def train(model, data, dset, optimizer, block_size, device, args):
         optimizer.zero_grad()
         position = 0
         loss_agg = 0
-        neighbor_ids = dset.get_neighbor_ids(first_block.contiguous().view(x.size(0), -1))
+        neighbor_ids = dset.get_neighbor_ids(first_block.contiguous().view(x.size(0), -1)) if args.use_rag else None
         for i in range(0, x.shape[-1], block_size):
             for j in range(0, x.shape[-1], block_size):
                 # if j==0 and i>0:
@@ -257,7 +262,7 @@ def train(model, data, dset, optimizer, block_size, device, args):
                 curr_block = x[:, :, i:i+block_size, j:j+block_size]
                 # print(prev_block.shape)
                 # neighbors = torch.cat([dset.get_neighbors(neighbor_ids, position, block_size, x.size(0), latent_dim).to(device), prev_block], dim = 1) if args.use_prev_block else 
-                neighbors = dset.get_neighbors(neighbor_ids, position, block_size, x.size(0), latent_dim).to(device)
+                neighbors = dset.get_neighbors(neighbor_ids, position, block_size, x.size(0), latent_dim).to(device) if args.use_rag else dset
                 loss = model.p_losses2(curr_block, neighbors, position = block_pos, low_res_cond = low_res_cond)
                 # prev_block = curr_block
                 loss_agg += loss
@@ -298,7 +303,7 @@ def validate(model, data, dset, block_size, device, args):
     low_res_cond = None
     position = 0
     x_query = dset.get_rand_queries(n_images)
-    neighbor_ids = dset.get_neighbor_ids(x_query)
+    neighbor_ids = dset.get_neighbor_ids(x_query) if args.use_rag else None
 
     # w = args.guidance_weight
     for i in range(0, img.shape[-1], block_size):
@@ -307,7 +312,7 @@ def validate(model, data, dset, block_size, device, args):
             #     prev_block = curr_block[0][:,:,i-block_size:i, j:j+block_size]
             block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
             # neighbors = torch.cat([dset.get_neighbors(neighbor_ids, position, block_size, n_images, latent_dim).to(device), prev_block], dim =1) if args.use_prev_block else 
-            neighbors = dset.get_neighbors(neighbor_ids, position, block_size, n_images, latent_dim).to(device)
+            neighbors = dset.get_neighbors(neighbor_ids, position, block_size, n_images, latent_dim).to(device) if args.use_rag else dset
             # if args.use_low_res and args.use_cfg:
             #     curr_block_uncond = model.sample(block_size, prev_block, block_pos, low_res_cond = None, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance (CFG)
             #     curr_block_cond = model.sample(block_size, prev_block, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance 
