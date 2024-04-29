@@ -143,6 +143,7 @@ class UNetLight(nn.Module):
         # down sample
         for block1, attn1, block2, attn2, norm, downsample in self.down_blocks:
         # for block1, block2, norm, downsample in self.down_blocks:
+            print(x.shape, skips[-1].shape)
             x = block1(x, t, p)
             # print(x.shape)
             if attn1 is not None:
