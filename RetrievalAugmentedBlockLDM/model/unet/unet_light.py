@@ -107,9 +107,11 @@ class UNetLight(nn.Module):
 
     def forward(self, x: torch.Tensor, x_cond: torch.Tensor, t: torch.Tensor, p: torch.Tensor, l: torch.Tensor = None):
         t = self.time_embedding(t)
+        print(x.shape)
         if self.activate_cond_layer:
             x_cond = self.cond_conv(x_cond)
             x = self.pre_init_conv(x)
+            print(x.shape)
             if self.use_addition:
                 x = x + x_cond
                 ln = nn.LayerNorm([x.size(1), x.size(2), x.size(3)]).cuda()
