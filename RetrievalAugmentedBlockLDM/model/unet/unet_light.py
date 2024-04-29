@@ -11,7 +11,7 @@ from typing import List
 class UNetLight(nn.Module):
     def __init__(self,
                  in_channels: int, out_channels: int, time_emb_dim: int, pos_emb_dim: int, cond_emb_dim: int, activate_cond_layer: bool = False, use_addition: bool = False,
-                 channels: List[int] = None, n_groups: int = 8, 
+                 channels: List[int] = None, n_groups: int = 8, init_padding: int = 1,
                  dim_keys: int = 64, n_heads: int = 4, use_spatial_transformer: bool = False):
         """
         U-Net model, first proposed in (https://arxiv.org/abs/1505.04597) and equipped for
@@ -44,18 +44,18 @@ class UNetLight(nn.Module):
         self.activate_cond_layer = activate_cond_layer
         self.use_addition = use_addition
         if self.activate_cond_layer:
-            self.pre_init_conv = nn.Conv2d(in_channels, self.channels[0] // 2, kernel_size = 3, stride = 1, padding = 1)
-            self.cond_conv = nn.Conv2d(cond_emb_dim, self.channels[0] // 2, kernel_size = 3, stride = 1, padding = 1)
+            self.pre_init_conv = nn.Conv2d(in_channels, self.channels[0] // 2, kernel_size = 3, stride = 1, padding = init_padding)
+            self.cond_conv = nn.Conv2d(cond_emb_dim, self.channels[0] // 2, kernel_size = 3, stride = 1, padding = init_padding)
             if self.use_addition:
                 # self.layer_norm = nn.LayerNorm(None)
-                self.init_conv = nn.Conv2d(self.channels[0] // 2, self.channels[0], kernel_size=3, stride = 1, padding=1)
+                self.init_conv = nn.Conv2d(self.channels[0] // 2, self.channels[0], kernel_size=3, stride = 1, padding=init_padding)
         else:
             if self.use_addition:
                 pass
                 # self.layer_norm = nn.LayerNorm(None)
             else:
                 in_channels += cond_emb_dim
-            self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=3, stride=1, padding=1)
+            self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=3, stride=1, padding=init_padding)
         # self.cond_attn = CrossAttention(in_channels, in_channels, dim_keys, n_heads)
 
         # contracting path

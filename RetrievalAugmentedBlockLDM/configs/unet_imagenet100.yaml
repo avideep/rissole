@@ -9,7 +9,7 @@ activate_cond_layer: True
 use_addition: True
 # residual network
 n_groups: 8         # group normalization
-
+init_padding: 2
 # attention
 dim_keys: 64   # dimension of queries, keys, values
 n_heads: 4  # number of heads for self-attention
