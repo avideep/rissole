@@ -117,6 +117,7 @@ class UNetLight(nn.Module):
                 ln.bias.requires_grad = True
                 x = ln(x)
                 x = self.init_conv(x)
+                print(x.shape)
             else:
                 x = torch.cat([x, x_cond], dim = 1)
         else:
