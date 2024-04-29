@@ -44,18 +44,18 @@ class UNetLight(nn.Module):
         self.activate_cond_layer = activate_cond_layer
         self.use_addition = use_addition
         if self.activate_cond_layer:
-            self.pre_init_conv = nn.Conv2d(in_channels, self.channels[0] // 2, kernel_size = 7, padding = 4)
-            self.cond_conv = nn.Conv2d(cond_emb_dim, self.channels[0] // 2, kernel_size = 7, padding = 4)
+            self.pre_init_conv = nn.Conv2d(in_channels, self.channels[0] // 2, kernel_size = 3, stride = 1, padding = 1)
+            self.cond_conv = nn.Conv2d(cond_emb_dim, self.channels[0] // 2, kernel_size = 3, stride = 1, padding = 1)
             if self.use_addition:
                 # self.layer_norm = nn.LayerNorm(None)
-                self.init_conv = nn.Conv2d(self.channels[0] // 2, self.channels[0], kernel_size=7, padding=4)
+                self.init_conv = nn.Conv2d(self.channels[0] // 2, self.channels[0], kernel_size=3, stride = 1, padding=1)
         else:
             if self.use_addition:
                 pass
                 # self.layer_norm = nn.LayerNorm(None)
             else:
                 in_channels += cond_emb_dim
-            self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=4)
+            self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=3, stride=1, padding=1)
         # self.cond_attn = CrossAttention(in_channels, in_channels, dim_keys, n_heads)
 
         # contracting path
