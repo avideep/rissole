@@ -39,12 +39,13 @@ class ImageNet100:
             transforms.CenterCrop(img_size),
             transforms.Normalize(self.mean, self.std)
         ])
-        self.ROOT_PATH = root + 'imagenet100/train/'
+        self.ROOT_PATH = root
+        self.IMAGE_PATH = self.ROOT_PATH + 'imagenet100/train/'
         # train_size = int(50000 * 0.9)
         # # val size is 10000 in cifar10
         # test_size = 50000 - train_size
 
-        self.train_set_full = ImageFolder(self.ROOT_PATH, self.train_transform)
+        self.train_set_full = ImageFolder(self.IMAGE_PATH, self.train_transform)
         self.train_loader, self.val_loader = self.train_val_test_split(self.train_set_full, self.batch_size)
         self.full_dataloader = DataLoader(self.train_set_full, batch_size=dset_batch_size, num_workers=12, pin_memory=True)
         # invert normalization for tensor to image transform
