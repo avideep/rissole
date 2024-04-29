@@ -112,14 +112,20 @@ class UNetLight(nn.Module):
             x = self.pre_init_conv(x)
             if self.use_addition:
                 x = x + x_cond
-                x = nn.LayerNorm([x.size(1), x.size(2), x.size(3)]).cuda()(x)
+                ln = nn.LayerNorm([x.size(1), x.size(2), x.size(3)]).cuda()
+                ln.weight.requires_grad = True
+                ln.bias.requires_grad = True
+                x = ln(x)
                 x = self.init_conv(x)
             else:
                 x = torch.cat([x, x_cond], dim = 1)
         else:
             if self.use_addition:
                 x = x + x_cond.view(-1, x.size(1), x.size(2), x.size(3))
-                x = nn.LayerNorm([x.size(1), x.size(2), x.size(3)])(x)
+                ln = nn.LayerNorm([x.size(1), x.size(2), x.size(3)]).cuda()
+                ln.weight.requires_grad = True
+                ln.bias.requires_grad = True
+                x = ln(x)
             else:
                 x = torch.cat([x, x_cond], dim = 1)
             x = self.init_conv(x)
