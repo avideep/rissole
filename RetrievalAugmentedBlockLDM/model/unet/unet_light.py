@@ -10,8 +10,8 @@ from typing import List
 
 class UNetLight(nn.Module):
     def __init__(self,
-                 in_channels: int, out_channels: int, time_emb_dim: int, pos_emb_dim: int, cond_emb_dim: int, activate_cond_layer: bool = False, use_addition: bool = False,
-                 channels: List[int] = None, n_groups: int = 8, init_padding: int = 1,
+                 in_channels: int, out_channels: int, time_emb_dim: int, pos_emb_dim: int, cond_emb_dim: int, conv_config: dict, activate_cond_layer: bool = False, use_addition: bool = False,
+                 channels: List[int] = None, n_groups: int = 8,
                  dim_keys: int = 64, n_heads: int = 4, use_spatial_transformer: bool = False):
         """
         U-Net model, first proposed in (https://arxiv.org/abs/1505.04597) and equipped for
@@ -43,6 +43,7 @@ class UNetLight(nn.Module):
         # self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=3) # for Celeb. Padding = 4 for ImageNet100 
         self.activate_cond_layer = activate_cond_layer
         self.use_addition = use_addition
+        init_padding = conv_config['init_padding']
         if self.activate_cond_layer:
             self.pre_init_conv = nn.Conv2d(in_channels, self.channels[0] // 2, kernel_size = 3, stride = 1, padding = init_padding)
             self.cond_conv = nn.Conv2d(cond_emb_dim, self.channels[0] // 2, kernel_size = 3, stride = 1, padding = init_padding)
@@ -101,8 +102,10 @@ class UNetLight(nn.Module):
             prev_channel = c
 
         # final output 1x1 convolution
-        self.final_conv = nn.Conv2d(self.channels[0], out_channels, kernel_size = 5, padding = 1) #ImageNet100
-        # self.final_conv = nn.Conv2d(self.channels[0], out_channels, 1) #CelebA
+        kernel_size = conv_config['final_kernel_size']
+        padding = conv_config['final_padding']
+        self.final_conv = nn.Conv2d(self.channels[0], out_channels, kernel_size = kernel_size, padding = padding)
+
 
 
     def forward(self, x: torch.Tensor, x_cond: torch.Tensor, t: torch.Tensor, p: torch.Tensor, l: torch.Tensor = None):
