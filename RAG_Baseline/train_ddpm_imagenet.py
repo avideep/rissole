@@ -243,7 +243,7 @@ def train(model, data, dset, optimizer, block_size, vae, device, args):
         optimizer.zero_grad()
         position = 0
         loss_agg = 0
-        neighbor_ids = dset.get_neighbor_ids(first_block.contiguous().view(x.size(0), -1), c)
+        neighbor_ids = dset.get_neighbor_ids(first_block.contiguous().view(x.size(0), -1))
         for i in range(0, x.shape[-1], block_size):
             for j in range(0, x.shape[-1], block_size):
                 # if j==0 and i>0:
