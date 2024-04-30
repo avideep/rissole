@@ -170,7 +170,7 @@ def main():
         dset = DSetBuilder(data, args.k, vqgan_model, device, block_factor=args.block_factor)
     else:
         print('Not Using RAG...')
-        dset = torch.zeros(args.batch_size,  args.k * latent_dim, block_size, block_size).to(device)
+        # dset = torch.zeros(args.batch_size,  args.k * latent_dim, block_size, block_size).to(device)
 
     print("{:<16}: {}".format('DDPM model params', count_parameters(ddpm)))
 
@@ -263,7 +263,7 @@ def train(model, data, dset, optimizer, block_size, device, args):
                 curr_block = x[:, :, i:i+block_size, j:j+block_size]
                 # print(prev_block.shape)
                 # neighbors = torch.cat([dset.get_neighbors(neighbor_ids, position, block_size, x.size(0), latent_dim).to(device), prev_block], dim = 1) if args.use_prev_block else 
-                neighbors = dset.get_neighbors(neighbor_ids, position, block_size, x.size(0), latent_dim).to(device) if args.use_rag else dset
+                neighbors = dset.get_neighbors(neighbor_ids, position, block_size, x.size(0), latent_dim).to(device) if args.use_rag else torch.zeros(x.size(0),  args.k * latent_dim, block_size, block_size).to(device)
                 loss = model.p_losses2(curr_block, neighbors, position = block_pos, low_res_cond = low_res_cond)
                 # prev_block = curr_block
                 loss_agg += loss
@@ -313,7 +313,7 @@ def validate(model, data, dset, block_size, device, args):
             #     prev_block = curr_block[0][:,:,i-block_size:i, j:j+block_size]
             block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
             # neighbors = torch.cat([dset.get_neighbors(neighbor_ids, position, block_size, n_images, latent_dim).to(device), prev_block], dim =1) if args.use_prev_block else 
-            neighbors = dset.get_neighbors(neighbor_ids, position, block_size, n_images, latent_dim).to(device) if args.use_rag else dset
+            neighbors = dset.get_neighbors(neighbor_ids, position, block_size, n_images, latent_dim).to(device) if args.use_rag else torch.zeros(n_images,  args.k * latent_dim, block_size, block_size).to(device)
             # if args.use_low_res and args.use_cfg:
             #     curr_block_uncond = model.sample(block_size, prev_block, block_pos, low_res_cond = None, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance (CFG)
             #     curr_block_cond = model.sample(block_size, prev_block, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim) #sampling strategy for classifier-free guidance 
