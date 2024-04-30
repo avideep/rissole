@@ -237,18 +237,6 @@ def train(model, data, dset, optimizer, block_size, device, args):
     for x, _ in tqdm(data.train, desc="Training"):
         x = x.to(device)
         x = model.encode(x)
-        # if args.use_cfg:
-        #     if args.use_low_res  and  np.random.choice([1, 0], p=[1-p, p]): # setting the condition to None as per the guidance probability, should the condition be used
-        #         x_hat = sample_from_vae(x.shape[0],vae, device)
-        #         x_resized = model.encode(x_hat)
-        #         low_res_cond = F.resize(x_resized, [block_size], antialias = True)
-        #     else:
-        #         low_res_cond = None
-        # elif args.use_low_res: # if cfg is not used but low res cond is going to be used
-        #     x_hat = sample_from_vae(x.shape[0],vae, device)
-        #     x_resized = model.encode(x_hat)
-        #     low_res_cond = F.resize(x_resized, [block_size], antialias = True)
-        # else: # if nothing is used
         low_res_cond = None
         first_block = x[:, :, :block_size, :block_size]
         # prev_block = torch.rand_like(first_block).to(device) if args.use_prev_block else None
