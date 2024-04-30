@@ -170,6 +170,7 @@ def main():
         dset = DSetBuilder(data, args.k, vqgan_model, device, block_factor=args.block_factor)
     else:
         print('Not Using RAG...')
+        dset = None
         # dset = torch.zeros(args.batch_size,  args.k * latent_dim, block_size, block_size).to(device)
 
     print("{:<16}: {}".format('DDPM model params', count_parameters(ddpm)))
@@ -303,8 +304,10 @@ def validate(model, data, dset, block_size, device, args):
     # else:
     low_res_cond = None
     position = 0
-    x_query = dset.get_rand_queries(n_images)
-    neighbor_ids = dset.get_neighbor_ids(x_query) if args.use_rag else None
+    if args.use_rag:
+        x_query = dset.get_rand_queries(n_images) 
+        neighbor_ids = dset.get_neighbor_ids(x_query)
+    
 
     # w = args.guidance_weight
     for i in range(0, img.shape[-1], block_size):
