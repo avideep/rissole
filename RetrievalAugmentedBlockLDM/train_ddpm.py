@@ -165,10 +165,11 @@ def main():
     ddpm.to(device)
 
     block_size = get_block_size(args, vqgan_model, device)
-
     if args.use_rag:
+        print('Using RAG...')
         dset = DSetBuilder(data, args.k, vqgan_model, device, block_factor=args.block_factor)
     else:
+        print('Not Using RAG...')
         dset = torch.zeros(args.batch_size,  args.k * latent_dim, block_size, block_size).to(device)
 
     print("{:<16}: {}".format('DDPM model params', count_parameters(ddpm)))
