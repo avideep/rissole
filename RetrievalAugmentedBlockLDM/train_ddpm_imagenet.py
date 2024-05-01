@@ -72,6 +72,8 @@ parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-29_153956/b
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 parser.add_argument('--vqgan-config', default='configs/vqgan_rgb.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
+parser.add_argument('--use-rag', action='store_true',
+                     help='Whether to condition the model with retrieved neighbors')
 # parser.add_argument('--vae-path', default='checkpoints/vae/24-02-15_130409/best_model.pt',
 #                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 # parser.add_argument('--vae-config', default='configs/vae.yaml',
