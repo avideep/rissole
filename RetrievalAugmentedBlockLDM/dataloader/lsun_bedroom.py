@@ -45,7 +45,7 @@ class LSUNBedroom:
         # # val size is 10000 in cifar10
         # test_size = 50000 - train_size
 
-        self.train_set_full = LSUN(root='./data', classes=['bedroom_train'], transform=transforms.ToTensor())
+        self.train_set_full = LSUN(root=self.IMAGE_PATH, classes=['bedroom_train'], transform=transforms.ToTensor())
         self.train_loader, self.val_loader = self.train_val_test_split(self.train_set_full, self.batch_size)
         self.full_dataloader = DataLoader(self.train_set_full, batch_size=dset_batch_size, num_workers=12, pin_memory=True)
         # invert normalization for tensor to image transform
