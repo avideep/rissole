@@ -5,7 +5,8 @@ import torch
 import yaml
 
 from tqdm import tqdm
-
+import random
+import string
 from utils.visualization import tensor_to_image
 from dataloader import PlantNet
 from model import VQGANLight, VAE, IntroVAE
@@ -158,13 +159,16 @@ def main():
 
         sample_images_gen(ddpm, dset, args.image_count, args.gen_image_path, args, device)
 
+def get_random_filename():
+    # Generate a random string of 10 characters
+    return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10))
 
 def sample_images_real(data_loader, n_images, real_image_path):
     count = 0
     for x, _ in tqdm(data_loader, desc="sample_real_images"):
         for one_image in x:
             img = tensor_to_image(one_image)
-            img.save(f"{real_image_path}/{count}.jpg")
+            img.save(f"{real_image_path}/{get_random_filename()}.jpg")
 
             count += 1
             if count == n_images:
@@ -200,7 +204,7 @@ def sample_images_gen(model, dset, n_images, image_path, args, device):
 
         for n, img in enumerate(images):
             img = tensor_to_image(img)
-            img.save(f"{image_path}/{step_count}_{n}.jpg")
+            img.save(f"{image_path}/{get_random_filename()}_{n}.jpg")
 
         n_images -= sample_size
         step_count += 1
