@@ -56,6 +56,8 @@ parser.add_argument('--gen-image-path', default='samples/new_method_blocks_4/',
                     metavar='PATH', help='Path to generated images')
 parser.add_argument('--use-prev-block', action='store_true',
                     help='Whether to condition the model with the previous block')
+parser.add_argument('--use-rag', action='store_true',
+                    help='Whether to condition on retrieved neighbors from an external memory')
 parser.add_argument('--gpus', default=0, type=int,
                     nargs='+', metavar='GPUS', help='If GPU(s) available, which GPU(s) to use for training.')
 parser.add_argument('--sample_real', action='store_true',
@@ -149,7 +151,15 @@ def main():
         ddpm, _, _ = load_model_checkpoint(ddpm, args.load_checkpoint_ddpm, device)
         ddpm.to(device)
 
-        dset = DSetBuilder(data, args.k, vqgan_model, device, block_factor=args.block_factor)
+        if args.use_rag:
+            print('Using RAG...')
+            dset = DSetBuilder(data, args.k, vqgan_model, device, block_factor=args.block_factor)
+        else:
+            print('Not Using RAG...')
+            dset = None
+        # dset = torch.zeros(args.batch_size,  args.k * latent_dim, block_size, block_size).to(device)
+
+        # dset = DSetBuilder(data, args.k, vqgan_model, device, block_factor=args.block_factor)
 
         # vae = IntroVAE(**cfg_vae['model'])
         # vae, _, _ = load_model_checkpoint(vae, args.vae_path, device)
@@ -157,7 +167,7 @@ def main():
         # global vae_latent_dim
         # vae_latent_dim = cfg_vae['model']['latent_dim']        
         block_size = get_block_size(args, vqgan_model, device)
-        sample_images_gen(ddpm, dset, block_size, args.image_count, args.gen_image_path, args.img_size, device)
+        sample_images_gen(ddpm, dset, block_size, args.image_count, args.gen_image_path, args.img_size, args.use_rag, args.k, device)
 
 def get_block_size(args, vqgan_model, device):
     x = torch.rand(1, args.image_channels, args.img_size, args.img_size).to(device)
@@ -184,7 +194,7 @@ def get_random_filename():
     # Generate a random string of 10 characters
     return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10))
 @torch.no_grad()
-def sample_images_gen(model, dset, block_size, n_images, image_path, image_size, device):
+def sample_images_gen(model, dset, block_size, n_images, image_path, image_size, use_rag, nn, device):
     model.eval()
 
     # we only want to sample x0 images
@@ -210,8 +220,9 @@ def sample_images_gen(model, dset, block_size, n_images, image_path, image_size,
         # low_res_cond = model.encode(low_res_cond)
         # low_res_cond = F.resize(low_res_cond, [block_size], antialias = True)
         prev_block = torch.randn((n_images, latent_dim, block_size, block_size)).to(device)
-        x_query = dset.get_rand_queries(n_images)
-        neighbor_ids = dset.get_neighbor_ids(x_query)
+        if use_rag:
+            x_query = dset.get_rand_queries(n_images)
+            neighbor_ids = dset.get_neighbor_ids(x_query)
         low_res_cond = None
         position = 0
         for i in range(0, img.shape[-1], block_size):
@@ -221,7 +232,7 @@ def sample_images_gen(model, dset, block_size, n_images, image_path, image_size,
                 #     prev_block = model.encode(prev_block)
                 block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
                 # neighbors = torch.cat([dset.get_neighbors(neighbor_ids, position, block_size, n_images, latent_dim).to(device), prev_block], dim =1) if use_prev_block else
-                neighbors = dset.get_neighbors(neighbor_ids, position, block_size, n_images, latent_dim).to(device)
+                neighbors = dset.get_neighbors(neighbor_ids, position, block_size, n_images, latent_dim).to(device) if use_rag else torch.rand(n_images,  nn * latent_dim, block_size, block_size).to(device)
                 curr_block = model.sample(block_size, neighbors, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim)
                 # curr_block[0] = curr_block[0] - low_res_cond 
                 # prev_block = curr_block[0]
