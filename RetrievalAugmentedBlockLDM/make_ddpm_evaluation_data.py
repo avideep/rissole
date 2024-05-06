@@ -5,6 +5,8 @@ import torch
 import yaml
 
 from tqdm import tqdm
+import random
+import string
 
 from utils.visualization import tensor_to_image
 from dataloader import PlantNet
@@ -174,6 +176,9 @@ def sample_images_real(data_loader, n_images, real_image_path):
 #     images = model.decode(z)
 #     return images
 
+def get_random_filename():
+    # Generate a random string of 10 characters
+    return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10))
 @torch.no_grad()
 def sample_images_gen(model, dset, block_size, n_images, image_path, image_size, device):
     model.eval()
@@ -229,7 +234,7 @@ def sample_images_gen(model, dset, block_size, n_images, image_path, image_size,
         os.makedirs(image_path, exist_ok=True)
         for n, img in enumerate(images):
             img = tensor_to_image(img)
-            img.save(f"{image_path}/{step_count}_{n}.jpg")
+            img.save(f"{image_path}/{get_random_filename()}_{n}.jpg")
 
         n_images -= sample_size
         step_count += 1
