@@ -89,14 +89,14 @@ def main():
 
         if args.data == 'CelebA':
             args.img_size = 64
-            args.real_image_path += 'celeba/'
+            args.real_image_path += '/celeba/'
             data = CelebA(root= args.data_path, batch_size= args.batch_size)
         elif args.data == 'CIFAR10':
             data = CIFAR10(args.batch_size)
         elif args.data == 'ImageNet100':
             args.img_size = 224
             data = ImageNet100(root= args.data_path, batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
-            args.real_image_path += 'imagenet100/'
+            args.real_image_path += '/imagenet100/'
         else:
             data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
     # read config file for model
