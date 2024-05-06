@@ -90,7 +90,7 @@ def main():
         if args.data == 'CelebA':
             args.img_size = 64
             data = CelebA(root= args.data_path, batch_size= args.batch_size)
-            args.real_image_path += '/celeba/'
+            args.real_image_path += '/celeba'
         elif args.data == 'CIFAR10':
             data = CIFAR10(args.batch_size)
         elif args.data == 'ImageNet100':
