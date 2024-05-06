@@ -87,7 +87,7 @@ class DSetBuilder:
         output = torch.stack([self.dset[np.int64(neighbor)] for neighbor in neighbor_ids])
         # print(output.shape)
           
-        output = output.view(b, self.k*c, -1).unsqueeze(dim=-1)
+        output = output.view(b, c, -1).unsqueeze(dim=-1)
         # print(output.shape)
         pad_h, pad_w = (h - output.shape[-2])//2, (w - output.shape[-1])//2
         padding = (pad_w, pad_w+1, pad_h, pad_h)
