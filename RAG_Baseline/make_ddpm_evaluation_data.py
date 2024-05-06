@@ -41,9 +41,9 @@ parser.add_argument('--config', default='configs/ddpm_linear.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/ddpm_linear.yaml)')
 parser.add_argument('--unet-config', default='configs/unet.yaml',
                     metavar='PATH', help='Path to unet model config file (default: configs/unet.yaml)')
-parser.add_argument('--load-ckpt-ddpm', default='checkpoints/second_stage/ddpm_linear/24-04-20_171311/ddpm/best_model.pt', metavar='PATH',
+parser.add_argument('--load-ckpt-ddpm', default='checkpoints/second_stage/ddpm_linear/24-04-26_094037/ddpm/best_model.pt', metavar='PATH',
                     dest='load_checkpoint_ddpm', help='Load model checkpoint and continue training')
-parser.add_argument('--load-ckpt-unet', default='checkpoints/second_stage/ddpm_linear/24-04-20_171311/unet/best_model.pt', metavar='PATH',
+parser.add_argument('--load-ckpt-unet', default='checkpoints/second_stage/ddpm_linear/24-04-26_094037/unet/best_model.pt', metavar='PATH',
                     dest='load_checkpoint_unet', help='Load model checkpoint and continue training')
 parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-18_151152/best_model.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
@@ -89,18 +89,20 @@ def main():
         if args.data == 'CelebA':
             args.img_size = 64
             data = CelebA(args.batch_size)
+            args.real_image_path += '/celeba/'
         elif args.data == 'CIFAR10':
             data = CIFAR10(args.batch_size)
         elif args.data == 'ImageNet100':
             args.img_size = 224
             data = ImageNet100(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+            args.real_image_path += '/imagenet/'
         else:
             data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
         sample_images_real(data.val, args.image_count, args.real_image_path)
 
     if args.sample_gen:
-        if args.sample_gen and args.gen_image_path and not os.path.exists(args.gen_image_path):
-            os.makedirs(args.gen_image_path)
+        # if args.sample_gen and args.gen_image_path and not os.path.exists(args.gen_image_path):
+        #     os.makedirs(args.gen_image_path)
 
         # GPU setup
         args.gpus = args.gpus if isinstance(args.gpus, list) else [args.gpus]
@@ -111,12 +113,14 @@ def main():
         print("{:<16}: {}".format('device', device))
         if args.data == 'CelebA':
             args.img_size = 64
-            data = CelebA(root= args.data_path, batch_size= args.batch_size)
+            data = CelebA(args.batch_size)
+            args.gen_image_path += '/celeba/'
         elif args.data == 'CIFAR10':
             data = CIFAR10(args.batch_size)
         elif args.data == 'ImageNet100':
             args.img_size = 224
-            data = ImageNet100(root= args.data_path, batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+            data = ImageNet100(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+            args.gen_image_path += '/imagenet/'
         else:
             data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
         # read config file for model
@@ -149,6 +153,8 @@ def main():
         # vae.to(device)
         # global vae_latent_dim
         # vae_latent_dim = cfg_vae['model']['latent_dim']        
+        if args.sample_gen and args.gen_image_path and not os.path.exists(args.gen_image_path):
+            os.makedirs(args.gen_image_path)
 
         sample_images_gen(ddpm, dset, args.image_count, args.gen_image_path, args, device)
 
