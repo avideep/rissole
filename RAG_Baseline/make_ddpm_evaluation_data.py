@@ -77,8 +77,8 @@ def main():
         print("{:<16}: {}".format(name, val))
 
     if args.sample_real:
-        if args.real_image_path and not os.path.exists(args.real_image_path):
-            os.makedirs(args.real_image_path)
+        # if args.real_image_path and not os.path.exists(args.real_image_path):
+        #     os.makedirs(args.real_image_path)
         # GPU setup
         args.gpus = args.gpus if isinstance(args.gpus, list) else [args.gpus]
         if len(args.gpus) == 1:
@@ -98,6 +98,8 @@ def main():
             data = ImageNet100(root= args.data_path, batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
         else:
             data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
+        if args.real_image_path and not os.path.exists(args.real_image_path):
+            os.makedirs(args.real_image_path)
         sample_images_real(data.val, args.image_count, args.real_image_path)
 
     if args.sample_gen:
