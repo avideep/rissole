@@ -34,7 +34,7 @@ parser.add_argument('--image-channels', default=3, metavar='N',
 parser.add_argument('--data-path', default= '/hdd/avideep/blockLDM/data/', metavar='PATH', help='Path to root of the data')
 parser.add_argument('--block-factor', default=2, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
-parser.add_argument('--k', default=20, metavar='N',
+parser.add_argument('--k', default=15, metavar='N',
                     type=int, help='Number of nearest neighbors to search.')
 parser.add_argument('--image-count', default=25,
                     type=int, help='number of images that should be generated for comparison')
@@ -141,7 +141,7 @@ def main():
         # if args.use_prev_block:
         #     cfg_unet['in_channels'] = (args.k + 2) * latent_dim # 2 because one if for the input latent representation of the current block and another is that for the previous block
         # else:
-        # cfg_unet['cond_emb_dim'] = args.k * latent_dim
+        cfg_unet['cond_emb_dim'] = args.k * latent_dim
 
         unet = UNetLight(**cfg_unet)
         unet, _, _ = load_model_checkpoint(unet, args.load_checkpoint_unet, device)
