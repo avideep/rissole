@@ -40,8 +40,8 @@ class UNetLight(nn.Module):
         self.pos_embedding = TimeEmbedding(time_emb_dim, pos_emb_dim)
         # initial convolutional layer
         # in_channels = 3 * in_channels
-        self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=3, stride=1, padding=3)
-        # self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=3)
+        # self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=3, stride=1, padding=3)
+        self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=3)
         # self.cond_attn = CrossAttention(in_channels, in_channels, dim_keys, n_heads)
 
         # contracting path
@@ -86,8 +86,8 @@ class UNetLight(nn.Module):
             prev_channel = c
 
         # final output 1x1 convolution
-        # self.final_conv = nn.Conv2d(self.channels[0], out_channels, kernel_size = 5, padding = 1)
-        self.final_conv = nn.Conv2d(self.channels[0], out_channels, 5) # 1 for CelebA; 5 for ImageNet
+        self.final_conv = nn.Conv2d(self.channels[0], out_channels, kernel_size = 5, padding = 1)
+        # self.final_conv = nn.Conv2d(self.channels[0], out_channels, 5) # 1 for CelebA; 5 for ImageNet
 
 
     def forward(self, x: torch.Tensor, x_cond: torch.Tensor, t: torch.Tensor):
