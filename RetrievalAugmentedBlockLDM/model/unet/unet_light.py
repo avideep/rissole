@@ -123,7 +123,7 @@ class UNetLight(nn.Module):
                 x = ln(x)
                 print(x.shape)
                 x = self.init_conv(x)
-                # print(x.shape)
+                print(x.shape)
             else:
                 x = torch.cat([x, x_cond], dim = 1)
         else:
@@ -145,42 +145,42 @@ class UNetLight(nn.Module):
                 c = self.cond_embedding(x_cond)
         else:
             c = None
-        # # print(x.shape)
+        # print(x.shape)
         skips = []
         # down sample
         for block1, attn1, block2, attn2, norm, downsample in self.down_blocks:
         # for block1, block2, norm, downsample in self.down_blocks:
-            # print(x.shape)
+            print(x.shape)
             x = block1(x, t, p)
-            # # print(x.shape)
+            # print(x.shape)
             if attn1 is not None:
                 x = attn1(x, c)
             x = block2(x, t, p)
-            # # print(x.shape)
+            # print(x.shape)
             if attn2 is not None:
                 x = attn2(x, c)
             x = norm(x)
-            # # print(x.shape)
+            # print(x.shape)
             skips.append(x)
             x = downsample(x)
-            # # print(x.shape)
+            # print(x.shape)
 
         # bottleneck
         x = self.mid_block1(x, t, p)
-        # # print(x.shape)
+        # print(x.shape)
         if self.use_spatial_transformer:
             x = self.mid_attn(x,c)
         else:
             x = self.mid_attn(x)
-            # # print(x.shape)
+            # print(x.shape)
         # x = self.mid_attn(x)
         x = self.mid_block2(x, t, p)
-        # # print(x.shape)
+        # print(x.shape)
         # up sample
         for upsample, block1, attn1, block2, attn2, norm in self.up_blocks:
         # for upsample, block1, block2, norm in self.up_blocks:
             x = upsample(x)
-            # print(x.shape, skips[-1].shape)
+            print(x.shape, skips[-1].shape)
             x = torch.cat((x, skips.pop()), dim=1)
             x = block1(x, t, p)
             if attn1 is not None:
@@ -205,5 +205,5 @@ if __name__ == "__main__":
     time = torch.randint(0, 10, (8,))
 
     out = u(ipt, time)
-    # print("Input:", ipt.shape)
-    # print("Output:", out.shape)
+    print("Input:", ipt.shape)
+    print("Output:", out.shape)
