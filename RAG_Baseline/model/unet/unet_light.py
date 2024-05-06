@@ -87,7 +87,7 @@ class UNetLight(nn.Module):
 
         # final output 1x1 convolution
         # self.final_conv = nn.Conv2d(self.channels[0], out_channels, kernel_size = 5, padding = 1)
-        self.final_conv = nn.Conv2d(self.channels[0], out_channels, 5) # 1 for CelebA; 5 for ImageNet
+        self.final_conv = nn.Conv2d(self.channels[0], out_channels, 1) # 1 for CelebA; 5 for ImageNet
 
 
     def forward(self, x: torch.Tensor, x_cond: torch.Tensor, t: torch.Tensor):
