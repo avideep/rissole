@@ -19,7 +19,7 @@ n_heads: 4  # number of heads for self-attention
 use_spatial_transformer: False
 # UNet
 channels:
-  # - 128
+  - 128
   - 256
-  - 512
+  # - 512
 
