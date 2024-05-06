@@ -141,7 +141,7 @@ def main():
         # if args.use_prev_block:
         #     cfg_unet['in_channels'] = (args.k + 2) * latent_dim # 2 because one if for the input latent representation of the current block and another is that for the previous block
         # else:
-        cfg_unet['cond_emb_dim'] = args.k * latent_dim
+        # cfg_unet['cond_emb_dim'] = args.k * latent_dim
 
         unet = UNetLight(**cfg_unet)
         unet, _, _ = load_model_checkpoint(unet, args.load_checkpoint_unet, device)
