@@ -200,7 +200,7 @@ def sample_images_gen(model, dset, block_size, n_images, image_path, image_size,
     # we only want to sample x0 images
     sample_step = 0
 
-    max_sample_size = 128
+    max_sample_size = 25
     step_count = 0
 
     while n_images > 0:
@@ -219,7 +219,7 @@ def sample_images_gen(model, dset, block_size, n_images, image_path, image_size,
         # low_res_cond = sample_from_vae(n_images, vae, device)
         # low_res_cond = model.encode(low_res_cond)
         # low_res_cond = F.resize(low_res_cond, [block_size], antialias = True)
-        prev_block = torch.randn((n_images, latent_dim, block_size, block_size)).to(device)
+        # prev_block = torch.randn((n_images, latent_dim, block_size, block_size)).to(device)
         if use_rag:
             x_query = dset.get_rand_queries(n_images)
             neighbor_ids = dset.get_neighbor_ids(x_query)
