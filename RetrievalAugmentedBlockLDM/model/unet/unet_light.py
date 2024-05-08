@@ -35,7 +35,7 @@ class UNetLight(nn.Module):
         # time embedding
         self.time_embedding = TimeEmbedding(time_emb_dim, pos_emb_dim)
         # self.cond_embedding = ConditionalEmbedding(cond_emb_dim, self.channels[0])
-        self.cond_embedding = nn.Conv2d(cond_emb_dim, self.channels[0], kernel_size=3, padding=3)
+        self.cond_embedding = nn.Conv2d(cond_emb_dim, self.channels[0], kernel_size=7, padding=3)
         # self.low_cond_embedding = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=3)
         self.pos_embedding = TimeEmbedding(time_emb_dim, pos_emb_dim)
         # initial convolutional layer
