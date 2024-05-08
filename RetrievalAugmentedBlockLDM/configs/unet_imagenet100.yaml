@@ -12,7 +12,7 @@ n_groups: 8         # group normalization
 conv_config:
   init_padding: 1
   final_kernel_size: 5
-  final_padding: 2
+  final_padding: 4
 # attention
 dim_keys: 64   # dimension of queries, keys, values
 n_heads: 4  # number of heads for self-attention

@@ -104,7 +104,7 @@ class UNetLight(nn.Module):
         # final output 1x1 convolution
         kernel_size = conv_config['final_kernel_size']
         padding = conv_config['final_padding']
-        self.final_conv = nn.Conv2d(self.channels[0], out_channels, kernel_size = kernel_size, padding = padding)
+        self.final_conv = nn.Conv2d(self.channels[0], out_channels, kernel_size = kernel_size, stride = 2, padding = padding)
 
 
 
