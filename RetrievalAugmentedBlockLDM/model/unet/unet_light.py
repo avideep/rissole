@@ -49,7 +49,7 @@ class UNetLight(nn.Module):
             self.cond_conv = nn.Conv2d(cond_emb_dim, self.channels[0] // 2, kernel_size = 3, stride = 1, padding = init_padding)
             if self.use_addition:
                 # self.layer_norm = nn.LayerNorm(None)
-                self.init_conv = nn.Conv2d(self.channels[0] // 2, self.channels[0], kernel_size=3, stride = 1, padding=6)
+                self.init_conv = nn.Conv2d(self.channels[0] // 2, self.channels[0], kernel_size=3, stride = 1, padding=init_padding)
         else:
             if self.use_addition:
                 pass
@@ -104,7 +104,7 @@ class UNetLight(nn.Module):
         # final output 1x1 convolution
         kernel_size = conv_config['final_kernel_size']
         padding = conv_config['final_padding']
-        self.final_conv = nn.Conv2d(self.channels[0], out_channels, kernel_size = kernel_size, stride = 2, padding = padding)
+        self.final_conv = nn.Conv2d(self.channels[0], out_channels, kernel_size = kernel_size, stride = 1, padding = padding)
 
 
 
