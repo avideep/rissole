@@ -109,6 +109,7 @@ class UNetLight(nn.Module):
 
 
     def forward(self, x: torch.Tensor, x_cond: torch.Tensor, t: torch.Tensor, p: torch.Tensor, l: torch.Tensor = None):
+        print(x.shape)
         t = self.time_embedding(t)
         # print(x.shape)
         if self.activate_cond_layer:
@@ -190,7 +191,8 @@ class UNetLight(nn.Module):
                 x = attn2(x, c)
             x = norm(x)
         # output convolution
-        x = self.final_conv(x)  
+        x = self.final_conv(x)
+        print(x.shape)  
 
         return x
 
