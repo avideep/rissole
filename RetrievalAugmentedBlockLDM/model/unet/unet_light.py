@@ -35,7 +35,7 @@ class UNetLight(nn.Module):
         # time embedding
         self.time_embedding = TimeEmbedding(time_emb_dim, pos_emb_dim)
         # self.cond_embedding = ConditionalEmbedding(cond_emb_dim, self.channels[0])
-        self.cond_embedding = nn.Conv2d(cond_emb_dim, self.channels[0], kernel_size=7, padding=3)
+        self.cond_embedding = nn.Conv2d(cond_emb_dim, self.channels[0], kernel_size=3, padding=3)
         # self.low_cond_embedding = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=3)
         self.pos_embedding = TimeEmbedding(time_emb_dim, pos_emb_dim)
         # initial convolutional layer
@@ -45,18 +45,18 @@ class UNetLight(nn.Module):
         self.use_addition = use_addition
         init_padding = conv_config['init_padding']
         if self.activate_cond_layer:
-            self.pre_init_conv = nn.Conv2d(in_channels, self.channels[0] // 2, kernel_size = 7, stride = 1, padding = init_padding)
-            self.cond_conv = nn.Conv2d(cond_emb_dim, self.channels[0] // 2, kernel_size = 7, stride = 1, padding = init_padding)
+            self.pre_init_conv = nn.Conv2d(in_channels, self.channels[0] // 2, kernel_size = 3, stride = 1, padding = init_padding)
+            self.cond_conv = nn.Conv2d(cond_emb_dim, self.channels[0] // 2, kernel_size = 3, stride = 1, padding = init_padding)
             if self.use_addition:
                 # self.layer_norm = nn.LayerNorm(None)
-                self.init_conv = nn.Conv2d(self.channels[0] // 2, self.channels[0], kernel_size=7, stride = 1, padding=3)
+                self.init_conv = nn.Conv2d(self.channels[0] // 2, self.channels[0], kernel_size=3, stride = 1, padding=3)
         else:
             if self.use_addition:
                 pass
                 # self.layer_norm = nn.LayerNorm(None)
             else:
                 in_channels += cond_emb_dim
-            self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, stride=1, padding=init_padding)
+            self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=3, stride=1, padding=init_padding)
         # self.cond_attn = CrossAttention(in_channels, in_channels, dim_keys, n_heads)
 
         # contracting path
