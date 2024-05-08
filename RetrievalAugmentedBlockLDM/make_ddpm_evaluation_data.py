@@ -36,15 +36,15 @@ parser.add_argument('--block-factor', default=2, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
 parser.add_argument('--k', default=20, metavar='N',
                     type=int, help='Number of nearest neighbors to search.')
-parser.add_argument('--image-count', default=400,
+parser.add_argument('--image-count', default=50,
                     type=int, help='number of images that should be generated for comparison')
 parser.add_argument('--config', default='configs/ddpm_linear.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/ddpm_linear.yaml)')
 parser.add_argument('--unet-config', default='configs/unet_imagenet100.yaml',
                     metavar='PATH', help='Path to unet model config file (default: configs/unet.yaml)')
-parser.add_argument('--load-ckpt-ddpm', default='checkpoints/second_stage/ddpm_linear/24-05-01_114744/ddpm/best_model.pt', metavar='PATH',
+parser.add_argument('--load-ckpt-ddpm', default='checkpoints/second_stage/ddpm_linear/24-05-04_150155/ddpm/best_model.pt', metavar='PATH',
                     dest='load_checkpoint_ddpm', help='Load model checkpoint and continue training')
-parser.add_argument('--load-ckpt-unet', default='checkpoints/second_stage/ddpm_linear/24-05-01_114744/unet/best_model.pt', metavar='PATH',
+parser.add_argument('--load-ckpt-unet', default='checkpoints/second_stage/ddpm_linear/24-05-04_150155/unet/best_model.pt', metavar='PATH',
                     dest='load_checkpoint_unet', help='Load model checkpoint and continue training')
 parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-29_153956/best_model.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
@@ -200,7 +200,7 @@ def sample_images_gen(model, dset, block_size, n_images, image_path, image_size,
     # we only want to sample x0 images
     sample_step = 0
 
-    max_sample_size = 20
+    max_sample_size = 10
     step_count = 0
 
     while n_images > 0:
