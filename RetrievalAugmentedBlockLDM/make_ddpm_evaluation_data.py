@@ -210,18 +210,18 @@ def sample_images_gen(model, dset, block_size, n_images, image_path, image_size,
             sample_size = n_images
         images_decoded = images = [0]*model.n_steps
         channels = 3
-        img = torch.randn((n_images, channels, image_size, image_size), device=device)
+        img = torch.randn((sample_size, channels, image_size, image_size), device=device)
         img = model.encode(img)
         for i in range(len(images)):
             images[i] = img
         # prev_block = torch.rand_like(img[:, :, :block_size, :block_size]).to(device)
         # prev_block = model.encode(prev_block)
-        # low_res_cond = sample_from_vae(n_images, vae, device)
+        # low_res_cond = sample_from_vae(sample_size, vae, device)
         # low_res_cond = model.encode(low_res_cond)
         # low_res_cond = F.resize(low_res_cond, [block_size], antialias = True)
-        # prev_block = torch.randn((n_images, latent_dim, block_size, block_size)).to(device)
+        # prev_block = torch.randn((sample_size, latent_dim, block_size, block_size)).to(device)
         if use_rag:
-            x_query = dset.get_rand_queries(n_images)
+            x_query = dset.get_rand_queries(sample_size)
             neighbor_ids = dset.get_neighbor_ids(x_query)
         low_res_cond = None
         position = 0
@@ -230,10 +230,10 @@ def sample_images_gen(model, dset, block_size, n_images, image_path, image_size,
                 # if j==0 and i>0:
                 #     prev_block = img[:,:,i-block_size:i, j:j+block_size]
                 #     prev_block = model.encode(prev_block)
-                block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
-                # neighbors = torch.cat([dset.get_neighbors(neighbor_ids, position, block_size, n_images, latent_dim).to(device), prev_block], dim =1) if use_prev_block else
-                neighbors = dset.get_neighbors(neighbor_ids, position, block_size, n_images, latent_dim).to(device) if use_rag else torch.rand(n_images,  nn * latent_dim, block_size, block_size).to(device)
-                curr_block = model.sample(block_size, neighbors, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim)
+                block_pos = torch.full((sample_size,),position, dtype=torch.int64).to(device)
+                # neighbors = torch.cat([dset.get_neighbors(neighbor_ids, position, block_size, sample_size, latent_dim).to(device), prev_block], dim =1) if use_prev_block else
+                neighbors = dset.get_neighbors(neighbor_ids, position, block_size, sample_size, latent_dim).to(device) if use_rag else torch.rand(sample_size,  nn * latent_dim, block_size, block_size).to(device)
+                curr_block = model.sample(block_size, neighbors, block_pos, low_res_cond, batch_size=sample_size, channels=latent_dim)
                 # curr_block[0] = curr_block[0] - low_res_cond 
                 # prev_block = curr_block[0]
                 position += 1
