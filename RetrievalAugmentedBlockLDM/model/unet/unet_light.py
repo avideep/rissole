@@ -56,7 +56,7 @@ class UNetLight(nn.Module):
                 # self.layer_norm = nn.LayerNorm(None)
             else:
                 in_channels += cond_emb_dim
-            self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, stride=1, padding=2)
+            self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, stride=1, padding=4)
         # self.cond_attn = CrossAttention(in_channels, in_channels, dim_keys, n_heads)
 
         # contracting path
