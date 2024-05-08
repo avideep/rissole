@@ -200,7 +200,7 @@ def sample_images_gen(model, dset, block_size, n_images, image_path, image_size,
     # we only want to sample x0 images
     sample_step = 0
 
-    max_sample_size = 25
+    max_sample_size = 10
     step_count = 0
 
     while n_images > 0:
