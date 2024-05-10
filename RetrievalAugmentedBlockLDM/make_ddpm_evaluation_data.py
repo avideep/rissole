@@ -36,7 +36,7 @@ parser.add_argument('--block-factor', default=2, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
 parser.add_argument('--k', default=20, metavar='N',
                     type=int, help='Number of nearest neighbors to search.')
-parser.add_argument('--image-count', default=1000,
+parser.add_argument('--image-count', default=3,
                     type=int, help='number of images that should be generated for comparison')
 parser.add_argument('--config', default='configs/ddpm_linear.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/ddpm_linear.yaml)')
@@ -57,6 +57,8 @@ parser.add_argument('--gen-image-path', default='samples/new_method_blocks_4/',
 parser.add_argument('--use-prev-block', action='store_true',
                     help='Whether to condition the model with the previous block')
 parser.add_argument('--use-rag', action='store_true',
+                    help='Whether to condition on retrieved neighbors from an external memory')
+parser.add_argument('--make-figure', action='store_true',
                     help='Whether to condition on retrieved neighbors from an external memory')
 parser.add_argument('--gpus', default=0, type=int,
                     nargs='+', metavar='GPUS', help='If GPU(s) available, which GPU(s) to use for training.')
@@ -167,7 +169,7 @@ def main():
         # global vae_latent_dim
         # vae_latent_dim = cfg_vae['model']['latent_dim']        
         block_size = get_block_size(args, vqgan_model, device)
-        sample_images_gen(ddpm, dset, block_size, args.image_count, args.gen_image_path, args.img_size, args.use_rag, args.k, device)
+        sample_images_gen(ddpm, dset, block_size, args.image_count, args.gen_image_path, args.img_size, args.use_rag, args.k, device, args)
 
 def get_block_size(args, vqgan_model, device):
     x = torch.rand(1, args.image_channels, args.img_size, args.img_size).to(device)
@@ -190,11 +192,29 @@ def sample_images_real(data_loader, n_images, real_image_path):
 #     images = model.decode(z)
 #     return images
 
+
+# def make_figure(x_query, indices, dset, neighbor_ids, neighbors, images):
+#     sample_size = x_query
+#     x_query = x_query.view(sample_size, 32, 14, 14)
+#     # c, h, w = images.size(1), images.size(2), images.size(3)
+#     full_x_query = torch.rand(sample_size, 32, 28, 28)
+#     full_x_query[:, :, :14, :14] = x_query
+#     patch_size = 14
+#     img_size = 8
+#     position = 0
+#     for i in range(0, img_size, patch_size):
+#         for j in range (0, img_size, patch_size):
+#             full_x_query[:, :, i:i+patch_size, j:j+patch_size] = dset.dset[position][indices].view(sample_size, 32, 14, 14)
+#     full_x_query_decoded = model.decode(full_x_query)
+
+
+
+    pass
 def get_random_filename():
     # Generate a random string of 10 characters
     return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10))
 @torch.no_grad()
-def sample_images_gen(model, dset, block_size, n_images, image_path, image_size, use_rag, nn, device):
+def sample_images_gen(model, dset, block_size, n_images, image_path, image_size, use_rag, nn, device, args):
     model.eval()
 
     # we only want to sample x0 images
@@ -221,8 +241,9 @@ def sample_images_gen(model, dset, block_size, n_images, image_path, image_size,
         # low_res_cond = F.resize(low_res_cond, [block_size], antialias = True)
         # prev_block = torch.randn((sample_size, latent_dim, block_size, block_size)).to(device)
         if use_rag:
-            x_query = dset.get_rand_queries(sample_size)
+            x_query, indices = dset.get_rand_queries(sample_size)
             neighbor_ids = dset.get_neighbor_ids(x_query)
+
         low_res_cond = None
         position = 0
         for i in range(0, img.shape[-1], block_size):
@@ -246,6 +267,13 @@ def sample_images_gen(model, dset, block_size, n_images, image_path, image_size,
         images = torch.stack(images)
         # images = model.decode(images)
         # image_path = image_path + '/' +dset.data.__class__.__name__
+        if args.make_figure:
+            save_dict = {'x_query': x_query,
+                         'indices':indices,
+                         'neighbor_ids': neighbor_ids,
+                         'neighbors':neighbors,
+                         'samples':images}
+            torch.save(save_dict, 'figure_dict.pth')
         os.makedirs(image_path, exist_ok=True)
         for n, img in enumerate(images):
             img = tensor_to_image(img)

@@ -77,7 +77,7 @@ class DSetBuilder:
     
     def get_rand_queries(self, n):
         indices = torch.randperm(self.dset.size(1))[:n]
-        return self.dset[0, indices, :]
+        return self.dset[0, indices, :], indices
     
     def get_neighbors(self, neighbor_ids, position, block_size, b, latent_dim):
         mat = []
