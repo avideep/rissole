@@ -88,32 +88,7 @@ class DSetBuilder:
         # padding = (pad, pad)
         # output = F.pad(output, padding, "constant", 0)
         return output
-    
-    # @torch.no_grad()
-    # def dsetbuilder(self):
-    #     # x, _ = next(iter(self.data.full_dataloader))
-    #     # print(self.model.encode(x.to(self.device)).shape)
-    #     """ Creates the D Set for this particular Dataset"""
-    #     if os.path.exists(self.DSET_PATH):
-    #         all_patches = torch.load(self.DSET_PATH)
-    #     else:
-    #         print('DSET at {} does note exist. Building...'.format(self.DSET_PATH))
-    #         all_patches = []
-    #         for i in range(0, self.latent_size, self.latent_patch_size):
-    #             for j in range (0, self.latent_size, self.latent_patch_size):
-    #                 patches = []
-    #                 for x, _ in tqdm(self.data.full_dataloader, desc='Building DSET'):
-    #                     x = x.to(self.device)
-    #                     z = self.encode(x)
-    #                     patch = z[:, :, i:i+self.latent_patch_size, j:j+self.latent_patch_size]
-    #                     patches.append(patch.cpu().detach())
-    #                     del x, z, patch
-    #                 all_patches.append(torch.cat(patches, dim=0).contiguous().view(len(self.data.full_dataloader.dataset), -1))
-    #                 del patches
-    #         all_patches = torch.stack(all_patches)
-    #         torch.save(all_patches, self.DSET_PATH)
-    #     print('DSET with shape: {} is ready!'.format(all_patches.shape))
-    #     return all_patches
+
     @torch.no_grad()
     def dsetbuilder(self):
         """ Creates the D Set for this particular Dataset"""
@@ -122,11 +97,8 @@ class DSetBuilder:
         else:
             all_patches = []
             for x, _ in tqdm(self.data.full_dataloader, desc='Building DSET'):
-                # batch_patches = self.get_random_patches(x)
-                # clips = torch.stack([torch.tensor(self.encoder.encode(self.tensor2img(x_i))) for x_i in batch_patches])
                 z = self.encode(x.to(device))
                 all_patches.append(z.cpu().detach().contiguous().view(z.size(0), -1))
-                # del batch_patches
                 del z
             all_patches = torch.cat(all_patches, dim = 0)
 
