@@ -77,8 +77,10 @@ class DSetBuilder:
     
     def get_rand_queries(self, n):
         indices = torch.randperm(self.dset.size(1))[:n]
-        return self.dset[0, indices, :]
-    
+        return self.dset[indices, :]
+    def get_fragmented_dset(self, block_size, position, neighbor):
+        pass
+
     def get_neighbors(self, neighbor_ids, position, block_size, b, latent_dim):
         mat = []
         for neighbor in neighbor_ids:
@@ -118,6 +120,7 @@ if __name__ == "__main__":
                     nargs='+', metavar='GPUS', help='If GPU(s) available, which GPU(s) to use for training.')
     parser.add_argument('--batch-size', default=16, metavar='N',
                     type=int, help='Mini-batch size (default: 16)')
+    parser.add_argument('--data-path', default= '/hdd/avideep/blockLDM/data/', metavar='PATH', help='Path to root of the data')
     parser.add_argument('--k', default=10, metavar='N',
                     type=int, help='number of nearest neighbors.')
     parser.add_argument('--dset-batch-size', default=64, metavar='N',
@@ -135,11 +138,13 @@ if __name__ == "__main__":
     vqgan_model.to(device)
 
     if args.data == 'CelebA':
-        data = CelebA(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
-    elif args.data == 'CelebAHQ':
-        data = CelebAHQ(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+        args.img_size = 64
+        data = CelebA(root= args.data_path, batch_size= args.batch_size)
+    elif args.data == 'CIFAR10':
+        data = CIFAR10(args.batch_size)
     elif args.data == 'ImageNet100':
-        data = ImageNet100(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+        args.img_size = 224
+        data = ImageNet100(root= args.data_path, batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
     else:
-        data = CIFAR10(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+        data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
     dset = DSetBuilder(data, k=args.k, model=vqgan_model, device=device, block_factor=2)
