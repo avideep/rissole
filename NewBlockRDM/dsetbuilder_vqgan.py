@@ -125,7 +125,7 @@ class DSetBuilder:
                 # batch_patches = self.get_random_patches(x)
                 # clips = torch.stack([torch.tensor(self.encoder.encode(self.tensor2img(x_i))) for x_i in batch_patches])
                 z = self.encode(x.to(device))
-                all_patches.append(z.cpu().detach().congiguous().view(z.size(0), -1))
+                all_patches.append(z.cpu().detach().contiguous().view(z.size(0), -1))
                 # del batch_patches
                 del z
             all_patches = torch.cat(all_patches, dim = 0)
