@@ -238,12 +238,12 @@ def train(model, data, dset, optimizer, block_size, device, args):
         x = x.to(device)
         x = model.encode(x)
         low_res_cond = None
-        first_block = x[:, :, :block_size, :block_size]
+        # first_block = x[:, :, :block_size, :block_size]
         # prev_block = torch.rand_like(first_block).to(device) if args.use_prev_block else None
         optimizer.zero_grad()
         position = 0
         loss_agg = 0
-        neighbor_ids = dset.get_neighbor_ids(first_block.contiguous().view(x.size(0), -1)) if args.use_rag else None
+        neighbor_ids = dset.get_neighbor_ids(x.contiguous().view(x.size(0), -1)) if args.use_rag else None
         for i in range(0, x.shape[-1], block_size):
             for j in range(0, x.shape[-1], block_size):
                 # if j==0 and i>0:
