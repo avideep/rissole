@@ -248,7 +248,6 @@ def train(model, data, dset, optimizer, block_size, device, args):
                 curr_block = x[:, :, i:i+block_size, j:j+block_size]
                 neighbors = dset.get_neighbors(neighbor_ids, position).to(device) if args.use_rag else torch.rand(x.size(0),  args.k * latent_dim, block_size, block_size).to(device)
                 loss = model.p_losses2(curr_block, neighbors, position = block_pos, low_res_cond = low_res_cond)
-                # prev_block = curr_block
                 loss_agg += loss
                 position += 1
         loss_agg.backward()
