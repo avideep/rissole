@@ -72,6 +72,7 @@ class DSetBuilder:
     def get_neighbor_ids(self, x):
         # b = x.size(0)
         # x_vqgan = self.model.encode(x).view(b, -1)
+        print(x.shape)
         neighbors, _ = self.searcher.search_batched(x.cpu().numpy().astype(np.float32))
         return neighbors
     
