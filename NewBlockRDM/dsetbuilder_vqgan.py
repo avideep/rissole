@@ -79,12 +79,14 @@ class DSetBuilder:
         indices = torch.randperm(self.dset.size(1))[:n]
         return self.dset[indices, :]
     def get_fragmented_dset(self, block_size, position, neighbor):
+        dset = self.dset[np.int64(neighbor)]
         pass
 
     def get_neighbors(self, neighbor_ids, position, block_size, b, latent_dim):
         mat = []
+        # neighbors = self.get_fragmented_dset(block_size, position, neighbor_ids)
         for neighbor in neighbor_ids:
-            mat.append(self.dset[position][np.int64(neighbor)])
+            mat.append(self.get_fragmented_dset(block_size, position, neighbor))
         output = torch.stack(mat).view(b, self.k*latent_dim, block_size, block_size)
         # pad = (block_size - output.shape[-1])//2
         # padding = (pad, pad)
@@ -105,6 +107,7 @@ class DSetBuilder:
             all_patches = torch.cat(all_patches, dim = 0)
 
             torch.save(all_patches.view(all_patches.size(0), -1), self.DSET_PATH)
+        
         print('Dset of shape {} is ready!'.format(all_patches.shape))
         return all_patches
     
@@ -136,7 +139,10 @@ if __name__ == "__main__":
     vqgan_model = VQGANLight(**cfg_vqgan['model'])
     vqgan_model, _, _ = load_model_checkpoint(vqgan_model, args.vqgan_path, device)
     vqgan_model.to(device)
-
+    x = torch.rand(8, 3, 64, 64)
+    x = vqgan_model.encode(x)
+    x = vqgan_model.quantize(x)
+    print(x.shape)
     if args.data == 'CelebA':
         args.img_size = 64
         data = CelebA(root= args.data_path, batch_size= args.batch_size)
