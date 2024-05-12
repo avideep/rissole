@@ -86,11 +86,11 @@ class DSetBuilder:
                 if pos == position:
                     return dset[:, :, i:i+self.latent_patch_size, j:j+self.latent_patch_size]
 
-    def get_neighbors(self, neighbor_ids, position, block_size, b, latent_dim):
+    def get_neighbors(self, neighbor_ids, position):
         mat = []
         for neighbor in neighbor_ids:
             mat.append(self.get_fragmented_dset(neighbor, position))
-        output = torch.stack(mat).view(b, self.k*latent_dim, block_size, block_size)
+        output = torch.stack(mat).view(len(neighbor_ids), self.k*self.latent_dim, self.latent_patch_size, self.latent_patch_size)
         # pad = (block_size - output.shape[-1])//2
         # padding = (pad, pad)
         # output = F.pad(output, padding, "constant", 0)
