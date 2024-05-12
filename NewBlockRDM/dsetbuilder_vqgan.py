@@ -139,7 +139,7 @@ if __name__ == "__main__":
     vqgan_model = VQGANLight(**cfg_vqgan['model'])
     vqgan_model, _, _ = load_model_checkpoint(vqgan_model, args.vqgan_path, device)
     vqgan_model.to(device)
-    x = torch.rand(8, 3, 64, 64)
+    x = torch.rand(8, 3, 64, 64).to(device)
     x = vqgan_model.encode(x)
     x = vqgan_model.quantize(x)
     print(x.shape)
