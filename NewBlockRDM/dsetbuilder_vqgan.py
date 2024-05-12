@@ -72,7 +72,7 @@ class DSetBuilder:
     def get_neighbor_ids(self, x):
         # b = x.size(0)
         # x_vqgan = self.model.encode(x).view(b, -1)
-        print(x.shape)
+        print(x.shape   )
         neighbors, _ = self.searcher.search_batched(x.cpu().numpy().astype(np.float32))
         return neighbors
     
@@ -86,6 +86,7 @@ class DSetBuilder:
             for j in range (0, self.latent_size, self.latent_patch_size):
                 if pos == position:
                     return dset[:, :, i:i+self.latent_patch_size, j:j+self.latent_patch_size]
+                pos += 1
 
     def get_neighbors(self, neighbor_ids, position):
         mat = []
