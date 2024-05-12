@@ -88,7 +88,6 @@ class DSetBuilder:
 
     def get_neighbors(self, neighbor_ids, position, block_size, b, latent_dim):
         mat = []
-        # neighbors = self.get_fragmented_dset(block_size, position, neighbor_ids)
         for neighbor in neighbor_ids:
             mat.append(self.get_fragmented_dset(neighbor, position))
         output = torch.stack(mat).view(b, self.k*latent_dim, block_size, block_size)
