@@ -78,15 +78,19 @@ class DSetBuilder:
     def get_rand_queries(self, n):
         indices = torch.randperm(self.dset.size(1))[:n]
         return self.dset[indices, :]
-    def get_fragmented_dset(self, block_size, position, neighbor):
-        dset = self.dset[np.int64(neighbor)]
-        pass
+    def get_fragmented_dset(self, neighbor, position):
+        pos = 0
+        dset = self.dset[np.int64(neighbor)].view((len(neighbor), self.latent_dim, self.latent_size, self.latent_size))
+        for i in range(0, self.latent_size, self.latent_patch_size):
+            for j in range (0, self.latent_size, self.latent_patch_size):
+                if pos == position:
+                    return dset[:, :, i:i+self.latent_patch_size, j:j+self.latent_patch_size]
 
     def get_neighbors(self, neighbor_ids, position, block_size, b, latent_dim):
         mat = []
         # neighbors = self.get_fragmented_dset(block_size, position, neighbor_ids)
         for neighbor in neighbor_ids:
-            mat.append(self.get_fragmented_dset(block_size, position, neighbor))
+            mat.append(self.get_fragmented_dset(neighbor, position))
         output = torch.stack(mat).view(b, self.k*latent_dim, block_size, block_size)
         # pad = (block_size - output.shape[-1])//2
         # padding = (pad, pad)
