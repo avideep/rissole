@@ -10,8 +10,8 @@ use_addition: True
 # residual network
 n_groups: 8         # group normalization
 conv_config:
-  init_padding: 1
-  init_kernel: 3
+  init_padding: 2
+  init_kernel: 2
   final_kernel_size: 1
   final_padding: 0
 # attention

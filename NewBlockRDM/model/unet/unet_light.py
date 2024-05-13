@@ -43,13 +43,13 @@ class UNetLight(nn.Module):
         # self.init_conv = nn.Conv2d(in_channels, self.channels[0], kernel_size=7, padding=3) # for Celeb. Padding = 4 for ImageNet100 
         self.activate_cond_layer = activate_cond_layer
         self.use_addition = use_addition
-        init_padding = conv_config['init_padding']
+        init_padding, init_kernel = conv_config['init_padding'], conv_config['init_kernel']
         if self.activate_cond_layer:
-            self.pre_init_conv = nn.Conv2d(in_channels, self.channels[0] // 2, kernel_size = 3, stride = 1, padding = init_padding)
-            self.cond_conv = nn.Conv2d(cond_emb_dim, self.channels[0] // 2, kernel_size = 3, stride = 1, padding = init_padding)
+            self.pre_init_conv = nn.Conv2d(in_channels, self.channels[0] // 2, kernel_size = init_kernel, stride = 1, padding = init_padding)
+            self.cond_conv = nn.Conv2d(cond_emb_dim, self.channels[0] // 2, kernel_size = init_kernel, stride = 1, padding = init_padding)
             if self.use_addition:
                 # self.layer_norm = nn.LayerNorm(None)
-                self.init_conv = nn.Conv2d(self.channels[0] // 2, self.channels[0], kernel_size=3, stride = 1, padding=init_padding)
+                self.init_conv = nn.Conv2d(self.channels[0] // 2, self.channels[0], kernel_size=init_kernel, stride = 1, padding=init_padding)
         else:
             if self.use_addition:
                 pass
