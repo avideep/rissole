@@ -135,6 +135,9 @@ if __name__ == "__main__":
     parser.add_argument('--dset-batch-size', default=64, metavar='N',
                     type=int, help='Mini-batch size (default: 32)')
     args = parser.parse_args()
+    if args.data == 'ImageNet100':
+        args.vqgan_config = 'configs/vqgan_rgb.yaml'
+        args.vqgan_path = 'checkpoints/vqgan/24-03-29_153956/best_model.pt'
     cfg_vqgan = yaml.load(open(args.vqgan_config, 'r'), Loader=yaml.Loader)
     # setup GPU
     args.gpus = args.gpus if isinstance(args.gpus, list) else [args.gpus]
