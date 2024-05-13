@@ -39,14 +39,14 @@ class DSetBuilder:
         self.mean = [0.5, 0.5, 0.5]
         self.std = [0.5, 0.5, 0.5]
         # self.patch_size = self.data.img_size // block_factor
-        self.DSET_PATH = self.data.ROOT_PATH + 'dset/{}/vqgan/whole_dset.pth'.format(data_name)
+        self.DSET_PATH = self.data.ROOT_PATH + 'dset/{}/vqgan/whole_dset_f_{}.pth'.format(data_name, block_factor)
         self.k = k
         self.model = model
         self.device = device
         self.latent_dim, self.latent_size = self.get_latent_shape()[1], self.get_latent_shape()[2]
         self.latent_patch_size = self.latent_size // block_factor
         self.dset = self.dsetbuilder()
-        searcher_dir = self.data.ROOT_PATH + 'dset/{}/vqgan/whole_searcher_k_{}/'.format(data_name, k)
+        searcher_dir = self.data.ROOT_PATH + 'dset/{}/vqgan/whole_searcher_k_{}_f_{}/'.format(data_name, k, block_factor)
         if not os.path.exists(searcher_dir):
             t_start = time.time()
             self.searcher = scann.scann_ops_pybind.builder(self.dset / np.linalg.norm(self.dset, axis=1)[:, np.newaxis].astype(np.float32), self.k, "dot_product").tree(num_leaves=2000, num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
@@ -150,12 +150,18 @@ if __name__ == "__main__":
     x = vqgan_model.quantize(x)
     print(x.shape)
     if args.data == 'CelebA':
-        args.img_size = 64
+        if args.block_factor == 3:
+            args.img_size = 60
+        else:
+            args.img_size = 64
         data = CelebA(root= args.data_path, batch_size= args.batch_size)
     elif args.data == 'CIFAR10':
         data = CIFAR10(args.batch_size)
     elif args.data == 'ImageNet100':
-        args.img_size = 224
+        if args.block_factor == 3:
+            args.img_size = 216
+        else:
+            args.img_size = 224
         data = ImageNet100(root= args.data_path, batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
     else:
         data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
