@@ -125,7 +125,8 @@ def main():
         raise ValueError('Currently multi-gpu training is not possible')
     # load data
     if args.data == 'CelebA':
-        args.unet_config = 'configs/unet_f_3.yaml'
+        if args.block_factor == 3:
+            args.unet_config = 'configs/unet_f_3.yaml'
         args.img_size = 64
         data = CelebA(root= args.data_path, batch_size= args.batch_size)
     elif args.data == 'CIFAR10':
