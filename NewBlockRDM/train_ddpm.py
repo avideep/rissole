@@ -96,8 +96,8 @@ latent_dim = None
 
 def main():
     args = parser.parse_args()
-    for name, val in vars(args).items():
-        print("{:<16}: {}".format(name, val))
+    # for name, val in vars(args).items():
+    #     print("{:<16}: {}".format(name, val))
 
     # setup paths and logging
     args.name = 'second_stage/' + os.path.splitext(os.path.basename(args.config))[0]
@@ -141,7 +141,8 @@ def main():
         data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
     # read config file for model
 
-
+    for name, val in vars(args).items():
+        print("{:<16}: {}".format(name, val))
     cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
     cfg_unet = yaml.load(open(args.unet_config, 'r'), Loader=yaml.Loader)
     cfg_vqgan = yaml.load(open(args.vqgan_config, 'r'), Loader=yaml.Loader)
