@@ -130,15 +130,16 @@ def main():
     elif args.data == 'CIFAR10':
         data = CIFAR10(args.batch_size)
     elif args.data == 'ImageNet100':
+        args.vqgan_config = 'configs/vqgan_rgb.yaml'
+        args.vqgan_path = 'checkpoints/vqgan/24-03-29_153956/best_model.pt'
+        args.unet_config = 'configs/unet_imagenet100.yaml'
         args.img_size = 224
         data = ImageNet100(root= args.data_path, batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
     else:
         data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
     # read config file for model
-    if args.data == 'ImageNet100':
-        args.vqgan_config = 'configs/vqgan_rgb.yaml'
-        args.vqgan_path = 'checkpoints/vqgan/24-03-29_153956/best_model.pt'
-        args.unet_config = 'configs/unet_imagenet100.yaml'
+
+
     cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
     cfg_unet = yaml.load(open(args.unet_config, 'r'), Loader=yaml.Loader)
     cfg_vqgan = yaml.load(open(args.vqgan_config, 'r'), Loader=yaml.Loader)
