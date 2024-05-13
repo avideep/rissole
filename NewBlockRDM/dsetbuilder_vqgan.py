@@ -58,7 +58,7 @@ class DSetBuilder:
             print(f'Loading pre-trained searcher from {searcher_dir}')
             self.searcher = scann.scann_ops_pybind.load_searcher(searcher_dir)
             print('Finished loading searcher.')
-        print(self.latent_size, self.latent_patch_size)
+        # print(self.latent_size, self.latent_patch_size)
         
         
     @torch.no_grad()
