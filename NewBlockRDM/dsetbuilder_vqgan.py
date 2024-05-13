@@ -130,6 +130,8 @@ if __name__ == "__main__":
     parser.add_argument('--data-path', default= '/hdd/avideep/blockLDM/data/', metavar='PATH', help='Path to root of the data')
     parser.add_argument('--k', default=10, metavar='N',
                     type=int, help='number of nearest neighbors.')
+    parser.add_argument('--block-factor', default=2, metavar='N',
+                    type=int, help='number of nearest neighbors.')
     parser.add_argument('--dset-batch-size', default=64, metavar='N',
                     type=int, help='Mini-batch size (default: 32)')
     args = parser.parse_args()
@@ -157,4 +159,4 @@ if __name__ == "__main__":
         data = ImageNet100(root= args.data_path, batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
     else:
         data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
-    dset = DSetBuilder(data, k=args.k, model=vqgan_model, device=device, block_factor=2)
+    dset = DSetBuilder(data, k=args.k, model=vqgan_model, device=device, block_factor=args.block_factor)
