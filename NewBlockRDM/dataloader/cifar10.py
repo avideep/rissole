@@ -24,6 +24,7 @@ class CIFAR10:
         self.train_transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Resize(img_size),
+            transforms.CenterCrop(img_size),
             transforms.RandomHorizontalFlip(p=0.5),
             transforms.Normalize(self.mean, self.std)
         ])

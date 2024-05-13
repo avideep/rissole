@@ -157,7 +157,7 @@ if __name__ == "__main__":
             args.img_size = 60
         else:
             args.img_size = 64
-        data = CelebA(root= args.data_path, batch_size= args.batch_size)
+        data = CelebA(root= args.data_path, batch_size= args.batch_size, img_size= args.img_size)
     elif args.data == 'CIFAR10':
         data = CIFAR10(args.batch_size)
     elif args.data == 'ImageNet100':
@@ -165,7 +165,7 @@ if __name__ == "__main__":
             args.img_size = 216
         else:
             args.img_size = 224
-        data = ImageNet100(root= args.data_path, batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+        data = ImageNet100(root= args.data_path, batch_size = args.batch_size, dset_batch_size = args.dset_batch_size, img_size= args.img_size)
     else:
         data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
     dset = DSetBuilder(data, k=args.k, model=vqgan_model, device=device, block_factor=args.block_factor)
