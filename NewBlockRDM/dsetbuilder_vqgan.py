@@ -106,7 +106,7 @@ class DSetBuilder:
         else:
             all_patches = []
             for x, _ in tqdm(self.data.full_dataloader, desc='Building DSET'):
-                z = self.encode(x.to(device))
+                z = self.encode(x.to(self.device))
                 all_patches.append(z.cpu().detach().contiguous().view(z.size(0), -1))
                 del z
             all_patches = torch.cat(all_patches, dim = 0)
