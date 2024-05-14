@@ -34,7 +34,7 @@ parser.add_argument('--image-channels', default=3, metavar='N',
 parser.add_argument('--data-path', default= '/hdd/avideep/blockLDM/data/', metavar='PATH', help='Path to root of the data')
 parser.add_argument('--block-factor', default=2, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
-parser.add_argument('--k', default=20, metavar='N',
+parser.add_argument('--k', default=10, metavar='N',
                     type=int, help='Number of nearest neighbors to search.')
 parser.add_argument('--image-count', default=3,
                     type=int, help='number of images that should be generated for comparison')
