@@ -115,8 +115,9 @@ class ResidualBlockUNet(nn.Module):
             t = self.time_emb(t)        # [bs, out_channels]
             x += t[:, :, None, None]
         if self.pos_emb is not None:
-            p = self.pos_emb(p)
-            x += p[:, :, None, None]
+            if p is not None:
+                p = self.pos_emb(p)
+                x += p[:, :, None, None]
         # if self.cond_emb is not None:
         #     c = self.cond_emb(x_cond)
         #     if x.shape[2] == c.shape[2]:

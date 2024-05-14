@@ -137,7 +137,8 @@ class UNetLight(nn.Module):
             else:
                 x = torch.cat([x, x_cond], dim = 1)
             x = self.init_conv(x)
-        p = self.pos_embedding(p)
+        if p is not None:
+            p = self.pos_embedding(p)
         if self.use_spatial_transformer:
             if l is not None:
                 c = torch.cat([x_cond, l], dim=1)

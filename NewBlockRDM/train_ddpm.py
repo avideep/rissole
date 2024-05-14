@@ -74,6 +74,8 @@ parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
 parser.add_argument('--use-rag', action='store_true',
                      help='Whether to condition the model with retrieved neighbors')
+parser.add_argument('--use-pos', action='store_true',
+                     help='Whether to condition the model with positional information')
 # parser.add_argument('--vae-path', default='checkpoints/vae/24-02-15_130409/best_model.pt',
 #                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 # parser.add_argument('--vae-config', default='configs/vae.yaml',
@@ -257,7 +259,7 @@ def train(model, data, dset, optimizer, block_size, device, args):
         neighbor_ids = dset.get_neighbor_ids(x.contiguous().view(x.size(0), -1)) if args.use_rag else None
         for i in range(0, x.shape[-1], block_size):
             for j in range(0, x.shape[-1], block_size):
-                block_pos = torch.full((x.size(0),),position, dtype=torch.int64).to(device)
+                block_pos = torch.full((x.size(0),),position, dtype=torch.int64).to(device) if args.use_pos else None
                 curr_block = x[:, :, i:i+block_size, j:j+block_size]
                 neighbors = dset.get_neighbors(neighbor_ids, position).to(device) if args.use_rag else torch.rand(x.size(0),  args.k * latent_dim, block_size, block_size).to(device)
                 loss = model.p_losses2(curr_block, neighbors, position = block_pos, low_res_cond = low_res_cond)
