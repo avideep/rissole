@@ -15,7 +15,7 @@ from model.ddpm.ddpm import DDPM
 from model.unet.unet_light import UNetLight
 import torchvision.transforms.functional as F
 from utils.helpers import load_model_checkpoint
-from dsetbuilder_vqgan import DSetBuilder, ClassDSetBuilder
+from dsetbuilder_vqgan import DSetBuilder
 from dataloader import CelebA, CelebAHQ, CIFAR10, ImageNet100
 # from: https://stackoverflow.com/questions/20554074/sklearn-omp-error-15-initializing-libiomp5md-dll-but-found-mk2iomp5md-dll-a
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
