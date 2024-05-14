@@ -297,7 +297,7 @@ def validate(model, data, dset, block_size, device, args):
     for i in range(0, img.shape[-1], block_size):
         for j in range(0, img.shape[-1], block_size):
 
-            block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
+            block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device) if args.use_pos else None
             neighbors = dset.get_neighbors(neighbor_ids, position).to(device) if args.use_rag else torch.rand(n_images,  args.k * latent_dim, block_size, block_size).to(device)
             curr_block = model.sample(block_size, neighbors, block_pos, low_res_cond = None, batch_size=n_images, channels=latent_dim) # if CFG is not used and low-res-conditioning is also not used
             position += 1
