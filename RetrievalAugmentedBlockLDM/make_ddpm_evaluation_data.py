@@ -7,7 +7,7 @@ import yaml
 from tqdm import tqdm
 import random
 import string
-
+import gc
 from utils.visualization import tensor_to_image
 from dataloader import PlantNet
 from model import VQGANLight, VAE, IntroVAE
@@ -301,6 +301,8 @@ def sample_images_gen(model, dset, block_size, n_images, image_path, image_size,
 
         n_images -= sample_size
         step_count += 1
+        torch.cuda.empty_cache()
+        gc.collect()
 '''
 def validate(model, data_loader, block_size, vae, device):
     model.eval()
