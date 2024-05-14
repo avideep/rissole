@@ -241,7 +241,7 @@ def sample_images_gen(model, dset, block_size, n_images, image_path, image_size,
             for j in range(0, img.shape[-1], block_size):
 
                 block_pos = torch.full((sample_size,),position, dtype=torch.int64).to(device)
-                neighbors = dset.get_neighbors(neighbor_ids, position, block_size, sample_size, latent_dim).to(device) if use_rag else torch.rand(sample_size,  nn * latent_dim, block_size, block_size).to(device)
+                neighbors = dset.get_neighbors(neighbor_ids, position).to(device) if use_rag else torch.rand(sample_size,  nn * latent_dim, block_size, block_size).to(device)
                 curr_block = model.sample(block_size, neighbors, block_pos, low_res_cond, batch_size=sample_size, channels=latent_dim)
                 position += 1
                 for k in range(len(curr_block)):
