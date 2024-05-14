@@ -92,14 +92,24 @@ def main():
         print("{:<16}: {}".format('device', device))
 
         if args.data == 'CelebA':
-            args.img_size = 64
+            if args.block_factor == 3:
+                args.unet_config = 'configs/unet_f_3.yaml'
+                args.img_size = 60
+            else:
+                args.img_size = 64
+            data = CelebA(root= args.data_path, batch_size= args.batch_size, img_size=args.img_size)
             args.real_image_path += '/celeba/'
-            data = CelebA(root= args.data_path, batch_size= args.batch_size)
         elif args.data == 'CIFAR10':
             data = CIFAR10(args.batch_size)
         elif args.data == 'ImageNet100':
-            args.img_size = 224
-            data = ImageNet100(root= args.data_path, batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+            args.vqgan_config = 'configs/vqgan_rgb.yaml'
+            args.vqgan_path = 'checkpoints/vqgan/24-03-29_153956/best_model.pt'
+            args.unet_config = 'configs/unet_imagenet100.yaml'
+            if args.block_factor == 3:
+                args.img_size = 216
+            else:
+                args.img_size = 224
+            data = ImageNet100(root= args.data_path, batch_size = args.batch_size, dset_batch_size = args.dset_batch_size, img_size= args.img_size)
             args.real_image_path += '/imagenet100/'
         else:
             data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
@@ -120,13 +130,23 @@ def main():
             raise ValueError('Currently multi-gpu training is not possible')
         print("{:<16}: {}".format('device', device))
         if args.data == 'CelebA':
-            args.img_size = 64
-            data = CelebA(root= args.data_path, batch_size= args.batch_size)
+            if args.block_factor == 3:
+                args.unet_config = 'configs/unet_f_3.yaml'
+                args.img_size = 60
+            else:
+                args.img_size = 64
+            data = CelebA(root= args.data_path, batch_size= args.batch_size, img_size=args.img_size)
         elif args.data == 'CIFAR10':
             data = CIFAR10(args.batch_size)
         elif args.data == 'ImageNet100':
-            args.img_size = 224
-            data = ImageNet100(root= args.data_path, batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+            args.vqgan_config = 'configs/vqgan_rgb.yaml'
+            args.vqgan_path = 'checkpoints/vqgan/24-03-29_153956/best_model.pt'
+            args.unet_config = 'configs/unet_imagenet100.yaml'
+            if args.block_factor == 3:
+                args.img_size = 216
+            else:
+                args.img_size = 224
+            data = ImageNet100(root= args.data_path, batch_size = args.batch_size, dset_batch_size = args.dset_batch_size, img_size= args.img_size)
         else:
             data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
         # read config file for model
