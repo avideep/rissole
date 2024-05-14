@@ -280,6 +280,8 @@ def sample_images_gen(model, dset, block_size, n_images, image_path, image_size,
                 position += 1
                 for k in range(len(curr_block)):
                     images[k][:, :, i:i+block_size, j:j+block_size] = curr_block[k]
+                torch.cuda.empty_cache()
+                gc.collect()
         for k in range(len(images)):
             images_decoded[k] = model.decode(images[k])
         # images = model.sample(16, batch_size=sample_size, channels=latent_dim, sample_step=sample_step)
