@@ -36,7 +36,7 @@ parser.add_argument('--block-factor', default=2, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
 parser.add_argument('--k', default=20, metavar='N',
                     type=int, help='Number of nearest neighbors to search.')
-parser.add_argument('--image-count', default=8900,
+parser.add_argument('--image-count', default=10000,
                     type=int, help='number of images that should be generated for comparison')
 parser.add_argument('--config', default='configs/ddpm_linear.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/ddpm_linear.yaml)')
@@ -96,6 +96,7 @@ def main():
             else:
                 args.img_size = 64
             data = CelebA(root= args.data_path, batch_size= args.batch_size, img_size=args.img_size)
+            args.real_image_path += '/celeba/'
         elif args.data == 'CIFAR10':
             data = CIFAR10(args.batch_size)
         elif args.data == 'ImageNet100':
@@ -107,6 +108,7 @@ def main():
             else:
                 args.img_size = 224
             data = ImageNet100(root= args.data_path, batch_size = args.batch_size, dset_batch_size = args.dset_batch_size, img_size= args.img_size)
+            args.real_image_path += '/imagenet100/'
         else:
             data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
     # read config file for model
