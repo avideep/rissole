@@ -42,13 +42,13 @@ parser.add_argument('--config', default='configs/ddpm_linear.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/ddpm_linear.yaml)')
 parser.add_argument('--unet-config', default='configs/unet_imagenet100.yaml',
                     metavar='PATH', help='Path to unet model config file (default: configs/unet.yaml)')
-parser.add_argument('--load-ckpt-ddpm', default='checkpoints/second_stage/ddpm_linear/24-04-28_125137/ddpm/best_model.pt', metavar='PATH',
+parser.add_argument('--load-ckpt-ddpm', default='checkpoints/second_stage/ddpm_linear/24-05-12_134651/ddpm/best_model.pt', metavar='PATH',
                     dest='load_checkpoint_ddpm', help='Load model checkpoint and continue training')
-parser.add_argument('--load-ckpt-unet', default='checkpoints/second_stage/ddpm_linear/24-04-28_125137/unet/best_model.pt', metavar='PATH',
+parser.add_argument('--load-ckpt-unet', default='checkpoints/second_stage/ddpm_linear/24-05-12_134651/unet/best_model.pt', metavar='PATH',
                     dest='load_checkpoint_unet', help='Load model checkpoint and continue training')
-parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-29_153956/best_model.pt',
+parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-18_151152/best_model.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
-parser.add_argument('--vqgan-config', default='configs/vqgan_rgb.yaml',
+parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
 parser.add_argument('--real-image-path', default='original',
                     metavar='PATH', help='Path to load samples from the source images into')
@@ -90,15 +90,23 @@ def main():
         print("{:<16}: {}".format('device', device))
 
         if args.data == 'CelebA':
-            args.img_size = 64
-            args.real_image_path += '/celeba/'
-            data = CelebA(root= args.data_path, batch_size= args.batch_size)
+            if args.block_factor == 3:
+                args.unet_config = 'configs/unet_f_3.yaml'
+                args.img_size = 60
+            else:
+                args.img_size = 64
+            data = CelebA(root= args.data_path, batch_size= args.batch_size, img_size=args.img_size)
         elif args.data == 'CIFAR10':
             data = CIFAR10(args.batch_size)
         elif args.data == 'ImageNet100':
-            args.img_size = 224
-            data = ImageNet100(root= args.data_path, batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
-            args.real_image_path += '/imagenet100/'
+            args.vqgan_config = 'configs/vqgan_rgb.yaml'
+            args.vqgan_path = 'checkpoints/vqgan/24-03-29_153956/best_model.pt'
+            args.unet_config = 'configs/unet_imagenet100.yaml'
+            if args.block_factor == 3:
+                args.img_size = 216
+            else:
+                args.img_size = 224
+            data = ImageNet100(root= args.data_path, batch_size = args.batch_size, dset_batch_size = args.dset_batch_size, img_size= args.img_size)
         else:
             data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
     # read config file for model
@@ -118,13 +126,23 @@ def main():
             raise ValueError('Currently multi-gpu training is not possible')
         print("{:<16}: {}".format('device', device))
         if args.data == 'CelebA':
-            args.img_size = 64
-            data = CelebA(root= args.data_path, batch_size= args.batch_size)
+            if args.block_factor == 3:
+                args.unet_config = 'configs/unet_f_3.yaml'
+                args.img_size = 60
+            else:
+                args.img_size = 64
+            data = CelebA(root= args.data_path, batch_size= args.batch_size, img_size=args.img_size)
         elif args.data == 'CIFAR10':
             data = CIFAR10(args.batch_size)
         elif args.data == 'ImageNet100':
-            args.img_size = 224
-            data = ImageNet100(root= args.data_path, batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+            args.vqgan_config = 'configs/vqgan_rgb.yaml'
+            args.vqgan_path = 'checkpoints/vqgan/24-03-29_153956/best_model.pt'
+            args.unet_config = 'configs/unet_imagenet100.yaml'
+            if args.block_factor == 3:
+                args.img_size = 216
+            else:
+                args.img_size = 224
+            data = ImageNet100(root= args.data_path, batch_size = args.batch_size, dset_batch_size = args.dset_batch_size, img_size= args.img_size)
         else:
             data = CelebAHQ(args.batch_size, dset_batch_size= args.dset_batch_size, device=device)
         # read config file for model
@@ -214,12 +232,6 @@ def sample_images_gen(model, dset, block_size, n_images, image_path, image_size,
         img = model.encode(img)
         for i in range(len(images)):
             images[i] = img
-        # prev_block = torch.rand_like(img[:, :, :block_size, :block_size]).to(device)
-        # prev_block = model.encode(prev_block)
-        # low_res_cond = sample_from_vae(sample_size, vae, device)
-        # low_res_cond = model.encode(low_res_cond)
-        # low_res_cond = F.resize(low_res_cond, [block_size], antialias = True)
-        # prev_block = torch.randn((sample_size, latent_dim, block_size, block_size)).to(device)
         if use_rag:
             x_query = dset.get_rand_queries(sample_size)
             neighbor_ids = dset.get_neighbor_ids(x_query)
@@ -227,25 +239,17 @@ def sample_images_gen(model, dset, block_size, n_images, image_path, image_size,
         position = 0
         for i in range(0, img.shape[-1], block_size):
             for j in range(0, img.shape[-1], block_size):
-                # if j==0 and i>0:
-                #     prev_block = img[:,:,i-block_size:i, j:j+block_size]
-                #     prev_block = model.encode(prev_block)
+
                 block_pos = torch.full((sample_size,),position, dtype=torch.int64).to(device)
-                # neighbors = torch.cat([dset.get_neighbors(neighbor_ids, position, block_size, sample_size, latent_dim).to(device), prev_block], dim =1) if use_prev_block else
                 neighbors = dset.get_neighbors(neighbor_ids, position, block_size, sample_size, latent_dim).to(device) if use_rag else torch.rand(sample_size,  nn * latent_dim, block_size, block_size).to(device)
                 curr_block = model.sample(block_size, neighbors, block_pos, low_res_cond, batch_size=sample_size, channels=latent_dim)
-                # curr_block[0] = curr_block[0] - low_res_cond 
-                # prev_block = curr_block[0]
                 position += 1
                 for k in range(len(curr_block)):
                     images[k][:, :, i:i+block_size, j:j+block_size] = curr_block[k]
         for k in range(len(images)):
             images_decoded[k] = model.decode(images[k])
-        # images = model.sample(16, batch_size=sample_size, channels=latent_dim, sample_step=sample_step)
         images = [img for img in images_decoded[0]]
         images = torch.stack(images)
-        # images = model.decode(images)
-        # image_path = image_path + '/' +dset.data.__class__.__name__
         os.makedirs(image_path, exist_ok=True)
         for n, img in enumerate(images):
             img = tensor_to_image(img)
@@ -253,41 +257,6 @@ def sample_images_gen(model, dset, block_size, n_images, image_path, image_size,
 
         n_images -= sample_size
         step_count += 1
-'''
-def validate(model, data_loader, block_size, vae, device):
-    model.eval()
-    x, _ = next(iter(data_loader))
-    x = x.to(device)
-    x = model.encode(x)
-    n_images = 8
-    _, c, w, h = x.size()
-    images_decoded = images = [0]*model.n_steps
-    img = torch.ones((n_images, c, w, h), device=device)
-    for i in range(len(images)):
-        images[i] = img
-    prev_block = torch.rand_like(img[:, :, :block_size, :block_size]).to(device)
-    low_res_cond = sample_from_vae(n_images, vae, device)
-    low_res_cond = model.encode(low_res_cond)
-    low_res_cond = F.resize(low_res_cond, [block_size], antialias = True)
-    position = 0
-    for i in range(0, img.shape[-1], block_size):
-        for j in range(0, img.shape[-1], block_size):
-            block_pos = torch.full((n_images,),position, dtype=torch.int64).to(device)
-            curr_block = model.sample(block_size, prev_block, block_pos, low_res_cond, batch_size=n_images, channels=latent_dim)
-            curr_block[0] = curr_block[0] - low_res_cond 
-            # curr_block[0] = curr_block[0] - prev_block
-            prev_block = curr_block[0]
-            position += 1
-            for k in range(len(curr_block)):
-                images[k][:, :, i:i+block_size, j:j+block_size] = curr_block[k]
-    for k in range(len(images)):
-        images_decoded[k] = model.decode(images[k])
-    logger.tensorboard.add_figure('Val: DDPM',
-                                  get_sample_images_for_ddpm(images, n_ims=n_images),
-                                  global_step=logger.global_train_step)
-
-'''
-
 if __name__ == "__main__":
     try:
         main()
