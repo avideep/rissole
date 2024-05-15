@@ -116,6 +116,7 @@ def main():
     # read config file for model
         if args.real_image_path and not os.path.exists(args.real_image_path):
             os.makedirs(args.real_image_path)
+        cfg_vqgan = yaml.load(open(args.vqgan_config, 'r'), Loader=yaml.Loader)
         vqgan_model = VQGANLight(**cfg_vqgan['model'])
         vqgan_model, _, _ = load_model_checkpoint(vqgan_model, args.vqgan_path, device)
         vqgan_model.to(device)
