@@ -206,7 +206,7 @@ def sample_images_real(data_loader, n_images, vqgan_model, device, real_image_pa
     for x, _ in tqdm(data_loader, desc="sample_real_images"):
         x = vqgan_model.encode(x.to(device))
         x = vqgan_model.quantize(x)
-        x = vqgan_model.decoce(x)
+        x = vqgan_model.decode(x)
         for one_image in x.cpu():
             img = tensor_to_image(one_image)
             img.save(f"{real_image_path}/{get_random_filename()}.jpg")
