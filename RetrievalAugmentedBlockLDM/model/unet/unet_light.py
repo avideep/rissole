@@ -45,8 +45,8 @@ class UNetLight(nn.Module):
         self.use_addition = use_addition
         init_padding = conv_config['init_padding']
         if self.activate_cond_layer:
-            self.pre_init_conv = nn.Conv2d(in_channels, self.channels[0] // 2, kernel_size = 3, stride = 1, padding = init_padding)
-            self.cond_conv = nn.Conv2d(cond_emb_dim, self.channels[0] // 2, kernel_size = 3, stride = 1, padding = init_padding)
+            self.pre_init_conv = nn.Conv2d(in_channels, self.channels[0] // 2, kernel_size = 3, stride = 1, padding = 1)
+            self.cond_conv = nn.Conv2d(cond_emb_dim, self.channels[0] // 2, kernel_size = 3, stride = 1, padding = 1)
             if self.use_addition:
                 # self.layer_norm = nn.LayerNorm(None)
                 self.init_conv = nn.Conv2d(self.channels[0] // 2, self.channels[0], kernel_size=3, stride = 1, padding=init_padding)
