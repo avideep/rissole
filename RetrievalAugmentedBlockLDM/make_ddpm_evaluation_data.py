@@ -116,7 +116,10 @@ def main():
     # read config file for model
         if args.real_image_path and not os.path.exists(args.real_image_path):
             os.makedirs(args.real_image_path)
-        sample_images_real(data.val, args.image_count, args.real_image_path)
+        vqgan_model = VQGANLight(**cfg_vqgan['model'])
+        vqgan_model, _, _ = load_model_checkpoint(vqgan_model, args.vqgan_path, device)
+        vqgan_model.to(device)
+        sample_images_real(data.val, args.image_count, vqgan_model, device, args.real_image_path)
 
     if args.sample_gen:
         if args.gen_image_path and not os.path.exists(args.gen_image_path):
@@ -197,10 +200,13 @@ def get_block_size(args, vqgan_model, device):
     x = vqgan_model.quantize(x)
     return x.size(2) // args.block_factor
 
-def sample_images_real(data_loader, n_images, real_image_path):
+def sample_images_real(data_loader, n_images, vqgan_model, device, real_image_path):
     count = 0
     for x, _ in tqdm(data_loader, desc="sample_real_images"):
-        for one_image in x:
+        x = vqgan_model.encode(x.to(device))
+        x = vqgan_model.quantiz(x)
+        x = vqgan_model.decoce(x)
+        for one_image in x.cpu():
             img = tensor_to_image(one_image)
             img.save(f"{real_image_path}/{get_random_filename()}.jpg")
 
