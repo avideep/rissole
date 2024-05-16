@@ -32,7 +32,7 @@ parser.add_argument('--image-size', default=224, metavar='N',
 parser.add_argument('--image-channels', default=3, metavar='N',
                     type=int, help='Number of image channels (default: 3)')
 parser.add_argument('--data-path', default= '/hdd/avideep/blockLDM/data/', metavar='PATH', help='Path to root of the data')
-parser.add_argument('--block-factor', default=4, metavar='N',
+parser.add_argument('--block-factor', default=2, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
 parser.add_argument('--k', default=20, metavar='N',
                     type=int, help='Number of nearest neighbors to search.')
@@ -42,9 +42,9 @@ parser.add_argument('--config', default='configs/ddpm_linear.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/ddpm_linear.yaml)')
 parser.add_argument('--unet-config', default='configs/unet.yaml',
                     metavar='PATH', help='Path to unet model config file (default: configs/unet.yaml)')
-parser.add_argument('--load-ckpt-ddpm', default='checkpoints/second_stage/ddpm_linear/24-05-12_134544/ddpm/best_model.pt', metavar='PATH',
+parser.add_argument('--load-ckpt-ddpm', default='checkpoints/second_stage/ddpm_linear/24-05-14_095011/ddpm/best_model.pt', metavar='PATH',
                     dest='load_checkpoint_ddpm', help='Load model checkpoint and continue training')
-parser.add_argument('--load-ckpt-unet', default='checkpoints/second_stage/ddpm_linear/24-05-12_134544/unet/best_model.pt', metavar='PATH',
+parser.add_argument('--load-ckpt-unet', default='checkpoints/second_stage/ddpm_linear/24-05-14_095011/unet/best_model.pt', metavar='PATH',
                     dest='load_checkpoint_unet', help='Load model checkpoint and continue training')
 parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-18_151152/best_model.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
