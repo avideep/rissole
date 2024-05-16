@@ -39,14 +39,14 @@ class DSetBuilder:
         self.mean = [0.5, 0.5, 0.5]
         self.std = [0.5, 0.5, 0.5]
         # self.patch_size = self.data.img_size // block_factor
-        self.DSET_PATH = self.data.ROOT_PATH + 'dset/{}/vqgan/whole_dset_f_{}.pth'.format(data_name, block_factor)
+        self.DSET_PATH = self.data.ROOT_PATH + 'dset/{}/vqgan/whole_dset.pth'.format(data_name, block_factor)
         self.k = k
         self.model = model
         self.device = device
         self.latent_dim, self.latent_size = self.get_latent_shape()[1], self.get_latent_shape()[2]
         self.latent_patch_size = self.latent_size // block_factor
         self.dset = self.dsetbuilder()
-        searcher_dir = self.data.ROOT_PATH + 'dset/{}/vqgan/whole_searcher_k_{}_f_{}/'.format(data_name, k, block_factor)
+        searcher_dir = self.data.ROOT_PATH + 'dset/{}/vqgan/whole_searcher_k_{}/'.format(data_name, k)
         if not os.path.exists(searcher_dir):
             t_start = time.time()
             self.searcher = scann.scann_ops_pybind.builder(self.dset / np.linalg.norm(self.dset, axis=1)[:, np.newaxis].astype(np.float32), self.k, "dot_product").tree(num_leaves=2000, num_leaves_to_search=100, training_sample_size=250000).score_ah(2, anisotropic_quantization_threshold=0.2).reorder(100).build()
