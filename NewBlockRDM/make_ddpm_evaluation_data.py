@@ -64,6 +64,8 @@ parser.add_argument('--sample_real', action='store_true',
                     help='If true, samples images from the ground truth imageset')
 parser.add_argument('--sample_gen', action='store_true',
                     help='If true, samples images from the ddpm')
+parser.add_argument('--use-pos', action='store_true',
+                    help='If true, condition the images with positional information')
 parser.add_argument('--data-config', default='configs/data_se.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/data_se.yaml)')
 # parser.add_argument('--vae-path', default='checkpoints/vae/introVAE/24-01-18_162139/best_model.pt',
@@ -191,7 +193,7 @@ def main():
         # global vae_latent_dim
         # vae_latent_dim = cfg_vae['model']['latent_dim']        
         block_size = get_block_size(args, vqgan_model, device)
-        sample_images_gen(ddpm, dset, block_size, args.image_count, args.gen_image_path, args.img_size, args.use_rag, args.k, device)
+        sample_images_gen(ddpm, dset, block_size, args.image_count, args.gen_image_path, args.img_size, args.use_rag, args.use_pos, args.k, device)
 
 def get_block_size(args, vqgan_model, device):
     x = torch.rand(1, args.image_channels, args.img_size, args.img_size).to(device)
@@ -223,7 +225,7 @@ def get_random_filename():
     # Generate a random string of 10 characters
     return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10))
 @torch.no_grad()
-def sample_images_gen(model, dset, block_size, n_images, image_path, image_size, use_rag, nn, device):
+def sample_images_gen(model, dset, block_size, n_images, image_path, image_size, use_rag, use_pos, nn, device):
     model.eval()
 
     # we only want to sample x0 images
@@ -251,7 +253,7 @@ def sample_images_gen(model, dset, block_size, n_images, image_path, image_size,
         for i in range(0, img.shape[-1], block_size):
             for j in range(0, img.shape[-1], block_size):
 
-                block_pos = torch.full((sample_size,),position, dtype=torch.int64).to(device)
+                block_pos = torch.full((sample_size,),position, dtype=torch.int64).to(device) if use_pos else None
                 neighbors = dset.get_neighbors(neighbor_ids, position).to(device) if use_rag else torch.rand(sample_size,  nn * latent_dim, block_size, block_size).to(device)
                 curr_block = model.sample(block_size, neighbors, block_pos, low_res_cond, batch_size=sample_size, channels=latent_dim)
                 position += 1
