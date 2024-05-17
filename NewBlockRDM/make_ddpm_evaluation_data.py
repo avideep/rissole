@@ -36,7 +36,7 @@ parser.add_argument('--block-factor', default=4, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
 parser.add_argument('--k', default=20, metavar='N',
                     type=int, help='Number of nearest neighbors to search.')
-parser.add_argument('--image-count', default=10000,
+parser.add_argument('--image-count', default=100,
                     type=int, help='number of images that should be generated for comparison')
 parser.add_argument('--config', default='configs/ddpm_linear.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/ddpm_linear.yaml)')
@@ -231,7 +231,7 @@ def sample_images_gen(model, dset, block_size, n_images, image_path, image_size,
     # we only want to sample x0 images
     sample_step = 0
 
-    max_sample_size = 20
+    max_sample_size = 50
     step_count = 0
 
     while n_images > 0:
