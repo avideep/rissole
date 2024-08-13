@@ -86,6 +86,7 @@ class ResidualBlockUNet(nn.Module):
 
         self.time_emb = nn.Linear(time_emb_dim, out_channels) if time_emb_dim is not None else None
         self.pos_emb = nn.Linear(time_emb_dim, out_channels) if time_emb_dim is not None else None
+        
 
         
         self.cond_emb = nn.Sequential(
