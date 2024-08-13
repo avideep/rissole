@@ -85,8 +85,9 @@ class ResidualBlockUNet(nn.Module):
             self.shortcut = nn.Identity()
 
         self.time_emb = nn.Linear(time_emb_dim, out_channels) if time_emb_dim is not None else None
-        self.pos_emb = nn.Linear(time_emb_dim, out_channels) if time_emb_dim is not None else None
-        
+        # self.pos_emb = nn.Linear(time_emb_dim, out_channels) if time_emb_dim is not None else None
+        # self.pos_emb = None
+
 
         
         self.cond_emb = nn.Sequential(
@@ -102,14 +103,13 @@ class ResidualBlockUNet(nn.Module):
         identity = self.shortcut(x)
 
         x = self.block1(x)
-        p = None
         # condition with time if required
         if self.time_emb is not None:
             t = self.time_emb(t)        # [bs, out_channels]
             x += t[:, :, None, None]
-        if self.pos_emb is not None and p is not None:
-            p = self.pos_emb(p) 
-            x += p[:, :, None, None]
+        # if self.pos_emb is not None and p is not None:
+        #     p = self.pos_emb(p) 
+        #     x += p[:, :, None, None]
         x = self.block2(x)
 
         return x + identity
