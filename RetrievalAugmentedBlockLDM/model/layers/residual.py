@@ -96,20 +96,12 @@ class ResidualBlockUNet(nn.Module):
             nn.ReLU()
         )
 
-        # self.low_cond_emb = nn.Sequential(
-        #     nn.Conv2d(cond_emb_dim, out_channels, kernel_size=3, padding=1),
-        #     nn.GroupNorm(n_groups, out_channels),
-        #     nn.Dropout(0.6),
-        #     nn.SiLU()
-        # )
-
-    # def forward(self, x: torch.Tensor, x_cond: torch.Tensor = None, t: torch.Tensor = None, p:torch.Tensor = None):
     def forward(self, x: torch.Tensor, t: torch.Tensor = None, p:torch.Tensor = None):
 
         identity = self.shortcut(x)
 
         x = self.block1(x)
-
+        p = None
         # condition with time if required
         if self.time_emb is not None:
             t = self.time_emb(t)        # [bs, out_channels]
@@ -117,14 +109,6 @@ class ResidualBlockUNet(nn.Module):
         if self.pos_emb is not None:
             p = self.pos_emb(p)
             x += p[:, :, None, None]
-        # if self.cond_emb is not None:
-        #     c = self.cond_emb(x_cond)
-        #     if x.shape[2] == c.shape[2]:
-        #         x += c
-        # if l is not None:
-        #     l = self.low_cond_emb(l)
-        #     if x.shape[2] == l.shape[2]:
-        #         x += l
         x = self.block2(x)
 
         return x + identity
