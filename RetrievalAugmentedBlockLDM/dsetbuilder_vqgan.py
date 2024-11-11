@@ -210,9 +210,9 @@ class ClassDSetBuilder:
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="DSET Building")
-    parser.add_argument('--data', '-d', default='CelebA',
+    parser.add_argument('--data', '-d', default='CIFAR10',
                         type=str, metavar='data', help='Dataset Name. Please enter CelebA, CelebAHQ, ImageNet100 or CIFAR10. Default: CelebA')
-    parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-18_151152/best_model.pt',
+    parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-11-11_112118/best_model.pt',
                         metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
     parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
                         metavar='PATH', help='Path to model config file (default: configs/vqgan_cifar10.yaml)')
@@ -238,8 +238,10 @@ if __name__ == "__main__":
         data = CelebA(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
     elif args.data == 'CelebAHQ':
         data = CelebAHQ(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
+    elif args.data == 'CIFAR10':
+        data = CIFAR10(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
     elif args.data == 'ImageNet100':
         data = ImageNet100(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
     else:
         data = CIFAR10(batch_size = args.batch_size, dset_batch_size = args.dset_batch_size)
-    dset = DSetBuilder(data, k=20, model=vqgan_model, device=device, block_factor=4)
+    dset = DSetBuilder(data, k=10, model=vqgan_model, device=device, block_factor=2)
