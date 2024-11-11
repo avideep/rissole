@@ -37,7 +37,7 @@ parser.add_argument('--batch-size', default=512, metavar='N',
                     type=int, help='Mini-batch size (default: 64)')
 parser.add_argument('--dset-batch-size', default=128, metavar='N',
                     type=int, help='Mini-batch size (default: 32)')
-parser.add_argument('--image-size', default=224, metavar='N',
+parser.add_argument('--img_size', default=64, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
 parser.add_argument('--block-factor', default=2, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
