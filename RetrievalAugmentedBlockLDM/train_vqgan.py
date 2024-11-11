@@ -16,7 +16,7 @@ from utils.helpers import load_model_checkpoint, save_model_checkpoint
 from utils.helpers import log2tensorboard_vqvae
 from utils.helpers import count_parameters
 from utils.visualization import get_original_reconstruction_image
-from dataloader import CIFAR10, PlantNet, CelebA, CelebAHQ, ImageNet100
+from dataloader import CIFAR10, CelebA, CelebAHQ, ImageNet100
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
@@ -47,7 +47,7 @@ parser.add_argument('--config', default='configs/vqgan_cifar10.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
 parser.add_argument('--data-config', default='configs/data_se.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/data_se.yaml)')
-parser.add_argument('--data', '-d', default='CelebA',
+parser.add_argument('--data', '-d', default='CIFAR10',
                         type=str, metavar='data', help='Dataset Name. Please enter CelebA, CelebAHQ, or CIFAR10. Default: CelebA')
 parser.add_argument('--gpus', default=0, type=int,
                     nargs='+', metavar='GPUS', help='If GPU(s) available, which GPU(s) to use for training.')
