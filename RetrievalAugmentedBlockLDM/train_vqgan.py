@@ -31,11 +31,11 @@ parser.add_argument('--name', '-n', default='',
                     type=str, metavar='NAME', help='Model name and folder where logs are stored')
 parser.add_argument('--epochs', default=300,
                     type=int, metavar='N', help='Number of epochs to run (default: 2)')
-parser.add_argument('--batch-size', default=64, metavar='N',
+parser.add_argument('--batch-size', default=512, metavar='N',
                     type=int, help='Mini-batch size (default: 64)')
 parser.add_argument('--dset-batch-size', default=32, metavar='N',
                     type=int, help='Mini-batch size (default: 32)')
-parser.add_argument('--image-size', default=224, metavar='N',
+parser.add_argument('--image-size', default=32, metavar='N',
                     type=int, help='Size that images should be resized to before processing (default: 128)')
 parser.add_argument('--block-size', default=32, metavar='N',
                     type=int, help='Size of the block that the image will be divided by.')
@@ -43,7 +43,7 @@ parser.add_argument('--num-workers', default=0, metavar='N',
                     type=int, help='Number of workers for the dataloader (default: 0)')
 parser.add_argument('--lr', default=0.0002,
                     type=float, metavar='LR', help='Initial learning rate (default: 0.0001)')
-parser.add_argument('--config', default='configs/vqgan_rgb.yaml',
+parser.add_argument('--config', default='configs/vqgan_cifar10.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
 parser.add_argument('--data-config', default='configs/data_se.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/data_se.yaml)')
