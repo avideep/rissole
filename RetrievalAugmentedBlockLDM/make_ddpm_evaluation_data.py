@@ -23,7 +23,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 parser = argparse.ArgumentParser(description="PyTorch Second Stage Training")
 parser.add_argument('--data', '-d', default='CIFAR10',
                         type=str, metavar='data', help='Dataset Name. Please enter CelebA, CelebAHQ, or CIFAR10. Default: CelebA')
-parser.add_argument('--batch-size', default=16, metavar='N',
+parser.add_argument('--batch-size', default=512, metavar='N',
                     type=int, help='Mini-batch size (default: 64)')
 parser.add_argument('--dset-batch-size', default=32, metavar='N',
                     type=int, help='Mini-batch size (default: 32)')
