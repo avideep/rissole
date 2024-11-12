@@ -50,7 +50,7 @@ parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-11-11_112118/b
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
-parser.add_argument('--real-image-path', default='original',
+parser.add_argument('--real-image-path', default='original/cifar10_real',
                     metavar='PATH', help='Path to load samples from the source images into')
 parser.add_argument('--gen-image-path', default='samples/cifar10_samples/',
                     metavar='PATH', help='Path to generated images')
