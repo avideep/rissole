@@ -21,7 +21,7 @@ from dataloader import CelebA, CelebAHQ, CIFAR10, ImageNet100
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 parser = argparse.ArgumentParser(description="PyTorch Second Stage Training")
-parser.add_argument('--data', '-d', default='CelebA',
+parser.add_argument('--data', '-d', default='CIFAR10',
                         type=str, metavar='data', help='Dataset Name. Please enter CelebA, CelebAHQ, or CIFAR10. Default: CelebA')
 parser.add_argument('--batch-size', default=16, metavar='N',
                     type=int, help='Mini-batch size (default: 64)')
@@ -42,17 +42,17 @@ parser.add_argument('--config', default='configs/ddpm_linear.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/ddpm_linear.yaml)')
 parser.add_argument('--unet-config', default='configs/unet.yaml',
                     metavar='PATH', help='Path to unet model config file (default: configs/unet.yaml)')
-parser.add_argument('--load-ckpt-ddpm', default='checkpoints/second_stage/ddpm_linear/24-08-14_022510/ddpm/best_model.pt', metavar='PATH',
+parser.add_argument('--load-ckpt-ddpm', default='checkpoints/second_stage/ddpm_linear/24-11-11_171449/ddpm/best_model.pt', metavar='PATH',
                     dest='load_checkpoint_ddpm', help='Load model checkpoint and continue training')
-parser.add_argument('--load-ckpt-unet', default='checkpoints/second_stage/ddpm_linear/24-08-14_022510/unet/best_model.pt', metavar='PATH',
+parser.add_argument('--load-ckpt-unet', default='checkpoints/second_stage/ddpm_linear/24-11-11_171449/unet/best_model.pt', metavar='PATH',
                     dest='load_checkpoint_unet', help='Load model checkpoint and continue training')
-parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-03-18_151152/best_model.pt',
+parser.add_argument('--vqgan-path', default='checkpoints/vqgan/24-11-11_112118/best_model.pt',
                     metavar='PATH', help='Path to encoder/decoder model checkpoint (default: empty)')
 parser.add_argument('--vqgan-config', default='configs/vqgan_cifar10.yaml',
                     metavar='PATH', help='Path to model config file (default: configs/vqgan.yaml)')
 parser.add_argument('--real-image-path', default='original',
                     metavar='PATH', help='Path to load samples from the source images into')
-parser.add_argument('--gen-image-path', default='samples/new_method_blocks_4/',
+parser.add_argument('--gen-image-path', default='samples/cifar10_samples/',
                     metavar='PATH', help='Path to generated images')
 parser.add_argument('--use-prev-block', action='store_true',
                     help='Whether to condition the model with the previous block')
