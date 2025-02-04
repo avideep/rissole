@@ -1,1 +1,0 @@
-#Block Latent Diffusion Model

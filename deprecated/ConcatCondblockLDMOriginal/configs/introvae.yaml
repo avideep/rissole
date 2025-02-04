@@ -1,5 +1,0 @@
-model:
-  in_channels: 3
-  latent_dim: 512
-  channels: [32, 64, 128, 256, 512, 512]
-  image_size: 32

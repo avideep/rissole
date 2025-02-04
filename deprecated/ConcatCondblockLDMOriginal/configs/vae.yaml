@@ -1,3 +1,0 @@
-model:
-  in_channels: 3
-  latent_dim: 512
